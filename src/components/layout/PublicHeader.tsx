@@ -47,8 +47,8 @@ export default function PublicHeader() {
         const el = document.getElementById(sectionIds[i]);
         if (el) {
           const rect = el.getBoundingClientRect();
-          // Header height is 88px; when top of section crosses 150px from viewport top, activate it
-          if (rect.top <= 150) {
+          // Header height is 100px; when top of section crosses 165px from viewport top, activate it
+          if (rect.top <= 165) {
             current = sectionIds[i];
           }
         }
@@ -79,20 +79,20 @@ export default function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-[80px] lg:h-[88px]">
-          {/* Big, Prominent Logo (Protected from overlapping) */}
+        <div className="flex items-center justify-between h-[88px] sm:h-[94px] lg:h-[100px]">
+          {/* Big, Clear, Easily Readable Brand Logo */}
           <Link
             href="/#home"
             onClick={(e) => scrollToSection(e, "/#home")}
-            className="flex items-center shrink-0 py-2 mr-4 xl:mr-8 group select-none"
+            className="flex items-center shrink-0 py-2 mr-3 lg:mr-4 xl:mr-8 group select-none"
             aria-label="CK Condo Drop Hub Home"
           >
             <Image
               src="/brand/logo.webp"
               alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={280}
-              height={87}
-              className="h-12 sm:h-13 lg:h-14 w-auto max-h-[56px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
+              width={320}
+              height={100}
+              className="h-14 sm:h-16 lg:h-[72px] w-auto max-h-[72px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
               priority
             />
           </Link>
@@ -106,7 +106,7 @@ export default function PublicHeader() {
                   key={link.id}
                   href={link.href}
                   onClick={(e) => scrollToSection(e, link.href)}
-                  className={`px-2.5 xl:px-3.5 py-2 text-[11px] xl:text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 whitespace-nowrap ${
+                  className={`px-2 xl:px-3 py-2 text-[11px] xl:text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 whitespace-nowrap ${
                     isActive
                       ? "text-brand-red bg-brand-red-bg font-black"
                       : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
