@@ -88,7 +88,7 @@ export default function PublicHeader() {
             aria-label="CK Condo Drop Hub Home"
           >
             <Image
-              src="/brand/logo-mark-white.webp"
+              src="/brand/logo-mark.webp"
               alt="CK Condo Drop Hub"
               width={64}
               height={64}
