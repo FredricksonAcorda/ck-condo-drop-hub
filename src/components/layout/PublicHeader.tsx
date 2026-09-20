@@ -105,7 +105,7 @@ export default function PublicHeader() {
           </Link>
 
           {/* Desktop Nav in strictly consecutive section order */}
-          <nav className="hidden xl:flex items-center gap-1" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
             {consecutiveNavLinks.map((link) => {
               const isActive = pathname === "/" ? activeSection === link.id : pathname === link.href;
               return (
@@ -123,26 +123,10 @@ export default function PublicHeader() {
                 </Link>
               );
             })}
-            <Link
-              href="/track"
-              className={`px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 flex items-center gap-1 ${
-                pathname === "/track"
-                  ? "text-brand-red bg-brand-red-bg font-black"
-                  : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
-              }`}
-            >
-              <span>🔍</span> Track Parcel
-            </Link>
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link
-              href="/track"
-              className="xl:hidden btn btn-outline btn-sm !text-xs !py-1.5 flex items-center gap-1"
-            >
-              <span>🔍</span> Track
-            </Link>
             <Link
               href="/login"
               className="btn btn-outline btn-sm"
@@ -196,17 +180,6 @@ export default function PublicHeader() {
                 </Link>
               );
             })}
-            <Link
-              href="/track"
-              onClick={() => setMobileOpen(false)}
-              className={`block px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
-                pathname === "/track"
-                  ? "text-brand-red bg-brand-red-bg font-bold"
-                  : "text-brand-text-secondary hover:bg-brand-surface"
-              }`}
-            >
-              🔍 Track Parcel
-            </Link>
           </nav>
           <div className="px-4 pb-4 flex gap-3">
             <Link href="/login" onClick={() => setMobileOpen(false)} className="btn btn-outline flex-1 justify-center">

@@ -7,9 +7,8 @@ const quickLinks = [
   { label: "Services", href: "/#services" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing & Plans", href: "/#pricing" },
-  { label: "Why Choose Us", href: "/#about" },
+  { label: "About Us", href: "/#about" },
   { label: "Announcements", href: "/#announcements" },
-  { label: "Track Parcel", href: "/track" },
   { label: "Contact Us", href: "/#contact" },
 ];
 
