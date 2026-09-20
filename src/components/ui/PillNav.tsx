@@ -188,6 +188,33 @@ const PillNav: React.FC<PillNavProps> = ({
     });
   };
 
+  const closeMobileMenu = React.useCallback(() => {
+    setIsMobileMenuOpen(false);
+
+    const hamburger = hamburgerRef.current;
+    const menu = mobileMenuRef.current;
+
+    if (hamburger) {
+      const lines = hamburger.querySelectorAll('.hamburger-line');
+      gsap.to(lines[0], { rotation: 0, y: 0, duration: 0.25, ease });
+      gsap.to(lines[1], { rotation: 0, y: 0, duration: 0.25, ease });
+    }
+
+    if (menu) {
+      gsap.to(menu, {
+        opacity: 0,
+        y: 8,
+        scaleY: 1,
+        duration: 0.2,
+        ease,
+        transformOrigin: 'top center',
+        onComplete: () => {
+          gsap.set(menu, { visibility: 'hidden' });
+        }
+      });
+    }
+  }, [ease]);
+
   const toggleMobileMenu = () => {
     const newState = !isMobileMenuOpen;
     setIsMobileMenuOpen(newState);
@@ -224,7 +251,7 @@ const PillNav: React.FC<PillNavProps> = ({
       } else {
         gsap.to(menu, {
           opacity: 0,
-          y: 10,
+          y: 8,
           scaleY: 1,
           duration: 0.2,
           ease,
@@ -238,6 +265,16 @@ const PillNav: React.FC<PillNavProps> = ({
 
     onMobileMenuClick?.();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        closeMobileMenu();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen, closeMobileMenu]);
 
   const isExternalLink = (href: string) =>
     href.startsWith('http://') ||
@@ -461,84 +498,99 @@ const PillNav: React.FC<PillNavProps> = ({
         </button>
       </nav>
 
-      {/* Mobile Drawer Dropdown (Floating card) */}
+      {/* Mobile Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[990] lg:hidden pointer-events-auto"
+          onClick={closeMobileMenu}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Drawer Dropdown Container (Responsive width & GSAP safe centering) */}
       <div
-        ref={mobileMenuRef}
-        className="lg:hidden absolute top-[3.8em] left-0 right-0 rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.18)] z-[998] origin-top p-3 border border-brand-border bg-white/98 backdrop-blur-lg"
-        style={cssVars}
+        className={`lg:hidden absolute top-[calc(100%+0.65rem)] left-1/2 -translate-x-1/2 w-[min(340px,calc(100vw-2rem))] z-[998] ${
+          isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        }`}
       >
-        <ul className="list-none m-0 p-0 flex flex-col gap-1.5">
-          {items.map(item => {
-            const isActive =
-              activeHref === item.href ||
-              activeHref === item.href.replace('/#', '') ||
-              (activeHref === '/' && item.href === '/#home');
+        <div
+          ref={mobileMenuRef}
+          className="w-full rounded-2xl shadow-[0_20px_48px_rgba(0,0,0,0.22)] origin-top p-3.5 border border-brand-border bg-white/98 backdrop-blur-xl"
+          style={cssVars}
+        >
+          <ul className="list-none m-0 p-0 flex flex-col gap-1.5">
+            {items.map(item => {
+              const isActive =
+                activeHref === item.href ||
+                activeHref === item.href.replace('/#', '') ||
+                (activeHref === '/' && item.href === '/#home');
 
-            const defaultStyle: React.CSSProperties = {
-              background: isActive ? 'var(--base, #CC0000)' : 'var(--pill-bg, #f7f9fa)',
-              color: isActive ? '#ffffff' : 'var(--pill-text, #07100D)'
-            };
+              const defaultStyle: React.CSSProperties = {
+                background: isActive ? 'var(--base, #CC0000)' : 'var(--pill-bg, #f7f9fa)',
+                color: isActive ? '#ffffff' : 'var(--pill-text, #07100D)'
+              };
 
-            const linkClasses =
-              'block py-3 px-4 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200';
+              const linkClasses =
+                'block py-3 px-4 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 hover:bg-gray-100 active:scale-[0.98]';
 
-            return (
-              <li key={item.href}>
-                {isRouterLink(item.href) ? (
-                  <Link
-                    href={item.href}
-                    className={linkClasses}
-                    style={defaultStyle}
-                    onClick={(e) => {
-                      handleLinkClick(e, item.href);
-                      setIsMobileMenuOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                ) : (
-                  <a
-                    href={item.href}
-                    className={linkClasses}
-                    style={defaultStyle}
-                    onClick={(e) => {
-                      handleLinkClick(e, item.href);
-                      setIsMobileMenuOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </a>
-                )}
+              return (
+                <li key={item.href}>
+                  {isRouterLink(item.href) ? (
+                    <Link
+                      href={item.href}
+                      className={linkClasses}
+                      style={defaultStyle}
+                      onClick={(e) => {
+                        handleLinkClick(e, item.href);
+                        closeMobileMenu();
+                      }}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={item.href}
+                      className={linkClasses}
+                      style={defaultStyle}
+                      onClick={(e) => {
+                        handleLinkClick(e, item.href);
+                        closeMobileMenu();
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+
+            {/* Auth Pill Buttons in Mobile Menu (Balanced 2-column grid) */}
+            {authItems.length > 0 && (
+              <li className="pt-2.5 mt-1.5 border-t border-brand-border/80 grid grid-cols-2 gap-2.5">
+                {authItems.map((authItem) => {
+                  const isPrimary = authItem.variant === 'primary';
+                  return (
+                    <Link
+                      key={authItem.href}
+                      href={authItem.href}
+                      onClick={(e) => {
+                        handleLinkClick(e, authItem.href);
+                        closeMobileMenu();
+                      }}
+                      className={`w-full py-2.5 px-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] ${
+                        isPrimary
+                          ? 'bg-brand-red text-white shadow-xs hover:bg-brand-red-hover'
+                          : 'bg-brand-surface text-brand-text border border-brand-border hover:bg-gray-100'
+                      }`}
+                    >
+                      {authItem.label}
+                    </Link>
+                  );
+                })}
               </li>
-            );
-          })}
-
-          {/* Auth Pill Buttons in Mobile Menu */}
-          {authItems.length > 0 && (
-            <li className="pt-2 mt-1 border-t border-brand-border/60 flex gap-2">
-              {authItems.map((authItem) => {
-                const isPrimary = authItem.variant === 'primary';
-                return (
-                  <Link
-                    key={authItem.href}
-                    href={authItem.href}
-                    onClick={(e) => {
-                      handleLinkClick(e, authItem.href);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`flex-1 py-2.5 px-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                      isPrimary
-                        ? 'bg-brand-red text-white shadow-xs hover:bg-brand-red-hover'
-                        : 'bg-brand-surface text-brand-text border border-brand-border hover:bg-gray-100'
-                    }`}
-                  >
-                    {authItem.label}
-                  </Link>
-                );
-              })}
-            </li>
-          )}
-        </ul>
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );

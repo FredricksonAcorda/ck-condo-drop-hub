@@ -63,10 +63,10 @@ function HeroSection() {
             <p className="text-xs uppercase tracking-[0.2em] text-brand-text-secondary mb-3 font-bold">
               Your Condo. Your Convenience. Our Priority.
             </p>
-            <h1 className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mb-6 font-black">
+            <h1 className="font-[family-name:var(--font-heading)] text-4xl sm:text-6xl lg:text-7xl leading-[0.95] mb-6 font-black">
               YOUR TRUSTED<br />
               <span className="text-brand-red">PARCEL</span> HUB<br />
-              <span className="text-3xl sm:text-4xl lg:text-5xl">INSIDE YOUR COMMUNITY</span>
+              <span className="text-2xl sm:text-4xl lg:text-5xl">INSIDE YOUR COMMUNITY</span>
             </h1>
             <p className="text-brand-text-secondary text-base lg:text-lg leading-relaxed mb-6 max-w-lg font-medium">
               We make receiving and sending parcels easy, secure, and hassle-free for everyone in the condo.
@@ -82,11 +82,11 @@ function HeroSection() {
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/register" className="btn btn-primary btn-lg shadow-md hover:shadow-brand-red/25 transition-all">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/register" className="btn btn-primary btn-lg shadow-md hover:shadow-brand-red/25 transition-all text-center">
                 SIGN UP NOW →
               </Link>
-              <Link href="/#services" className="btn btn-outline btn-lg transition-all">
+              <Link href="/#services" className="btn btn-outline btn-lg transition-all text-center">
                 LEARN MORE
               </Link>
             </div>
@@ -812,13 +812,13 @@ function AnnouncementsSection() {
       title: "Store Hours",
       desc: (
         <>
-          <span className="font-extrabold text-brand-text block text-lg sm:text-xl mb-1.5">
+          <span className="font-extrabold text-brand-text block text-base sm:text-lg lg:text-xl mb-1.5">
             Monday – Sunday
           </span>
-          <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-brand-red block my-2 tracking-tight">
+          <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-brand-red block my-2 tracking-tight">
             8:00 AM – 9:00 PM
           </span>
-          <span className="text-base sm:text-lg text-brand-text font-bold block mt-2.5 leading-relaxed">
+          <span className="text-sm sm:text-base lg:text-lg text-brand-text font-bold block mt-2.5 leading-relaxed">
             Open daily including weekends and holidays for easy parcel pickup.
           </span>
         </>
@@ -828,14 +828,14 @@ function AnnouncementsSection() {
       title: "Important Notice",
       desc: (
         <>
-          <p className="text-lg sm:text-xl text-brand-text font-bold leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
             Please claim your parcels within the{" "}
             <span className="text-brand-red font-black underline decoration-2 underline-offset-4">
               3 to 7-day free holding period
             </span>{" "}
             to prevent extra storage charges.
           </p>
-          <p className="text-base sm:text-lg text-brand-text font-semibold mt-3 leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-brand-text font-semibold mt-3 leading-relaxed">
             Prompt pickup keeps our hub organized and prevents penalty fees.
           </p>
         </>
@@ -845,22 +845,22 @@ function AnnouncementsSection() {
       title: "Promos & Updates",
       desc: (
         <>
-          <p className="text-lg sm:text-xl text-brand-text font-bold leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
             Follow our{" "}
             <span className="text-brand-red font-black">
               official Facebook page
             </span>{" "}
             for the latest resident discounts, raffle promos, and community schedules.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 pt-1">
             <Link
               href="https://facebook.com/ckcondrohub"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-brand-red font-black text-base sm:text-lg hover:underline"
+              className="inline-flex items-center gap-1.5 text-brand-red font-black text-sm sm:text-base lg:text-lg hover:underline max-w-full group"
             >
-              <span>Visit facebook.com/ckcondrohub</span>
-              <span aria-hidden="true">→</span>
+              <span className="break-all sm:break-normal">Visit facebook.com/ckcondrohub</span>
+              <span aria-hidden="true" className="group-hover:translate-x-0.5 transition-transform shrink-0">→</span>
             </Link>
           </div>
         </>
@@ -897,7 +897,7 @@ function AnnouncementsSection() {
           {announcements.map((item) => (
             <div
               key={item.title}
-              className="border-2 border-brand-border rounded-2xl p-8 sm:p-9 hover:shadow-xl hover:border-brand-red/50 hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-between"
+              className="border-2 border-brand-border rounded-2xl p-6 sm:p-8 lg:p-9 hover:shadow-xl hover:border-brand-red/50 hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-between"
             >
               <div>
                 <h3 className="font-[family-name:var(--font-heading)] font-black text-2xl sm:text-3xl text-brand-text mb-4 uppercase tracking-wide">
