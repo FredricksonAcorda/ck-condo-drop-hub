@@ -348,15 +348,15 @@ function HowItWorksSection() {
                 )}
 
                 {/* Big Number Circle */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-brand-red text-white flex items-center justify-center mb-5 font-[family-name:var(--font-heading)] font-black text-3xl sm:text-4xl shadow-md shadow-brand-red/20 ring-4 ring-brand-red/10 transition-transform duration-200 group-hover:scale-105 select-none">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-brand-red text-white flex items-center justify-center mb-5 font-black text-3xl sm:text-4xl shadow-md shadow-brand-red/20 ring-4 ring-brand-red/10 transition-transform duration-200 group-hover:scale-105 select-none">
                   {step.num}
                 </div>
 
-                {/* Title & Description (+2 sizes) */}
-                <h3 className="font-[family-name:var(--font-heading)] font-black text-lg sm:text-xl uppercase tracking-wide text-brand-text mb-2.5">
+                {/* Title & Description */}
+                <h3 className="font-bold text-lg sm:text-xl uppercase tracking-wider text-brand-text mb-2 leading-snug">
                   {step.title}
                 </h3>
-                <p className="text-sm sm:text-base text-brand-text-secondary leading-relaxed max-w-[230px] font-medium">
+                <p className="text-sm sm:text-[15px] text-brand-text-secondary leading-relaxed max-w-[220px]">
                   {step.desc}
                 </p>
               </div>
