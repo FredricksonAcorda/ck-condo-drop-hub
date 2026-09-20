@@ -6,10 +6,8 @@ import Image from "next/image";
 const quickLinks = [
   { label: "Home", href: "/#home" },
   { label: "Services", href: "/#services" },
-  { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing & Plans", href: "/#pricing" },
   { label: "About Us", href: "/#about" },
-  { label: "Announcements", href: "/#announcements" },
   { label: "Contact Us", href: "/#contact" },
 ];
 
