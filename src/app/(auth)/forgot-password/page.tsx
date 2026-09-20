@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -27,13 +28,36 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="relative w-full max-w-[430px] sm:max-w-[440px] bg-[#141416] rounded-3xl border border-white/[0.08] p-7 sm:p-9 shadow-2xl overflow-hidden my-4">
+      {/* Top Red Glow Rim Light */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[2px] bg-gradient-to-r from-transparent via-brand-red to-transparent" />
+      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-52 h-16 bg-brand-red/20 blur-xl rounded-full pointer-events-none" />
+
+      {/* Brand Header */}
       <div className="text-center">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black tracking-wide uppercase">
-          RESET <span className="text-brand-red">PASSWORD</span>
+        <Link href="/" className="inline-block group">
+          <Image
+            src="/brand/logo-white.png"
+            alt="CK Condo Drop Hub"
+            width={240}
+            height={68}
+            unoptimized
+            priority
+            className="h-10 sm:h-11 w-auto mx-auto object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
+          />
+        </Link>
+        <p className="text-xs text-zinc-400 font-medium tracking-wide mt-1.5">
+          Buildersville Condominium Drop Hub
+        </p>
+      </div>
+
+      {/* Title & Subtitle */}
+      <div className="text-center mt-5 mb-5">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+          Reset Password
         </h1>
-        <p className="text-xs sm:text-sm text-brand-text-secondary mt-1.5 leading-relaxed max-w-sm mx-auto font-medium">
-          Enter your registered resident email or mobile number to receive a secure recovery code.
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed">
+          Enter your registered email or mobile number to receive a secure recovery code
         </p>
       </div>
 
@@ -41,15 +65,14 @@ export default function ForgotPasswordPage() {
       {errorMessage && (
         <div
           role="alert"
-          className="flex items-start gap-3 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs animate-in fade-in duration-200"
+          className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-red-950/60 border border-red-800/60 text-red-200 text-xs animate-in fade-in"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-brand-red shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div className="flex-1 font-medium leading-relaxed">{errorMessage}</div>
+          <span className="text-red-400 mt-0.5">⚠️</span>
+          <div className="flex-1 leading-relaxed">{errorMessage}</div>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-red-500 hover:text-red-800 text-sm font-bold leading-none shrink-0"
-            aria-label="Dismiss error"
+            className="text-red-400 hover:text-red-200 text-sm font-bold"
           >
             ✕
           </button>
@@ -57,24 +80,27 @@ export default function ForgotPasswordPage() {
       )}
 
       {submitted ? (
-        <div className="bg-green-50/80 border border-green-200 rounded-2xl p-6 text-center space-y-4 animate-in fade-in duration-300">
-          <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto shadow-xs">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div className="bg-[#1c1c21] border border-green-900/50 rounded-2xl p-6 text-center space-y-4 animate-in fade-in duration-300">
+          <div className="w-12 h-12 rounded-full bg-green-950 text-green-400 flex items-center justify-center mx-auto text-xl">
+            ✓
           </div>
           <div>
-            <h3 className="font-bold text-base text-green-950">Recovery Instructions Dispatched</h3>
-            <p className="text-xs text-green-800 leading-relaxed mt-1.5 max-w-xs mx-auto">
-              If <strong className="font-extrabold text-green-900">{emailOrPhone}</strong> is registered to a condo unit, you will receive a password reset link via SMS or email within 1–2 minutes.
+            <h3 className="font-bold text-base text-white">Recovery Link Dispatched</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed mt-1.5">
+              If <strong className="text-white">{emailOrPhone}</strong> is registered to a condo unit, you will receive password reset instructions via SMS or email shortly.
             </p>
           </div>
           <div className="pt-2 space-y-2">
-            <Link href="/login" className="btn btn-primary w-full py-3 font-bold text-xs uppercase tracking-wider block text-center">
-              RETURN TO LOGIN →
+            <Link
+              href="/login"
+              className="w-full py-3 rounded-xl bg-brand-red hover:bg-[#b30000] text-white font-bold text-xs uppercase tracking-wider block text-center transition-all shadow-md"
+            >
+              Return to Login →
             </Link>
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="text-[11px] font-bold text-brand-text-secondary hover:text-brand-black hover:underline"
+              className="text-xs text-zinc-400 hover:text-white transition-colors"
             >
               Try another email or phone number
             </button>
@@ -82,56 +108,42 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Curved Box: Email/Phone */}
-          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
-              Registered Email or Mobile Number
-            </label>
+          <div>
             <input
               type="text"
               name="emailOrPhone"
               autoComplete="username"
-              placeholder="e.g. 09171234567 or email@domain.com"
+              placeholder="Email address or Mobile number"
               value={emailOrPhone}
               onChange={(e) => {
                 setEmailOrPhone(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full bg-white"
+              className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
               required
               disabled={isLoading}
             />
           </div>
 
-          {/* Standard UI button width (centered & reduced from full width) */}
-          <div className="flex justify-center pt-2">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`btn btn-primary w-auto min-w-[240px] sm:min-w-[280px] max-w-xs px-8 py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
-                isLoading ? "opacity-80 cursor-not-allowed" : "hover:shadow-md"
-              }`}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Sending recovery link...</span>
-                </>
-              ) : (
-                <span>SEND RESET CODE →</span>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-2 py-3.5 rounded-xl bg-brand-red hover:bg-[#b30000] active:scale-[0.99] text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+          >
+            {isLoading ? (
+              <span>Sending recovery code...</span>
+            ) : (
+              <span>Send Reset Link</span>
+            )}
+          </button>
         </form>
       )}
 
-      <div className="text-center text-xs text-brand-text-secondary pt-1">
-        Remembered your password?{" "}
-        <Link href="/login" className="text-brand-red font-bold hover:underline">
-          Back to Login
+      {/* Back to Login Link */}
+      <div className="text-center mt-5">
+        <span className="text-xs text-zinc-400">Remembered your password? </span>
+        <Link href="/login" className="text-xs text-brand-red hover:underline font-semibold">
+          Sign in
         </Link>
       </div>
     </div>

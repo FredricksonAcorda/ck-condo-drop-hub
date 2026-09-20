@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -7,43 +6,38 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-surface via-white to-brand-surface flex flex-col justify-between">
-      {/* Auth Top Bar */}
-      <header className="py-4 px-4 sm:px-6 border-b border-brand-border/80 bg-white/90 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 py-1 group select-none" aria-label="CK Condo Drop Hub Home">
-            <Image
-              src="/brand/logo.webp"
-              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={240}
-              height={68}
-              className="h-9 sm:h-10 w-auto max-h-[40px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
-              priority
-            />
-          </Link>
-
-          <Link
-            href="/"
-            className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary hover:text-brand-red transition-colors flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-brand-surface"
+    <div className="min-h-screen bg-[#0a0a0c] text-white flex flex-col justify-between selection:bg-brand-red selection:text-white font-sans antialiased relative overflow-x-hidden">
+      {/* Top Navigation Bar with Home Link */}
+      <header className="w-full max-w-xl mx-auto px-6 pt-6 sm:pt-8 flex items-center justify-start z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-medium transition-colors group"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <span>←</span>
-            <span>Back to Home</span>
-          </Link>
-        </div>
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span>Home</span>
+        </Link>
       </header>
 
-      {/* Main Auth Content Container */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6 sm:my-10">
-        <div className="w-full max-w-lg bg-white rounded-3xl border border-brand-border/90 shadow-[0_20px_50px_rgba(0,0,0,0.06)] p-6 sm:p-9 transition-all">
-          {children}
-        </div>
+      {/* Centered Main Auth Card */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 py-6 sm:py-8 z-10">
+        {children}
       </main>
 
-      {/* Auth Footer */}
-      <footer className="py-4 px-4 text-center text-xs text-brand-text-secondary border-t border-brand-border/70 bg-white">
-        <p className="max-w-md mx-auto leading-relaxed">
-          © 2026 CK Condo Drop Hub • C1 Buildersville Condominium Community Hub
-        </p>
+      {/* Subtle Bottom Footer */}
+      <footer className="py-4 px-4 text-center text-[11px] text-zinc-600 z-10">
+        <p>© 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform</p>
       </footer>
     </div>
   );
