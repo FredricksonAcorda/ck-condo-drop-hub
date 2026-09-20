@@ -39,6 +39,9 @@ A quick fix without identifying the underlying mechanism creates technical debt 
 
 ### 4. Implement Minimal, Robust Fix & Verify
 - Apply the minimal change that addresses the root cause at the architectural source.
-- Verify that the reproduction case now passes.
+- **Verify the Entire Delivery Pipeline, Not Just Disk State:**
+  - If modifying static assets (images, fonts, logos): verify Next.js cache (`.next/cache/images`), clear cache if needed, and check HTTP headers / unoptimized flags to guarantee the browser does not receive stale cached bytes.
+  - If modifying database or API: verify live query response, RLS policies, and error handling end-to-end.
 - Check for regression across adjacent components.
-- Add an automated test or defensive check to prevent recurrence.
+- Run targeted automated probes or pixel-level checks before declaring done.
+- Reference full project post-mortem and guidelines: [DEBUGGING-GUIDELINES-AND-POSTMORTEM.md](../../DEBUGGING-GUIDELINES-AND-POSTMORTEM.md).
