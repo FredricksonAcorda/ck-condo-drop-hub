@@ -3,18 +3,19 @@
 import Link from "next/link";
 
 const quickLinks = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/#about" },
+  { label: "Home", href: "/#home" },
   { label: "Services", href: "/#services" },
-  { label: "Pricing & Plans", href: "/#pricing" },
   { label: "How It Works", href: "/#how-it-works" },
+  { label: "Pricing & Plans", href: "/#pricing" },
+  { label: "Why Choose Us", href: "/#about" },
+  { label: "Announcements", href: "/#announcements" },
+  { label: "Track Parcel", href: "/track" },
   { label: "Contact Us", href: "/#contact" },
-  { label: "FAQs", href: "/help" },
 ];
 
 export default function PublicFooter() {
   return (
-    <footer className="bg-brand-dark text-white">
+    <footer id="contact" className="bg-brand-dark text-white scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Brand */}

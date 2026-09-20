@@ -2,27 +2,86 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
-const navLinks = [
-  { label: "Home", href: "/", highlight: true },
-  { label: "About Us", href: "/#about" },
-  { label: "Services", href: "/#services" },
-  { label: "Pricing & Plans", href: "/#pricing" },
-  { label: "Track Parcel", href: "/track" },
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "Contact Us", href: "/#contact" },
+interface NavLink {
+  id: string;
+  label: string;
+  href: string;
+}
+
+// Strictly consecutive station sections in sequential scroll order
+const consecutiveNavLinks: NavLink[] = [
+  { id: "home", label: "Home", href: "/#home" },
+  { id: "services", label: "Services", href: "/#services" },
+  { id: "how-it-works", label: "How It Works", href: "/#how-it-works" },
+  { id: "pricing", label: "Pricing & Plans", href: "/#pricing" },
+  { id: "about", label: "About Us", href: "/#about" },
+  { id: "announcements", label: "Announcements", href: "/#announcements" },
+  { id: "contact", label: "Contact Us", href: "/#contact" },
 ];
 
 export default function PublicHeader() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("home");
+
+  // Scroll spy: Strictly tracks consecutive station sections as user scrolls down
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const sectionIds = consecutiveNavLinks.map((item) => item.id);
+
+    const handleScroll = () => {
+      // If scrolled to the bottom of the page, highlight the last section (Contact Us)
+      const isAtBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 60;
+      if (isAtBottom) {
+        setActiveSection(sectionIds[sectionIds.length - 1]);
+        return;
+      }
+
+      let current = sectionIds[0];
+      for (let i = 0; i < sectionIds.length; i++) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          // Header height is 72px; when top of section crosses 140px from viewport top, activate it
+          if (rect.top <= 140) {
+            current = sectionIds[i];
+          }
+        }
+      }
+      setActiveSection(current);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("/#") && pathname === "/") {
+      e.preventDefault();
+      const id = href.replace("/#", "");
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+        setActiveSection(id);
+        setMobileOpen(false);
+      }
+    } else {
+      setMobileOpen(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0">
+          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center gap-3 shrink-0">
             <div className="w-12 h-12 relative">
               <Image
                 src="/brand/logo.webp"
@@ -45,25 +104,45 @@ export default function PublicHeader() {
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  link.highlight
-                    ? "text-brand-red hover:bg-brand-red-bg"
-                    : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Desktop Nav in strictly consecutive section order */}
+          <nav className="hidden xl:flex items-center gap-1" aria-label="Main navigation">
+            {consecutiveNavLinks.map((link) => {
+              const isActive = pathname === "/" ? activeSection === link.id : pathname === link.href;
+              return (
+                <Link
+                  key={link.id}
+                  href={link.href}
+                  onClick={(e) => scrollToSection(e, link.href)}
+                  className={`px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 ${
+                    isActive
+                      ? "text-brand-red bg-brand-red-bg font-black"
+                      : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+            <Link
+              href="/track"
+              className={`px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 flex items-center gap-1 ${
+                pathname === "/track"
+                  ? "text-brand-red bg-brand-red-bg font-black"
+                  : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
+              }`}
+            >
+              <span>🔍</span> Track Parcel
+            </Link>
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
+            <Link
+              href="/track"
+              className="xl:hidden btn btn-outline btn-sm !text-xs !py-1.5 flex items-center gap-1"
+            >
+              <span>🔍</span> Track
+            </Link>
             <Link
               href="/login"
               className="btn btn-outline btn-sm"
@@ -98,28 +177,42 @@ export default function PublicHeader() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-brand-border bg-white">
+        <div className="lg:hidden border-t border-brand-border bg-white shadow-lg animate-in slide-in-from-top-2 duration-150">
           <nav className="px-4 py-4 space-y-1" aria-label="Mobile navigation">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  link.highlight
-                    ? "text-brand-red bg-brand-red-bg"
-                    : "text-brand-text-secondary hover:bg-brand-surface"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {consecutiveNavLinks.map((link) => {
+              const isActive = pathname === "/" ? activeSection === link.id : pathname === link.href;
+              return (
+                <Link
+                  key={link.id}
+                  href={link.href}
+                  onClick={(e) => scrollToSection(e, link.href)}
+                  className={`block px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "text-brand-red bg-brand-red-bg font-bold"
+                      : "text-brand-text-secondary hover:bg-brand-surface"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+            <Link
+              href="/track"
+              onClick={() => setMobileOpen(false)}
+              className={`block px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
+                pathname === "/track"
+                  ? "text-brand-red bg-brand-red-bg font-bold"
+                  : "text-brand-text-secondary hover:bg-brand-surface"
+              }`}
+            >
+              🔍 Track Parcel
+            </Link>
           </nav>
           <div className="px-4 pb-4 flex gap-3">
-            <Link href="/login" className="btn btn-outline flex-1 justify-center">
+            <Link href="/login" onClick={() => setMobileOpen(false)} className="btn btn-outline flex-1 justify-center">
               LOG IN
             </Link>
-            <Link href="/register" className="btn btn-primary flex-1 justify-center">
+            <Link href="/register" onClick={() => setMobileOpen(false)} className="btn btn-primary flex-1 justify-center">
               SIGN UP
             </Link>
           </div>

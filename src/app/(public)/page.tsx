@@ -6,7 +6,7 @@ import Link from "next/link";
 /* ------------------------------------------------------------------ */
 function HeroSection() {
   return (
-    <section className="relative bg-white overflow-hidden">
+    <section id="home" className="relative bg-white overflow-hidden scroll-mt-20">
       {/* Red curved overlay (matching the client's distinctive red wave) */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg className="absolute top-0 right-0 h-full w-[55%] hidden lg:block" viewBox="0 0 600 700" preserveAspectRatio="none">
@@ -169,7 +169,7 @@ function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="bg-white py-16 lg:py-20">
+    <section id="services" className="bg-white py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 text-center">
         <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl mb-2">
           OUR <span className="text-brand-red">SERVICES</span>
@@ -209,7 +209,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="bg-brand-surface py-16 lg:py-20">
+    <section id="how-it-works" className="bg-brand-surface py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-12">
           <div>
@@ -280,7 +280,7 @@ function PricingSection() {
   ];
 
   return (
-    <section id="pricing" className="relative overflow-hidden">
+    <section id="pricing" className="relative overflow-hidden scroll-mt-20">
       {/* Red intro panel */}
       <div className="bg-brand-red text-white py-12 lg:py-16">
         <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
@@ -370,7 +370,7 @@ function WhyChooseUsSection() {
   ];
 
   return (
-    <section className="bg-white py-16 lg:py-20">
+    <section id="about" className="bg-white py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           {/* Photo */}
@@ -487,7 +487,7 @@ function AnnouncementsSection() {
   ];
 
   return (
-    <section className="bg-white py-16 lg:py-20">
+    <section id="announcements" className="bg-white py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-10">
           <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl">
