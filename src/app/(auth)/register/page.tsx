@@ -78,8 +78,9 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+        {/* Curved Box: Full Name */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+          <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
             Full Name <span className="text-brand-red">*</span>
           </label>
           <input
@@ -92,15 +93,16 @@ export default function RegisterPage() {
               setFullName(e.target.value);
               if (errorMessage) setErrorMessage(null);
             }}
-            className="input w-full"
+            className="input w-full bg-white"
             required
             disabled={isLoading}
           />
         </div>
 
+        {/* Curved Boxes: Contact Info (Mobile & Email) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
               Mobile Number (SMS) <span className="text-brand-red">*</span>
             </label>
             <input
@@ -114,13 +116,13 @@ export default function RegisterPage() {
                 setPhone(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full"
+              className="input w-full bg-white"
               required
               disabled={isLoading}
             />
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
               Email Address <span className="text-brand-red">*</span>
             </label>
             <input
@@ -134,22 +136,23 @@ export default function RegisterPage() {
                 setEmail(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full"
+              className="input w-full bg-white"
               required
               disabled={isLoading}
             />
           </div>
         </div>
 
+        {/* Curved Boxes: Building & Unit */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
               Tower / Building <span className="text-brand-red">*</span>
             </label>
             <select
               value={tower}
               onChange={(e) => setTower(e.target.value)}
-              className="input w-full cursor-pointer"
+              className="input w-full cursor-pointer bg-white"
               disabled={isLoading}
             >
               <option value="Tower 1">Tower 1</option>
@@ -160,8 +163,8 @@ export default function RegisterPage() {
               <option value="Tower C">Tower C</option>
             </select>
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
               Unit Number <span className="text-brand-red">*</span>
             </label>
             <input
@@ -172,16 +175,16 @@ export default function RegisterPage() {
                 setUnit(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full"
+              className="input w-full bg-white"
               required
               disabled={isLoading}
             />
           </div>
         </div>
 
-        {/* Plan Selector */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
+        {/* Curved Box: Membership Tier Selector */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all">
+          <div className="flex justify-between items-center mb-2.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-brand-text">
               Select Membership Tier
             </label>
@@ -221,8 +224,8 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all relative select-none cursor-pointer ${
                     isSelected
-                      ? "border-brand-red bg-red-50/60 text-brand-text shadow-xs ring-1 ring-brand-red/30"
-                      : "border-brand-border bg-white text-brand-text hover:bg-brand-surface"
+                      ? "border-brand-red bg-red-50/70 text-brand-text shadow-xs ring-1 ring-brand-red/30"
+                      : "border-brand-border/80 bg-white text-brand-text hover:bg-brand-surface"
                   }`}
                 >
                   {p.popular && (
@@ -245,8 +248,9 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
+        {/* Curved Box: Password */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+          <div className="flex justify-between items-center mb-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-brand-text">
               Create Password <span className="text-brand-red">*</span>
             </label>
@@ -263,14 +267,14 @@ export default function RegisterPage() {
                 setPassword(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full pr-10"
+              className="input w-full pr-10 bg-white"
               required
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-secondary hover:text-brand-black transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-secondary hover:text-brand-black transition-colors cursor-pointer"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -282,39 +286,45 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="flex items-start gap-2.5 text-xs pt-1">
-          <input
-            type="checkbox"
-            checked={agreeTerms}
-            onChange={(e) => setAgreeTerms(e.target.checked)}
-            className="mt-0.5 rounded border-brand-border text-brand-red focus:ring-brand-red w-4 h-4 shrink-0"
-            required
-            disabled={isLoading}
-          />
-          <span className="text-brand-text-secondary leading-relaxed select-none">
-            I agree to the Condominium Parcel Holding Policy and consent to SMS arrival notifications.
-          </span>
+        {/* Curved Box: Terms Agreement */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-3.5 sm:p-4">
+          <label className="flex items-start gap-2.5 text-xs cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-0.5 rounded border-brand-border text-brand-red focus:ring-brand-red w-4 h-4 shrink-0 cursor-pointer"
+              required
+              disabled={isLoading}
+            />
+            <span className="text-brand-text-secondary leading-relaxed select-none">
+              I agree to the Condominium Parcel Holding Policy and consent to SMS arrival notifications.
+            </span>
+          </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`btn btn-primary w-full py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
-            isLoading ? "opacity-80 cursor-not-allowed" : "hover:shadow-md"
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Creating your resident account...</span>
-            </>
-          ) : (
-            <span>CREATE ACCOUNT & GET RESIDENT CODE →</span>
-          )}
-        </button>
+        {/* Standard UI button width (centered & reduced from full width) */}
+        <div className="flex justify-center pt-2">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`btn btn-primary w-auto min-w-[260px] sm:min-w-[320px] max-w-sm px-8 py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
+              isLoading ? "opacity-80 cursor-not-allowed" : "hover:shadow-md"
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Creating your resident account...</span>
+              </>
+            ) : (
+              <span>CREATE ACCOUNT & GET RESIDENT CODE →</span>
+            )}
+          </button>
+        </div>
       </form>
 
       <div className="text-center text-xs text-brand-text-secondary pt-1">

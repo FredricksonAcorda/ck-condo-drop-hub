@@ -82,8 +82,9 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+          {/* Curved Box: Email/Phone */}
+          <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
               Registered Email or Mobile Number
             </label>
             <input
@@ -96,31 +97,34 @@ export default function ForgotPasswordPage() {
                 setEmailOrPhone(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              className="input w-full"
+              className="input w-full bg-white"
               required
               disabled={isLoading}
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`btn btn-primary w-full py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
-              isLoading ? "opacity-80 cursor-not-allowed" : "hover:shadow-md"
-            }`}
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Sending recovery link...</span>
-              </>
-            ) : (
-              <span>SEND RESET CODE →</span>
-            )}
-          </button>
+          {/* Standard UI button width (centered & reduced from full width) */}
+          <div className="flex justify-center pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`btn btn-primary w-auto min-w-[240px] sm:min-w-[280px] max-w-xs px-8 py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
+                isLoading ? "opacity-80 cursor-not-allowed" : "hover:shadow-md"
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Sending recovery link...</span>
+                </>
+              ) : (
+                <span>SEND RESET CODE →</span>
+              )}
+            </button>
+          </div>
         </form>
       )}
 

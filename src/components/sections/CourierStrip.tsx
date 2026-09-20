@@ -32,12 +32,16 @@ const courierLogos: LogoItem[] = [
   {
     node: (
       <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
-        <div className="flex items-center bg-[#FFE500] px-4 py-1.5 rounded-lg border border-[#F2C000]">
-          <span className="text-3xl sm:text-4xl font-black italic text-black tracking-tight select-none">
-            Flash
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic text-black select-none tracking-tight">
+          <span>FL</span>
+          <span className="inline-flex items-center justify-center -mx-0.5 text-[#FFD600] drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+            <svg className="w-8 h-8 fill-[#FFD600] stroke-black stroke-[1.5] -rotate-6" viewBox="0 0 24 24">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
           </span>
-          <span className="text-xs font-black uppercase text-black ml-1 border-l-2 border-black pl-1.5 leading-none select-none">
-            Express
+          <span>SH</span>
+          <span className="text-xl sm:text-2xl font-black italic tracking-normal text-[#E31837] ml-1.5">
+            EXPRESS
           </span>
         </div>
       </div>
@@ -81,7 +85,21 @@ const courierLogos: LogoItem[] = [
 
 export default function CourierStrip() {
   return (
-    <section className="bg-brand-surface py-7 sm:py-9 border-y border-brand-border/70 overflow-hidden select-none">
+    <section className="bg-brand-surface py-10 sm:py-12 border-y border-brand-border/70 overflow-hidden select-none w-full">
+      {/* Centered Heading and Description */}
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 mb-6 sm:mb-8 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] font-bold text-brand-text-secondary mb-1.5">
+          Fast &amp; Reliable Delivery Network
+        </p>
+        <h2 className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-text uppercase">
+          OUR PARTNER <span className="text-brand-red">COURIERS</span>
+        </h2>
+        <p className="text-xs sm:text-sm text-brand-text-secondary mt-2 max-w-xl mx-auto font-medium leading-relaxed">
+          Official parcel drop-off and pickup point for Shopee, Lazada, TikTok Shop, and all major courier services in the Philippines.
+        </p>
+      </div>
+
+      {/* Full-width continuous logo loop */}
       <div className="w-full relative overflow-hidden py-2">
         <LogoLoop
           logos={courierLogos}

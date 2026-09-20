@@ -142,8 +142,9 @@ function LoginForm() {
 
       {/* Login Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-1.5">
+        {/* Curved Box: Email/Phone */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+          <label className="block text-xs font-bold uppercase tracking-wider text-brand-text mb-2">
             {role === "resident" ? "Email or Mobile Number" : "Staff Email Address"}
           </label>
           <div className="relative">
@@ -162,7 +163,7 @@ function LoginForm() {
                   ? "0917 123 4567 or email@domain.com"
                   : "admin@ckcondohub.com"
               }
-              className="input w-full pr-10"
+              className="input w-full pr-10 bg-white"
               required
               disabled={isLoading}
             />
@@ -176,8 +177,9 @@ function LoginForm() {
           </div>
         </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
+        {/* Curved Box: Password */}
+        <div className="rounded-2xl border border-brand-border/90 bg-brand-surface/40 p-4 transition-all focus-within:border-brand-red/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-red/10 focus-within:shadow-xs">
+          <div className="flex justify-between items-center mb-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-brand-text">
               Password
             </label>
@@ -199,14 +201,14 @@ function LoginForm() {
                 if (errorMessage) setErrorMessage(null);
               }}
               placeholder="••••••••"
-              className="input w-full pr-10"
+              className="input w-full pr-10 bg-white"
               required
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-secondary hover:text-brand-black transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-secondary hover:text-brand-black transition-colors cursor-pointer"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -218,7 +220,7 @@ function LoginForm() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs pt-1">
+        <div className="flex items-center justify-between text-xs px-1">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -231,29 +233,32 @@ function LoginForm() {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`btn w-full py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
-            role === "resident"
-              ? "btn-primary hover:shadow-md"
-              : "bg-brand-black text-white hover:bg-neutral-800"
-          } ${isLoading ? "opacity-80 cursor-not-allowed" : ""}`}
-        >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Signing in...</span>
-            </>
-          ) : (
-            <span>
-              {role === "resident" ? "SIGN IN TO RESIDENT PORTAL →" : "SIGN IN AS ADMIN →"}
-            </span>
-          )}
-        </button>
+        {/* Standard UI button width (centered & reduced from full width) */}
+        <div className="flex justify-center pt-2">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`btn w-auto min-w-[240px] sm:min-w-[280px] max-w-xs px-8 py-3.5 font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
+              role === "resident"
+                ? "btn-primary hover:shadow-md"
+                : "bg-brand-black text-white hover:bg-neutral-800"
+            } ${isLoading ? "opacity-80 cursor-not-allowed" : ""}`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <span>
+                {role === "resident" ? "SIGN IN TO RESIDENT PORTAL →" : "SIGN IN AS ADMIN →"}
+              </span>
+            )}
+          </button>
+        </div>
       </form>
 
       {/* Demo helper badges */}
