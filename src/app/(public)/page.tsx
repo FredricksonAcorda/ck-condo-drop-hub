@@ -3,87 +3,218 @@ import Link from "next/link";
 import LogoLoop, { LogoItem } from "@/components/ui/LogoLoop";
 import FAQAccordion, { FAQItem } from "@/components/ui/FAQAccordion";
 
+const heroBenefits = [
+  {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+    ),
+    title: "Receive Parcels",
+    desc: "We accept parcels from your favorite couriers.",
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+    title: "Pick Up Anytime",
+    desc: "Pick up your parcels at your convenience.",
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 21h18" />
+        <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+        <circle cx="14" cy="12" r="1.25" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+    title: "Door-to-Door Delivery",
+    desc: "Enjoy door-to-door delivery with our premium plan.",
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+    ),
+    title: "Safe & Secure",
+    desc: "Your parcels are safe with us until you pick them up.",
+  },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Section 1: Hero                                                    */
 /* ------------------------------------------------------------------ */
 function HeroSection() {
   return (
     <section id="home" className="relative bg-white overflow-hidden scroll-mt-28">
-      {/* Red curved overlay (matching the client's distinctive red wave) */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        <svg className="absolute top-0 right-0 h-full w-[55%] hidden lg:block" viewBox="0 0 600 700" preserveAspectRatio="none">
-          <path d="M100,0 L600,0 L600,700 L100,700 Q0,350 100,0 Z" fill="#CC0000" opacity="0.06" />
+      {/* Real storefront photo filling the curved background with smooth white gradient */}
+      <div className="absolute top-0 right-0 h-full w-[54%] xl:w-[56%] hidden lg:block pointer-events-none select-none z-0">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 600 700"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <clipPath id="heroCurveMask">
+              <path d="M100,0 L600,0 L600,700 L100,700 Q0,350 100,0 Z" />
+            </clipPath>
+            <linearGradient id="heroWhiteFade" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+              <stop offset="25%" stopColor="#FFFFFF" stopOpacity="0.85" />
+              <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0.3" />
+              <stop offset="85%" stopColor="#FFFFFF" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="heroPinkTint" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#CC0000" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#CC0000" stopOpacity="0.03" />
+            </linearGradient>
+          </defs>
+
+          {/* Underlay pink curve border glow */}
+          <path d="M98,0 L600,0 L600,700 L98,700 Q-2,350 98,0 Z" fill="#CC0000" opacity="0.08" />
+
+          {/* Hub storefront image filling the full curved background */}
+          <g clipPath="url(#heroCurveMask)">
+            <image
+              href="/images/hub-exterior.png"
+              xlinkHref="/images/hub-exterior.png"
+              x="0"
+              y="0"
+              width="600"
+              height="700"
+              preserveAspectRatio="xMidYMid slice"
+            />
+            {/* Subtle brand tint */}
+            <rect x="0" y="0" width="600" height="700" fill="url(#heroPinkTint)" />
+            {/* White gradient on the left side of the image */}
+            <rect x="0" y="0" width="600" height="700" fill="url(#heroWhiteFade)" />
+          </g>
         </svg>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left: Copy */}
-          <div className="relative z-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-brand-text-secondary mb-3">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-20 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center min-h-[500px] lg:min-h-[560px]">
+          {/* Left: Copy (Cols 1-7) */}
+          <div className="lg:col-span-7">
+            <p className="text-xs uppercase tracking-[0.2em] text-brand-text-secondary mb-3 font-bold">
               Your Condo. Your Convenience. Our Priority.
             </p>
-            <h1 className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mb-6">
+            <h1 className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mb-6 font-black">
               YOUR TRUSTED<br />
               <span className="text-brand-red">PARCEL</span> HUB<br />
               <span className="text-3xl sm:text-4xl lg:text-5xl">INSIDE YOUR COMMUNITY</span>
             </h1>
-            <p className="text-brand-text-secondary text-base lg:text-lg leading-relaxed mb-6 max-w-lg">
+            <p className="text-brand-text-secondary text-base lg:text-lg leading-relaxed mb-6 max-w-lg font-medium">
               We make receiving and sending parcels easy, secure, and hassle-free for everyone in the condo.
             </p>
 
             {/* Trust badges */}
             <div className="flex flex-wrap gap-4 mb-8">
               {["Safe & Secure", "Fast & Convenient", "Affordable", "Community Focused"].map((badge) => (
-                <span key={badge} className="flex items-center gap-1.5 text-sm text-brand-text-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span key={badge} className="flex items-center gap-1.5 text-sm font-semibold text-brand-text-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-brand-red shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   {badge}
                 </span>
               ))}
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/register" className="btn btn-primary btn-lg">
+              <Link href="/register" className="btn btn-primary btn-lg shadow-md hover:shadow-brand-red/25 transition-all">
                 SIGN UP NOW →
               </Link>
-              <Link href="/#services" className="btn btn-outline btn-lg">
+              <Link href="/#services" className="btn btn-outline btn-lg transition-all">
                 LEARN MORE
               </Link>
             </div>
           </div>
 
-          {/* Right: Real hub storefront photo + benefit panel */}
-          <div className="relative">
-            <div className="rounded-2xl overflow-hidden shadow-lg border border-brand-border">
-              <Image
-                src="/images/hub-exterior.png"
-                alt="CK Condo Drop Hub physical storefront at C1 Buildersville Condominium"
-                width={700}
-                height={500}
-                className="w-full h-auto object-cover"
-                priority
-              />
-            </div>
+          {/* Right: Floating benefit panel over photo background (Cols 8-12) */}
+          <div className="hidden lg:flex lg:col-span-5 justify-end items-center">
+            <div className="w-full max-w-[320px] xl:max-w-[340px] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 border border-brand-border/80 p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-brand-border/60">
+                <Image
+                  src="/brand/logo.png"
+                  alt="CK Condo Drop Hub"
+                  width={110}
+                  height={32}
+                  className="h-6 w-auto object-contain select-none"
+                />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-red/10 text-brand-red">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse" />
+                  Official Hub
+                </span>
+              </div>
 
-            {/* Benefit panel (floating card on desktop) */}
-            <div className="mt-6 lg:absolute lg:-right-4 lg:top-4 lg:w-64 bg-white rounded-xl shadow-lg border border-brand-border p-5 space-y-4">
-              {[
-                { icon: "📦", title: "Receive Parcels", desc: "We accept parcels from your favorite couriers." },
-                { icon: "🕐", title: "Pick Up Anytime", desc: "Pick up your parcels at your convenience." },
-                { icon: "🚪", title: "Door-to-Door Delivery", desc: "Enjoy door-to-door delivery with our premium plan." },
-                { icon: "🔒", title: "Safe & Secure", desc: "Your parcels are safe with us until you pick them up." },
-              ].map((item) => (
-                <div key={item.title} className="flex items-start gap-3">
-                  <div className="w-9 h-9 bg-brand-red-bg rounded-full flex items-center justify-center shrink-0 text-sm">
+              {heroBenefits.map((item) => (
+                <div key={item.title} className="flex items-start gap-3.5 group">
+                  <div className="w-10 h-10 rounded-xl bg-brand-red/10 border border-brand-red/15 flex items-center justify-center shrink-0 text-brand-red transition-all duration-200 group-hover:bg-brand-red group-hover:text-white group-hover:scale-105 shadow-xs">
                     {item.icon}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-brand-text">{item.title}</h3>
-                    <p className="text-xs text-brand-text-secondary leading-relaxed">{item.desc}</p>
+                    <h4 className="text-sm font-bold text-brand-text leading-tight group-hover:text-brand-red transition-colors">
+                      {item.title}
+                    </h4>
+                    <p className="text-xs text-brand-text-secondary leading-snug mt-1 font-medium">
+                      {item.desc}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Mobile storefront photo + benefit panel */}
+        <div className="lg:hidden mt-10">
+          <div className="relative rounded-2xl overflow-hidden shadow-lg border border-brand-border">
+            <Image
+              src="/images/hub-exterior.png"
+              alt="CK Condo Drop Hub storefront at C1 Buildersville Condominium"
+              width={700}
+              height={460}
+              className="w-full h-auto object-cover"
+              priority
+            />
+            <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white/90 via-white/40 to-transparent pointer-events-none" />
+          </div>
+
+          <div className="mt-5 bg-white rounded-2xl shadow-lg border border-brand-border p-5 space-y-3.5">
+            <div className="flex items-center justify-between pb-3 border-b border-brand-border/60">
+              <Image
+                src="/brand/logo.png"
+                alt="CK Condo Drop Hub"
+                width={100}
+                height={28}
+                className="h-5 w-auto object-contain select-none"
+              />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-red/10 text-brand-red">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse" />
+                Official Hub
+              </span>
+            </div>
+            {heroBenefits.map((item) => (
+              <div key={item.title} className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-brand-red/10 border border-brand-red/15 flex items-center justify-center shrink-0 text-brand-red">
+                  {item.icon}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-brand-text leading-tight">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-brand-text-secondary leading-snug mt-0.5">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
