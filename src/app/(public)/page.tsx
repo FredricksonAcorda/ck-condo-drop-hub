@@ -386,7 +386,7 @@ function PricingSection() {
             {/* View Full Pricing CTA */}
             <Link
               href="/#pricing"
-              className="w-full py-3 bg-white text-brand-red font-bold text-xs uppercase tracking-wider rounded-lg text-center hover:bg-gray-100 transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-6"
+              className="w-full py-3 bg-white text-black font-extrabold text-xs uppercase tracking-wider rounded-lg text-center hover:bg-gray-100 hover:text-black transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-6"
             >
               VIEW FULL PRICING →
             </Link>
@@ -418,8 +418,8 @@ function PricingSection() {
               </div>
 
               {/* Tag */}
-              <div className="my-6">
-                <div className="bg-[#FFF0ED] text-brand-text font-bold text-xs uppercase tracking-wide py-2.5 px-3 rounded-lg mx-auto w-full">
+              <div className="my-6 py-1">
+                <div className="text-brand-text font-bold text-xs uppercase tracking-wider">
                   3 DAYS FREE HOLDING
                 </div>
               </div>
@@ -467,8 +467,8 @@ function PricingSection() {
               </div>
 
               {/* Tag */}
-              <div className="my-6">
-                <div className="bg-[#FFF0ED] text-brand-text font-bold text-xs uppercase tracking-wide py-2.5 px-3 rounded-lg mx-auto w-full">
+              <div className="my-6 py-1">
+                <div className="text-brand-text font-bold text-xs uppercase tracking-wider">
                   3 DAYS FREE HOLDING
                 </div>
               </div>
@@ -541,7 +541,7 @@ function PricingSection() {
             {/* CTA */}
             <Link
               href="/register"
-              className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-brand-red text-white hover:bg-brand-red-dark transition-colors shadow-sm block"
+              className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider border-2 border-brand-red text-brand-red bg-white hover:bg-brand-red hover:text-white transition-colors block"
             >
               SELECT PLAN
             </Link>
