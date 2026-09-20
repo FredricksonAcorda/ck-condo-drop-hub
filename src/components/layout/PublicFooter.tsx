@@ -17,6 +17,8 @@ export default function PublicFooter() {
                 alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
                 width={280}
                 height={79}
+                unoptimized
+                priority
                 className="h-12 sm:h-14 lg:h-16 w-auto max-h-[64px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
               />
             </Link>
