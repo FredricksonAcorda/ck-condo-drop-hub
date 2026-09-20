@@ -1,4 +1,3 @@
-import Link from "next/link";
 import FAQAccordion, { FAQItem } from "@/components/ui/FAQAccordion";
 
 const faqItems: FAQItem[] = [
@@ -91,16 +90,7 @@ export default function AnnouncementsSection() {
       title: "Promos & Updates",
       desc: (
         <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
-          Follow our{" "}
-          <Link
-            href="https://facebook.com/ckcondrohub"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-red font-black hover:underline"
-          >
-            official Facebook page
-          </Link>{" "}
-          for the latest resident discounts, raffle promos, and community schedules.
+          Stay tuned with our community bulletin for the latest resident discounts, raffle promos, and community schedules.
         </p>
       ),
     },
@@ -110,24 +100,13 @@ export default function AnnouncementsSection() {
     <section id="announcements" className="bg-white py-16 lg:py-24 scroll-mt-28 border-t border-brand-border/60">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
-          <div>
-            <span className="text-xs uppercase tracking-[0.2em] font-bold text-brand-text-secondary">
-              Community Board
-            </span>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide mt-1 uppercase">
-              ANNOUN<span className="text-brand-red">CEMENTS</span>
-            </h2>
-          </div>
-          <Link
-            href="https://facebook.com/ckcondrohub"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-red text-sm sm:text-base font-bold hover:underline inline-flex items-center gap-1 shrink-0"
-          >
-            <span>Follow our Facebook page</span>
-            <span>→</span>
-          </Link>
+        <div className="mb-8 sm:mb-12">
+          <span className="text-xs uppercase tracking-[0.2em] font-bold text-brand-text-secondary">
+            Community Board
+          </span>
+          <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide mt-1 uppercase">
+            ANNOUN<span className="text-brand-red">CEMENTS</span>
+          </h2>
         </div>
 
         {/* Announcements Cards */}

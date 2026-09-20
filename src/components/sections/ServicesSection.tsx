@@ -67,13 +67,16 @@ const services: ServiceItem[] = [
 export default function ServicesSection() {
   return (
     <section id="services" className="bg-white py-16 lg:py-24 scroll-mt-28">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 text-center">
-        <h2 className="font-[family-name:var(--font-heading)] text-4xl sm:text-5xl lg:text-6xl font-black tracking-wide mb-3 uppercase">
-          OUR <span className="text-brand-red">SERVICES</span>
-        </h2>
-        <p className="text-base sm:text-lg lg:text-xl text-brand-text-secondary mb-14 max-w-2xl mx-auto font-medium leading-relaxed">
-          More than just a parcel hub — we provide convenient everyday services for the condo community.
-        </p>
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
+        {/* Right-aligned Title and Description */}
+        <div className="flex flex-col items-end text-right mb-12 sm:mb-14">
+          <h2 className="font-[family-name:var(--font-heading)] text-4xl sm:text-5xl lg:text-6xl font-black tracking-wide mb-3 uppercase">
+            OUR <span className="text-brand-red">SERVICES</span>
+          </h2>
+          <p className="text-base sm:text-lg lg:text-xl text-brand-text-secondary max-w-2xl font-medium leading-relaxed">
+            More than just a parcel hub — we provide convenient everyday services for the condo community.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-7">
           {services.map((service) => (
