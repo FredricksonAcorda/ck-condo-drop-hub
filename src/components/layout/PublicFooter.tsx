@@ -15,9 +15,9 @@ export default function PublicFooter() {
   return (
     <footer id="contact" className="bg-brand-dark text-white scroll-mt-28">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-14 lg:py-18">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 xl:gap-12 items-start">
-          {/* Brand Column (Col 1-4) */}
-          <div className="lg:col-span-4 xl:col-span-4 pr-0 lg:pr-6 xl:pr-8">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row lg:justify-between items-start gap-10 sm:gap-8 lg:gap-8 xl:gap-12">
+          {/* Brand Column */}
+          <div className="sm:col-span-2 lg:col-span-auto w-full lg:max-w-xs xl:max-w-sm shrink-0">
             <Link href="/" className="inline-block mb-4 group select-none" aria-label="CK Condo Drop Hub Home">
               <Image
                 src="/brand/logo-white.png"
@@ -58,71 +58,68 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* Evenly Balanced 3 Columns: Quick Links, Contact Us, Subscribe to Updates */}
-          <div className="lg:col-span-8 xl:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-8 xl:gap-12 items-start">
-            {/* Quick Links Column */}
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
-                Quick Links
-              </h3>
-              <ul className="space-y-3">
-                {quickLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-gray-400 hover:text-white hover:translate-x-1 inline-block transition-all"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Quick Links Column */}
+          <div className="w-full sm:w-auto shrink-0">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
+              Quick Links
+            </h3>
+            <ul className="space-y-3">
+              {quickLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-400 hover:text-white hover:translate-x-1 inline-block transition-all"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            {/* Contact Us Column */}
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
-                Contact Us
-              </h3>
-              <ul className="space-y-3.5">
-                <li className="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                  <span className="text-sm text-gray-400 font-medium">0917 123 4567</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <span className="text-sm text-gray-400">ckcondrohub@gmail.com</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span className="text-sm text-gray-400 leading-relaxed">
-                    C1 Buildersville Condominium<br />
-                    Marindal Rincon, Valenzuela City
-                  </span>
-                </li>
-              </ul>
-            </div>
+          {/* Contact Us Column */}
+          <div className="w-full sm:w-auto shrink-0 max-w-xs">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
+              Contact Us
+            </h3>
+            <ul className="space-y-3.5">
+              <li className="flex items-start gap-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span className="text-sm text-gray-400 font-medium">0917 123 4567</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span className="text-sm text-gray-400">ckcondrohub@gmail.com</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 text-brand-red shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span className="text-sm text-gray-400 leading-relaxed">
+                  C1 Buildersville Condominium<br />
+                  Marindal Rincon, Valenzuela City
+                </span>
+              </li>
+            </ul>
+          </div>
 
-            {/* Subscribe Column */}
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
-                Subscribe to Updates
-              </h3>
-              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
-                Get the latest promos, holiday schedules, and community announcements.
-              </p>
-              <form className="flex flex-col gap-2.5" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-red min-w-0 transition-colors"
-                  aria-label="Email for newsletter"
-                />
-                <button type="submit" className="w-full btn btn-primary py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider">
-                  SUBSCRIBE
-                </button>
-              </form>
-            </div>
+          {/* Subscribe Column */}
+          <div className="sm:col-span-2 lg:col-span-auto w-full sm:w-auto lg:w-64 xl:w-72 shrink-0">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-4 lg:mb-5">
+              Subscribe to Updates
+            </h3>
+            <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+              Get the latest promos, holiday schedules, and community announcements.
+            </p>
+            <form className="flex flex-col gap-2.5" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-red min-w-0 transition-colors"
+                aria-label="Email for newsletter"
+              />
+              <button type="submit" className="w-full btn btn-primary py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider">
+                SUBSCRIBE
+              </button>
+            </form>
           </div>
         </div>
       </div>

@@ -819,37 +819,60 @@ const faqItems: FAQItem[] = [
 function AnnouncementsSection() {
   const announcements = [
     {
-      icon: "🕐",
       title: "Store Hours",
       desc: (
         <>
-          <span className="font-bold text-brand-text block text-base sm:text-lg">Monday – Sunday</span>
-          <span className="text-xl sm:text-2xl font-black text-brand-red block my-1">8:00 AM – 9:00 PM</span>
-          <span className="text-sm sm:text-base text-brand-text-secondary block mt-1">
+          <span className="font-extrabold text-brand-text block text-lg sm:text-xl mb-1.5">
+            Monday – Sunday
+          </span>
+          <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-brand-red block my-2 tracking-tight">
+            8:00 AM – 9:00 PM
+          </span>
+          <span className="text-base sm:text-lg text-brand-text font-bold block mt-2.5 leading-relaxed">
             Open daily including weekends and holidays for easy parcel pickup.
           </span>
         </>
       ),
     },
     {
-      icon: "⚠️",
       title: "Important Notice",
       desc: (
         <>
-          <span className="text-sm sm:text-base text-brand-text-secondary leading-relaxed block">
-            Please claim your parcels within the <strong className="font-bold text-brand-text">3 to 7-day free holding period</strong> to prevent extra storage charges.
-          </span>
+          <p className="text-lg sm:text-xl text-brand-text font-bold leading-relaxed">
+            Please claim your parcels within the{" "}
+            <span className="text-brand-red font-black underline decoration-2 underline-offset-4">
+              3 to 7-day free holding period
+            </span>{" "}
+            to prevent extra storage charges.
+          </p>
+          <p className="text-base sm:text-lg text-brand-text font-semibold mt-3 leading-relaxed">
+            Prompt pickup keeps our hub organized and prevents penalty fees.
+          </p>
         </>
       ),
     },
     {
-      icon: "📣",
       title: "Promos & Updates",
       desc: (
         <>
-          <span className="text-sm sm:text-base text-brand-text-secondary leading-relaxed block">
-            Follow our <strong className="font-bold text-brand-text">official Facebook page</strong> for the latest resident discounts, raffle promos, and community schedules.
-          </span>
+          <p className="text-lg sm:text-xl text-brand-text font-bold leading-relaxed">
+            Follow our{" "}
+            <span className="text-brand-red font-black">
+              official Facebook page
+            </span>{" "}
+            for the latest resident discounts, raffle promos, and community schedules.
+          </p>
+          <div className="mt-4">
+            <Link
+              href="https://facebook.com/ckcondrohub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-brand-red font-black text-base sm:text-lg hover:underline"
+            >
+              <span>Visit facebook.com/ckcondrohub</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </>
       ),
     },
@@ -884,17 +907,14 @@ function AnnouncementsSection() {
           {announcements.map((item) => (
             <div
               key={item.title}
-              className="border-2 border-brand-border rounded-2xl p-7 sm:p-8 hover:shadow-xl hover:border-brand-red/40 hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-start"
+              className="border-2 border-brand-border rounded-2xl p-8 sm:p-9 hover:shadow-xl hover:border-brand-red/50 hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-between"
             >
-              <div className="flex items-start gap-4 sm:gap-5 mb-3">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-red-bg rounded-2xl flex items-center justify-center shrink-0 text-2xl sm:text-3xl shadow-xs">
-                  {item.icon}
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl sm:text-2xl text-brand-text mb-1 leading-snug">{item.title}</h3>
-                </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-heading)] font-black text-2xl sm:text-3xl text-brand-text mb-4 uppercase tracking-wide">
+                  {item.title}
+                </h3>
+                <div className="text-brand-text leading-relaxed">{item.desc}</div>
               </div>
-              <div className="mt-2 text-brand-text leading-relaxed">{item.desc}</div>
             </div>
           ))}
         </div>
