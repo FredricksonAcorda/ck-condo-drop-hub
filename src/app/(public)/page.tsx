@@ -844,26 +844,18 @@ function AnnouncementsSection() {
     {
       title: "Promos & Updates",
       desc: (
-        <>
-          <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
-            Follow our{" "}
-            <span className="text-brand-red font-black">
-              official Facebook page
-            </span>{" "}
-            for the latest resident discounts, raffle promos, and community schedules.
-          </p>
-          <div className="mt-4 pt-1">
-            <Link
-              href="https://facebook.com/ckcondrohub"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-brand-red font-black text-sm sm:text-base lg:text-lg hover:underline max-w-full group"
-            >
-              <span className="break-all sm:break-normal">Visit facebook.com/ckcondrohub</span>
-              <span aria-hidden="true" className="group-hover:translate-x-0.5 transition-transform shrink-0">→</span>
-            </Link>
-          </div>
-        </>
+        <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
+          Follow our{" "}
+          <Link
+            href="https://facebook.com/ckcondrohub"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-red font-black hover:underline"
+          >
+            official Facebook page
+          </Link>{" "}
+          for the latest resident discounts, raffle promos, and community schedules.
+        </p>
       ),
     },
   ];
