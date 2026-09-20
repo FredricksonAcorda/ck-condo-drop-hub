@@ -1,0 +1,51 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+
+# production
+build/
+dist/
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel / netlify
+.vercel
+.netlify
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# testing
+/coverage
+/playwright-report/
+/test-results/
+tmp/
+output/
+src-app/
+
+# IDE
+.vscode/
+.idea/
+
+# process artifacts (generated, not source)
+tmp/pdfs/*.png
+tmp/pdfs/qa.json
+output/pdf/
