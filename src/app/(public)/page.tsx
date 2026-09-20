@@ -382,17 +382,6 @@ function PricingSection() {
                 ))}
               </ul>
             </div>
-
-            {/* View Full Pricing CTA */}
-            <Link
-              href="/#pricing"
-              style={{ color: "#000000", borderColor: "#000000" }}
-              className="w-full py-3 bg-white !text-black !border-black border-2 border-black font-extrabold text-xs uppercase tracking-wider rounded-lg text-center hover:bg-gray-100 transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-6"
-            >
-              <span style={{ color: "#000000" }} className="!text-black font-black">
-                VIEW FULL PRICING →
-              </span>
-            </Link>
           </div>
 
           {/* Card 2: Per Parcel */}
