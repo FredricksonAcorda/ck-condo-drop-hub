@@ -2,19 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-
-interface Parcel {
-  id: string;
-  trackingNumber: string;
-  courier: string;
-  courierColor: string;
-  dateArrived: string;
-  deadline: string;
-  holdingFee: string;
-  status: "READY" | "OVERDUE" | "PICKED_UP";
-  shelf: string;
-  claimCode: string;
-}
+import { Parcel } from "@/types";
 
 const readyParcels: Parcel[] = [
   {

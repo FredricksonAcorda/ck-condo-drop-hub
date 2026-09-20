@@ -1,54 +1,62 @@
-# dependencies
+# Dependencies
 node_modules/
 .pnp
 .pnp.js
 
-# next.js
+# Next.js build and cache
 .next/
 out/
-
-# production
 build/
 dist/
 
-# misc
+# Environment variables & secrets (CRITICAL: Never commit to Git)
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Operating System files
 .DS_Store
 *.pem
 Thumbs.db
+desktop.ini
 
-# debug
+# Debug and runtime logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+*.log
 
-# local env files
-.env*.local
-.env
-
-# vercel / netlify
+# Hosting & deployment platforms
 .vercel
 .netlify
 
-# typescript
+# TypeScript build info
 *.tsbuildinfo
 next-env.d.ts
 
-# testing
+# Testing & coverage artifacts
 /coverage
 /playwright-report/
 /test-results/
+
+# Temporary and scratch working directories
 tmp/
 output/
 src-app/
+scratch/
+browser/
 
-# IDE
+# Transient generated screenshot files
+file_*.png
+IMG_*.png
+IMG_*.webp
+
+# IDEs and editors
 .vscode/
 .idea/
-
-# process artifacts (generated, not source)
-tmp/pdfs/*.png
-tmp/pdfs/qa.json
-output/pdf/
-scratch/
-IMG_20260824_133458_807.png
-
+*.sublime-project
+*.sublime-workspace

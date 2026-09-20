@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-
-interface RecentParcel {
-  id: string;
-  tracking: string;
-  recipient: string;
-  unit: string;
-  courier: string;
-  time: string;
-  status: "READY" | "PICKED_UP" | "OVERDUE";
-  shelf: string;
-}
+import { RecentParcel } from "@/types";
 
 export default function AdminDashboardPage() {
   // Receive workflow state

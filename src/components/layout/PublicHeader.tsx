@@ -2,21 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import PillNav, { PillNavItem } from "@/components/ui/PillNav";
-
-// Navigation sections (Home is represented by the spinning brand logo emblem)
-const navItems: PillNavItem[] = [
-  { label: "Services", href: "/#services" },
-  { label: "Pricing & Plans", href: "/#pricing" },
-  { label: "About Us", href: "/#about" },
-  { label: "Contact Us", href: "/#contact" },
-];
-
-// Auth actions using the exact same UI button navigation
-const authItems: PillNavItem[] = [
-  { label: "LOG IN", href: "/login" },
-  { label: "SIGN UP", href: "/register", variant: "primary" },
-];
+import PillNav from "@/components/ui/PillNav";
+import { PUBLIC_NAV_ITEMS, AUTH_NAV_ITEMS } from "@/constants";
 
 export default function PublicHeader() {
   const pathname = usePathname();
@@ -72,8 +59,8 @@ export default function PublicHeader() {
           logo="/brand/logo-mark.webp"
           logoAlt="CK Condo Drop Hub Home"
           logoHref="/#home"
-          items={navItems}
-          authItems={authItems}
+          items={PUBLIC_NAV_ITEMS}
+          authItems={AUTH_NAV_ITEMS}
           activeHref={activeHref}
           ease="power2.easeOut"
           baseColor="#CC0000"
