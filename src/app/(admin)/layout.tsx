@@ -31,9 +31,9 @@ export default function AdminLayout({
           <Link href="/admin" className="block">
             <Image
               src="/brand/logo-white.webp"
-              alt="CK Condo Drop Hub"
+              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
               width={240}
-              height={63}
+              height={68}
               className="h-10 w-auto max-h-[40px] object-contain mb-2 select-none"
               priority
             />
@@ -121,7 +121,7 @@ export default function AdminLayout({
             src="/brand/logo-white.webp"
             alt="CK Condo Drop Hub"
             width={160}
-            height={42}
+            height={45}
             className="h-7 w-auto max-h-[28px] object-contain select-none"
             priority
           />
@@ -144,7 +144,7 @@ export default function AdminLayout({
                   src="/brand/logo-white.webp"
                   alt="CK Condo Drop Hub"
                   width={160}
-                  height={42}
+                  height={45}
                   className="h-8 w-auto max-h-[32px] object-contain select-none"
                 />
                 <button onClick={() => setDrawerOpen(false)} className="text-white/60 p-1">
