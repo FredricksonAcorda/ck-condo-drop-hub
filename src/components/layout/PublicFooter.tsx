@@ -22,7 +22,7 @@ export default function PublicFooter() {
           <div>
             <Link href="/" className="inline-block mb-4 group select-none" aria-label="CK Condo Drop Hub Home">
               <Image
-                src="/brand/logo-white.webp"
+                src="/brand/logo-white.png"
                 alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
                 width={280}
                 height={79}

@@ -88,11 +88,11 @@ export default function PublicHeader() {
             aria-label="CK Condo Drop Hub Home"
           >
             <Image
-              src="/brand/logo.webp"
-              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={320}
-              height={90}
-              className="h-14 sm:h-16 lg:h-[72px] w-auto max-h-[72px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
+              src="/brand/logo-mark-white.webp"
+              alt="CK Condo Drop Hub"
+              width={64}
+              height={64}
+              className="h-12 sm:h-14 lg:h-16 w-auto max-h-[64px] object-contain select-none transition-transform duration-200 group-hover:scale-105"
               priority
             />
           </Link>
