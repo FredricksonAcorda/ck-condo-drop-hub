@@ -316,28 +316,28 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="bg-white py-16 lg:py-20 scroll-mt-28">
+    <section id="how-it-works" className="bg-white py-16 lg:py-24 scroll-mt-28">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-12">
           {/* Left: Heading & CTA */}
           <div className="lg:w-1/4 text-center lg:text-left shrink-0">
-            <h2 className="font-[family-name:var(--font-heading)] text-4xl sm:text-5xl lg:text-6xl leading-[0.95] mb-3">
+            <h2 className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl lg:text-7xl leading-[0.95] mb-4 font-black">
               HOW IT<br />
               <span className="text-brand-red">WORKS</span>
             </h2>
-            <p className="text-brand-text-secondary text-sm sm:text-base mb-6 leading-relaxed">
+            <p className="text-brand-text-secondary text-base sm:text-lg mb-6 leading-relaxed font-medium">
               Get your parcels in 4 easy steps.
             </p>
             <Link
               href="/register"
-              className="btn btn-primary btn-md px-6 shadow-sm inline-flex items-center gap-2"
+              className="btn btn-primary btn-lg px-7 shadow-md inline-flex items-center gap-2 font-bold"
             >
               GET STARTED →
             </Link>
           </div>
 
           {/* Right: 4 Steps Horizontal Chain */}
-          <div className="lg:w-3/4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          <div className="lg:w-3/4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 relative">
             {steps.map((step, i) => (
               <div key={step.num} className="relative flex flex-col items-center text-center group">
                 {/* Connector Arrow */}
@@ -352,11 +352,11 @@ function HowItWorksSection() {
                   {step.num}
                 </div>
 
-                {/* Title & Description */}
-                <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-brand-text mb-2">
+                {/* Title & Description (+2 sizes) */}
+                <h3 className="font-[family-name:var(--font-heading)] font-black text-lg sm:text-xl uppercase tracking-wide text-brand-text mb-2.5">
                   {step.title}
                 </h3>
-                <p className="text-xs text-brand-text-secondary leading-relaxed max-w-[190px]">
+                <p className="text-sm sm:text-base text-brand-text-secondary leading-relaxed max-w-[230px] font-medium">
                   {step.desc}
                 </p>
               </div>
