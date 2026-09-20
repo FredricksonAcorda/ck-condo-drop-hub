@@ -1,4 +1,4 @@
-import { Parcel, ResidentProfile, AuthUser } from "@/types";
+import { Parcel, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
 
 export const SEED_USERS: AuthUser[] = [
   {
@@ -192,3 +192,102 @@ export const SEED_PARCELS: Parcel[] = [
     claimedBy: "Juan Dela Cruz (Self)",
   },
 ];
+
+export const SEED_ACTIVITY_LOGS: ActivityLogItem[] = [
+  {
+    id: "act-1",
+    type: "PARCEL_INGESTED",
+    title: "Parcel Received: SPX-PH-2026-8921",
+    description: "Ingested from SPX Express for Juan Dela Cruz (Unit 101). Stored at Shelf A-04.",
+    timestamp: "Sept 18, 2026 • 10:45 AM",
+    actor: "Station 1 Front Desk Staff",
+    trackingNumber: "SPX-PH-2026-8921",
+    badgeColor: "bg-orange-500",
+  },
+  {
+    id: "act-2",
+    type: "SMS_DISPATCHED",
+    title: "SMS Alert Dispatched to Unit 101",
+    description: "Sent arrival notification with claim code CK-8921 to 0917 123 4567.",
+    timestamp: "Sept 18, 2026 • 10:46 AM",
+    actor: "Automated Gateway",
+    trackingNumber: "SPX-PH-2026-8921",
+    badgeColor: "bg-blue-500",
+  },
+  {
+    id: "act-3",
+    type: "PARCEL_INGESTED",
+    title: "Parcel Received: JT-PH-9920148",
+    description: "Ingested from J&T Express for Juan Dela Cruz (Unit 101). Stored at Shelf B-12.",
+    timestamp: "Sept 19, 2026 • 02:15 PM",
+    actor: "Station 1 Front Desk Staff",
+    trackingNumber: "JT-PH-9920148",
+    badgeColor: "bg-red-500",
+  },
+  {
+    id: "act-4",
+    type: "PARCEL_INGESTED",
+    title: "Parcel Received: LBC-2026-33901",
+    description: "Ingested from LBC Express for Maria Santos (Unit 304). Stored at Shelf B-02.",
+    timestamp: "Sept 20, 2026 • 09:15 AM",
+    actor: "Station 1 Front Desk Staff",
+    trackingNumber: "LBC-2026-33901",
+    badgeColor: "bg-rose-500",
+  },
+  {
+    id: "act-5",
+    type: "PARCEL_RELEASED",
+    title: "Parcel Released: SPX-PH-2026-7734",
+    description: "Verified passcode CK-7734 and handed package to Juan Dela Cruz (Self).",
+    timestamp: "Sept 15, 2026 • 05:20 PM",
+    actor: "Station 1 Front Desk Staff",
+    trackingNumber: "SPX-PH-2026-7734",
+    badgeColor: "bg-green-600",
+  },
+];
+
+export const SEED_SMS_LOGS: SmsLogItem[] = [
+  {
+    id: "sms-1",
+    recipientPhone: "0917 123 4567",
+    recipientName: "Juan Dela Cruz",
+    messageText: "CK Condo Drop Hub: Package SPX-PH-2026-8921 from SPX Express has arrived at Shelf A-04. Your claim passcode is CK-8921. Free holding until Sept 21, 2026.",
+    status: "DELIVERED",
+    timestamp: "Sept 18, 2026 • 10:46 AM",
+    trackingNumber: "SPX-PH-2026-8921",
+    costEstimate: "₱0.40",
+  },
+  {
+    id: "sms-2",
+    recipientPhone: "0917 123 4567",
+    recipientName: "Juan Dela Cruz",
+    messageText: "CK Condo Drop Hub: Package JT-PH-9920148 from J&T Express has arrived at Shelf B-12. Your claim passcode is CK-0148. Free holding until Sept 22, 2026.",
+    status: "DELIVERED",
+    timestamp: "Sept 19, 2026 • 02:16 PM",
+    trackingNumber: "JT-PH-9920148",
+    costEstimate: "₱0.40",
+  },
+  {
+    id: "sms-3",
+    recipientPhone: "0918 234 5678",
+    recipientName: "Maria Santos",
+    messageText: "CK Condo Drop Hub: Package LBC-2026-33901 from LBC Express has arrived at Shelf B-02. Your claim passcode is CK-3901. Free holding until Sept 23, 2026.",
+    status: "DELIVERED",
+    timestamp: "Sept 20, 2026 • 09:16 AM",
+    trackingNumber: "LBC-2026-33901",
+    costEstimate: "₱0.40",
+  },
+];
+
+export const DEFAULT_HUB_SETTINGS: HubSettings = {
+  hubName: "CK Condo Drop Hub",
+  buildingName: "CK Buildersville Condominium",
+  stationName: "Station 1 Front Desk",
+  freeDaysRegular: 3,
+  freeDaysPremium: 7,
+  overdueFeePerDay: 10,
+  smsSenderId: "CKCONDO",
+  autoPrintIntakeLabel: true,
+  soundEnabled: true,
+  maxShelfSlots: 60,
+};

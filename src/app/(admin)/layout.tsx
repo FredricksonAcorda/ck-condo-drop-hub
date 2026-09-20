@@ -8,8 +8,11 @@ import { useAuth } from "@/context";
 
 const adminNav = [
   { label: "DASHBOARD", href: "/admin", icon: "📊" },
-  { label: "SCAN / RECEIVE", href: "/admin/scanner", icon: "📷" },
+  { label: "SCANNER STATION", href: "/admin/scanner", icon: "📷" },
+  { label: "HUB INVENTORY", href: "/admin/parcels", icon: "📦" },
   { label: "CUSTOMERS & UNITS", href: "/admin/customers", icon: "👥" },
+  { label: "ACTIVITY & SMS LOGS", href: "/admin/reports", icon: "📜" },
+  { label: "HUB SETTINGS", href: "/admin/settings", icon: "⚙️" },
   { label: "TRACKING LOOKUP", href: "/track", icon: "🔍" },
 ];
 

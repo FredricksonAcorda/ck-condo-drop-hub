@@ -6,10 +6,11 @@ import { useState, useEffect, Suspense } from "react";
 import { useParcels } from "@/context";
 import { db } from "@/lib/db/local-store";
 import { ResidentProfile, Parcel } from "@/types";
+import { printThermalShelfLabel, printClaimReleaseSlip } from "@/lib/print/label-generator";
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
-  const { parcels, logParcel, verifyClaimCode, releaseParcel, getParcelByTracking } = useParcels();
+  const { parcels, logParcel, verifyClaimCode, releaseParcel, getParcelByTracking, hubSettings } = useParcels();
 
   // Residents list for intake recipient selector
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
@@ -26,6 +27,7 @@ function AdminDashboardContent() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiveSuccess, setReceiveSuccess] = useState<string | null>(null);
+  const [lastCreatedParcel, setLastCreatedParcel] = useState<Parcel | null>(null);
   const [receiveError, setReceiveError] = useState<string | null>(null);
 
   // Pickup workflow state
@@ -34,6 +36,7 @@ function AdminDashboardContent() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [isReleasing, setIsReleasing] = useState(false);
   const [pickupSuccess, setPickupSuccess] = useState<string | null>(null);
+  const [lastReleasedParcel, setLastReleasedParcel] = useState<Parcel | null>(null);
 
   // Fetch residents on mount
   useEffect(() => {
@@ -91,9 +94,17 @@ function AdminDashboardContent() {
         notes: notes.trim() || undefined,
       });
 
+      setLastCreatedParcel(newParcel);
       setReceiveSuccess(
         `Parcel ${newParcel.trackingNumber} successfully logged to ${newParcel.shelf}! Passcode [${newParcel.claimCode}] generated & SMS notification dispatched to ${resident.name}.`
       );
+      if (hubSettings.autoPrintIntakeLabel) {
+        printThermalShelfLabel({
+          parcel: newParcel,
+          hubName: hubSettings.hubName,
+          station: hubSettings.stationName,
+        });
+      }
       setTrackingInput("");
       setNotes("");
     } catch (err: unknown) {
@@ -137,6 +148,7 @@ function AdminDashboardContent() {
     setIsReleasing(true);
     try {
       const released = await releaseParcel(verifiedParcel.id, verifiedParcel.residentName);
+      setLastReleasedParcel(released);
       setPickupSuccess(`Parcel ${released.trackingNumber} successfully released to ${released.residentName}!`);
       setVerifiedParcel(null);
       setPickupCodeInput("");
@@ -160,9 +172,18 @@ function AdminDashboardContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/parcels" className="btn btn-outline btn-sm">
+            📦 Inventory ({parcels.length})
+          </Link>
           <Link href="/admin/scanner" className="btn btn-outline btn-sm">
-            📷 Open Scanner Window
+            📷 Scanner Terminal
+          </Link>
+          <Link href="/admin/reports" className="btn btn-outline btn-sm">
+            📜 SMS Logs
+          </Link>
+          <Link href="/admin/settings" className="btn btn-outline btn-sm">
+            ⚙️ Hub Settings
           </Link>
           <button
             onClick={() => {
@@ -244,9 +265,26 @@ function AdminDashboardContent() {
 
       {/* Notifications / Feedback */}
       {receiveSuccess && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in">
           <span className="font-medium">✅ {receiveSuccess}</span>
-          <button onClick={() => setReceiveSuccess(null)} className="text-green-600 font-bold ml-3">✕</button>
+          <div className="flex items-center gap-2">
+            {lastCreatedParcel && (
+              <button
+                type="button"
+                onClick={() =>
+                  printThermalShelfLabel({
+                    parcel: lastCreatedParcel,
+                    hubName: hubSettings.hubName,
+                    station: hubSettings.stationName,
+                  })
+                }
+                className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold"
+              >
+                🏷️ Print Shelf Label
+              </button>
+            )}
+            <button onClick={() => setReceiveSuccess(null)} className="text-green-600 font-bold ml-2">✕</button>
+          </div>
         </div>
       )}
 
@@ -258,9 +296,26 @@ function AdminDashboardContent() {
       )}
 
       {pickupSuccess && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in">
           <span className="font-medium">🎉 {pickupSuccess}</span>
-          <button onClick={() => setPickupSuccess(null)} className="text-blue-600 font-bold ml-3">✕</button>
+          <div className="flex items-center gap-2">
+            {lastReleasedParcel && (
+              <button
+                type="button"
+                onClick={() =>
+                  printClaimReleaseSlip({
+                    parcel: lastReleasedParcel,
+                    releasedByStaff: hubSettings.stationName,
+                    hubName: hubSettings.hubName,
+                  })
+                }
+                className="btn btn-sm bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold"
+              >
+                🧾 Print Release Slip
+              </button>
+            )}
+            <button onClick={() => setPickupSuccess(null)} className="text-blue-600 font-bold ml-2">✕</button>
+          </div>
         </div>
       )}
 

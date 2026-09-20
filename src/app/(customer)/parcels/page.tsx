@@ -490,12 +490,22 @@ export default function MyParcelsPage() {
               Shelf Location: <strong>{selectedClaimParcel.shelf}</strong>
             </div>
 
-            <button
-              onClick={() => setSelectedClaimParcel(null)}
-              className="btn btn-outline btn-sm w-full font-bold uppercase"
-            >
-              CLOSE
-            </button>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn btn-outline btn-sm flex-1 font-bold uppercase text-xs"
+              >
+                🖨️ PRINT PASS
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedClaimParcel(null)}
+                className="btn btn-primary btn-sm flex-1 font-bold uppercase text-xs"
+              >
+                CLOSE
+              </button>
+            </div>
           </div>
         </div>
       )}

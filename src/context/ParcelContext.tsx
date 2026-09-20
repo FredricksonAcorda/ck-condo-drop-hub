@@ -1,18 +1,27 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { Parcel, CreateParcelInput } from "@/types";
+import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
 import { db } from "@/lib/db/local-store";
+import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
+import { scannerAudio } from "@/lib/scanner/audio-feedback";
 
 interface ParcelContextType {
   parcels: Parcel[];
+  activityLogs: ActivityLogItem[];
+  smsLogs: SmsLogItem[];
+  hubSettings: HubSettings;
   loading: boolean;
   error: string | null;
   logParcel: (input: CreateParcelInput) => Promise<Parcel>;
   releaseParcel: (parcelId: string, claimedBy: string) => Promise<Parcel>;
+  updateParcel: (parcelId: string, updates: Partial<Parcel>) => Promise<Parcel>;
+  deleteParcel: (parcelId: string) => Promise<boolean>;
   verifyClaimCode: (code: string) => Promise<Parcel | null>;
   getParcelByTracking: (tracking: string) => Promise<Parcel | null>;
   getResidentParcels: (residentId: string) => Parcel[];
+  sendTestSms: (phone: string, name: string, message: string) => Promise<SmsLogItem>;
+  updateHubSettings: (settings: Partial<HubSettings>) => Promise<HubSettings>;
   refresh: () => Promise<void>;
 }
 
@@ -20,17 +29,29 @@ const ParcelContext = createContext<ParcelContextType | undefined>(undefined);
 
 export function ParcelProvider({ children }: { children: React.ReactNode }) {
   const [parcels, setParcels] = useState<Parcel[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
+  const [smsLogs, setSmsLogs] = useState<SmsLogItem[]>([]);
+  const [hubSettings, setHubSettings] = useState<HubSettings>({ ...DEFAULT_HUB_SETTINGS });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
-      const all = await db.getAllParcels();
-      setParcels(all);
+      const [allParcels, logs, sms, settings] = await Promise.all([
+        db.getAllParcels(),
+        db.getActivityLogs(),
+        db.getSmsLogs(),
+        db.getHubSettings(),
+      ]);
+      setParcels(allParcels);
+      setActivityLogs(logs);
+      setSmsLogs(sms);
+      setHubSettings(settings);
+      scannerAudio.setSoundEnabled(settings.soundEnabled);
       setError(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load parcels");
+      setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -39,11 +60,8 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refresh();
 
-    const handleDbUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent<{ key?: string }>;
-      if (!customEvent.detail?.key || customEvent.detail.key === "ck_hub_parcels_v1") {
-        refresh();
-      }
+    const handleDbUpdate = () => {
+      refresh();
     };
 
     window.addEventListener("ck_db_updated", handleDbUpdate);
@@ -67,6 +85,18 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     return updated;
   };
 
+  const updateParcel = async (parcelId: string, updates: Partial<Parcel>): Promise<Parcel> => {
+    const updated = await db.updateParcel(parcelId, updates);
+    await refresh();
+    return updated;
+  };
+
+  const deleteParcel = async (parcelId: string): Promise<boolean> => {
+    const result = await db.deleteParcel(parcelId);
+    await refresh();
+    return result;
+  };
+
   const verifyClaimCode = async (code: string): Promise<Parcel | null> => {
     return db.verifyClaimCode(code);
   };
@@ -79,15 +109,36 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     return parcels.filter((p) => p.residentId === residentId);
   };
 
+  const sendTestSms = async (phone: string, name: string, message: string): Promise<SmsLogItem> => {
+    const item = await db.sendTestSms(phone, name, message);
+    await refresh();
+    return item;
+  };
+
+  const updateHubSettings = async (settingsUpdates: Partial<HubSettings>): Promise<HubSettings> => {
+    const updated = await db.updateHubSettings(settingsUpdates);
+    setHubSettings(updated);
+    scannerAudio.setSoundEnabled(updated.soundEnabled);
+    await refresh();
+    return updated;
+  };
+
   const value: ParcelContextType = {
     parcels,
+    activityLogs,
+    smsLogs,
+    hubSettings,
     loading,
     error,
     logParcel,
     releaseParcel,
+    updateParcel,
+    deleteParcel,
     verifyClaimCode,
     getParcelByTracking,
     getResidentParcels,
+    sendTestSms,
+    updateHubSettings,
     refresh,
   };
 

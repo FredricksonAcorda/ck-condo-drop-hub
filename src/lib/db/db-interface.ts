@@ -1,4 +1,4 @@
-import { Parcel, CreateParcelInput, ResidentProfile, AuthUser } from "@/types";
+import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
 
 export interface IDatabaseService {
   // Parcels
@@ -8,6 +8,8 @@ export interface IDatabaseService {
   createParcel(input: CreateParcelInput): Promise<Parcel>;
   verifyClaimCode(claimCode: string): Promise<Parcel | null>;
   releaseParcel(parcelId: string, claimedBy: string): Promise<Parcel>;
+  updateParcel(parcelId: string, updates: Partial<Parcel>): Promise<Parcel>;
+  deleteParcel(parcelId: string): Promise<boolean>;
 
   // Residents & Profiles
   getAllResidents(): Promise<ResidentProfile[]>;
@@ -18,4 +20,13 @@ export interface IDatabaseService {
 
   // Auth Users
   findUserByCredentials(emailOrPhone: string): Promise<AuthUser | null>;
+
+  // Activity & SMS Logs
+  getActivityLogs(): Promise<ActivityLogItem[]>;
+  getSmsLogs(): Promise<SmsLogItem[]>;
+  sendTestSms(recipientPhone: string, recipientName: string, message: string): Promise<SmsLogItem>;
+
+  // Hub Settings
+  getHubSettings(): Promise<HubSettings>;
+  updateHubSettings(settings: Partial<HubSettings>): Promise<HubSettings>;
 }
