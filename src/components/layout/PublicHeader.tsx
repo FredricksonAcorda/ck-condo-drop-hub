@@ -9,6 +9,7 @@ const navLinks = [
   { label: "About Us", href: "/#about" },
   { label: "Services", href: "/#services" },
   { label: "Pricing & Plans", href: "/#pricing" },
+  { label: "Track Parcel", href: "/track" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Contact Us", href: "/#contact" },
 ];
