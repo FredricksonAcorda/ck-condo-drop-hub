@@ -21,15 +21,13 @@ export default function PublicFooter() {
           {/* Brand */}
           <div>
             <Link href="/" className="inline-block mb-4 group select-none" aria-label="CK Condo Drop Hub Home">
-              <div className="bg-white rounded-md p-2 sm:p-2.5 inline-block shadow-sm">
-                <Image
-                  src="/brand/logo.webp"
-                  alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-                  width={260}
-                  height={81}
-                  className="h-12 sm:h-14 w-auto object-contain select-none"
-                />
-              </div>
+              <Image
+                src="/brand/logo-white.webp"
+                alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+                width={280}
+                height={73}
+                className="h-12 sm:h-14 lg:h-16 w-auto max-h-[64px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
+              />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
               Your trusted parcel and community service hub inside the condominium.

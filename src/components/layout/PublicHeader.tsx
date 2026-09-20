@@ -91,7 +91,7 @@ export default function PublicHeader() {
               src="/brand/logo.webp"
               alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
               width={320}
-              height={100}
+              height={83}
               className="h-14 sm:h-16 lg:h-[72px] w-auto max-h-[72px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
               priority
             />
