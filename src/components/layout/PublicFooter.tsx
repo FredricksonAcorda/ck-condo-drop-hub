@@ -8,7 +8,6 @@ const quickLinks = [
   { label: "Services", href: "/#services" },
   { label: "Pricing & Plans", href: "/#pricing" },
   { label: "About Us", href: "/#about" },
-  { label: "Contact Us", href: "/#contact" },
 ];
 
 export default function PublicFooter() {
