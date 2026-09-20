@@ -8,12 +8,14 @@ export type PillNavItem = {
   label: string;
   href: string;
   ariaLabel?: string;
+  variant?: 'default' | 'primary';
 };
 
 export interface PillNavProps {
   logo: string;
   logoAlt?: string;
   items: PillNavItem[];
+  authItems?: PillNavItem[];
   activeHref?: string;
   className?: string;
   ease?: string;
@@ -25,13 +27,13 @@ export interface PillNavProps {
   onMobileMenuClick?: () => void;
   onItemClick?: (href: string) => void;
   initialLoadAnimation?: boolean;
-  extraMobileContent?: React.ReactNode;
 }
 
 const PillNav: React.FC<PillNavProps> = ({
   logo,
   logoAlt = 'Logo',
   items,
+  authItems = [],
   activeHref,
   className = '',
   ease = 'power2.easeOut',
@@ -43,10 +45,13 @@ const PillNav: React.FC<PillNavProps> = ({
   onMobileMenuClick,
   onItemClick,
   initialLoadAnimation = false,
-  extraMobileContent
 }) => {
   const resolvedPillTextColor = pillTextColor ?? baseColor;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Combine all items for GSAP indexing so both sections and auth pills have the exact same effect
+  const allItems = React.useMemo(() => [...items, ...authItems], [items, authItems]);
+
   const circleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const tlRefs = useRef<Array<gsap.core.Timeline | null>>([]);
   const activeTweenRefs = useRef<Array<gsap.core.Tween | null>>([]);
@@ -144,7 +149,7 @@ const PillNav: React.FC<PillNavProps> = ({
     }
 
     return () => window.removeEventListener('resize', onResize);
-  }, [items, ease, initialLoadAnimation]);
+  }, [allItems, ease, initialLoadAnimation]);
 
   const handleEnter = (i: number) => {
     const tl = tlRefs.current[i];
@@ -246,10 +251,10 @@ const PillNav: React.FC<PillNavProps> = ({
     ['--pill-bg']: pillColor,
     ['--hover-text']: hoveredPillTextColor,
     ['--pill-text']: resolvedPillTextColor,
-    ['--nav-h']: '48px',
-    ['--logo']: '40px',
-    ['--pill-pad-x']: '18px',
-    ['--pill-gap']: '4px'
+    ['--nav-h']: '44px',
+    ['--logo']: '38px',
+    ['--pill-pad-x']: '16px',
+    ['--pill-gap']: '3px'
   } as React.CSSProperties;
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -270,14 +275,111 @@ const PillNav: React.FC<PillNavProps> = ({
   const basePillClasses =
     'relative overflow-hidden inline-flex items-center justify-center h-full no-underline rounded-full box-border font-bold text-xs uppercase tracking-wider whitespace-nowrap cursor-pointer px-0 select-none transition-colors';
 
+  // Helper to render an individual pill button with GSAP animations
+  const renderPillItem = (item: PillNavItem, globalIndex: number, isAuth = false) => {
+    const isActive =
+      !isAuth &&
+      (activeHref === item.href ||
+        activeHref === item.href.replace('/#', '') ||
+        (activeHref === '/' && item.href === '/#home'));
+
+    const isPrimary = item.variant === 'primary';
+
+    // Style adjustments for primary CTA pills (e.g. Sign Up) vs default pills
+    const pillStyle: React.CSSProperties = {
+      background: isPrimary ? '#CC0000' : 'var(--pill-bg, #fff)',
+      color: isPrimary ? '#ffffff' : 'var(--pill-text, var(--base, #07100D))',
+      paddingLeft: 'var(--pill-pad-x)',
+      paddingRight: 'var(--pill-pad-x)',
+      border: isPrimary ? '1px solid #CC0000' : '1px solid rgba(0,0,0,0.06)'
+    };
+
+    const bubbleBg = isPrimary ? '#07100D' : 'var(--base, #CC0000)';
+    const hoverTextColor = '#ffffff';
+
+    const PillContent = (
+      <>
+        <span
+          className="hover-circle absolute left-1/2 bottom-0 rounded-full z-[1] block pointer-events-none"
+          style={{
+            background: bubbleBg,
+            willChange: 'transform'
+          }}
+          aria-hidden="true"
+          ref={el => {
+            circleRefs.current[globalIndex] = el;
+          }}
+        />
+        <span className="label-stack relative inline-block leading-[1] z-[2]">
+          <span
+            className="pill-label relative z-[2] inline-block leading-[1]"
+            style={{ willChange: 'transform' }}
+          >
+            {item.label}
+          </span>
+          <span
+            className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
+            style={{
+              color: hoverTextColor,
+              willChange: 'transform, opacity'
+            }}
+            aria-hidden="true"
+          >
+            {item.label}
+          </span>
+        </span>
+        {isActive && (
+          <span
+            className="absolute left-1/2 bottom-[3px] -translate-x-1/2 w-1.5 h-1.5 rounded-full z-[4] shadow-xs"
+            style={{ background: 'var(--base, #CC0000)' }}
+            aria-hidden="true"
+          />
+        )}
+      </>
+    );
+
+    return (
+      <li key={item.href} role="none" className="flex h-full">
+        {isRouterLink(item.href) ? (
+          <Link
+            role="menuitem"
+            href={item.href}
+            className={basePillClasses}
+            style={pillStyle}
+            aria-label={item.ariaLabel || item.label}
+            onMouseEnter={() => handleEnter(globalIndex)}
+            onMouseLeave={() => handleLeave(globalIndex)}
+            onClick={(e) => handleLinkClick(e, item.href)}
+          >
+            {PillContent}
+          </Link>
+        ) : (
+          <a
+            role="menuitem"
+            href={item.href}
+            className={basePillClasses}
+            style={pillStyle}
+            aria-label={item.ariaLabel || item.label}
+            onMouseEnter={() => handleEnter(globalIndex)}
+            onMouseLeave={() => handleLeave(globalIndex)}
+            onClick={(e) => handleLinkClick(e, item.href)}
+          >
+            {PillContent}
+          </a>
+        )}
+      </li>
+    );
+  };
+
   return (
-    <div className={`relative z-[100] w-full flex items-center justify-between ${className}`}>
+    <div className={`relative z-[100] ${className}`}>
+      {/* Floating Pill Capsule Bar */}
       <nav
-        className="w-full flex items-center justify-between md:justify-start box-border"
+        className="flex items-center box-border p-1.5 rounded-full bg-white/95 backdrop-blur-md border border-brand-border/80 shadow-[0_8px_32px_rgba(0,0,0,0.10)]"
         aria-label="Primary"
         style={cssVars}
       >
-        {/* Logo Icon (Spin on Hover) */}
+        {/* Logo Icon (Spins on Hover) */}
         <Link
           href={items?.[0]?.href || '/'}
           aria-label={logoAlt}
@@ -285,7 +387,7 @@ const PillNav: React.FC<PillNavProps> = ({
           onClick={(e) => handleLinkClick(e, items?.[0]?.href || '/')}
           role="menuitem"
           ref={logoRef}
-          className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden shrink-0 border border-brand-border/80 shadow-sm hover:shadow-md transition-shadow group"
+          className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden shrink-0 border border-brand-border/80 shadow-xs hover:shadow-sm transition-shadow group"
           style={{
             width: 'var(--nav-h)',
             height: 'var(--nav-h)',
@@ -304,7 +406,7 @@ const PillNav: React.FC<PillNavProps> = ({
         {/* Desktop Nav Items */}
         <div
           ref={navItemsRef}
-          className="relative items-center rounded-full hidden md:flex ml-3 border border-brand-border/70 shadow-sm bg-brand-surface/70 backdrop-blur-xs p-1"
+          className="relative items-center rounded-full hidden lg:flex ml-2"
           style={{
             height: 'var(--nav-h)'
           }}
@@ -314,92 +416,22 @@ const PillNav: React.FC<PillNavProps> = ({
             className="list-none flex items-stretch m-0 p-0 h-full"
             style={{ gap: 'var(--pill-gap)' }}
           >
-            {items.map((item, i) => {
-              const isActive =
-                activeHref === item.href ||
-                activeHref === item.href.replace('/#', '') ||
-                (activeHref === '/' && item.href === '/#home');
+            {/* 5 Sections */}
+            {items.map((item, i) => renderPillItem(item, i, false))}
 
-              const pillStyle: React.CSSProperties = {
-                background: 'var(--pill-bg, #fff)',
-                color: 'var(--pill-text, var(--base, #07100D))',
-                paddingLeft: 'var(--pill-pad-x)',
-                paddingRight: 'var(--pill-pad-x)'
-              };
+            {/* Subtle Divider before Auth Buttons */}
+            {authItems.length > 0 && (
+              <li
+                role="separator"
+                aria-orientation="vertical"
+                className="w-px h-5 self-center bg-brand-border/80 mx-1.5 shrink-0"
+              />
+            )}
 
-              const PillContent = (
-                <>
-                  <span
-                    className="hover-circle absolute left-1/2 bottom-0 rounded-full z-[1] block pointer-events-none"
-                    style={{
-                      background: 'var(--base, #CC0000)',
-                      willChange: 'transform'
-                    }}
-                    aria-hidden="true"
-                    ref={el => {
-                      circleRefs.current[i] = el;
-                    }}
-                  />
-                  <span className="label-stack relative inline-block leading-[1] z-[2]">
-                    <span
-                      className="pill-label relative z-[2] inline-block leading-[1]"
-                      style={{ willChange: 'transform' }}
-                    >
-                      {item.label}
-                    </span>
-                    <span
-                      className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
-                      style={{
-                        color: 'var(--hover-text, #fff)',
-                        willChange: 'transform, opacity'
-                      }}
-                      aria-hidden="true"
-                    >
-                      {item.label}
-                    </span>
-                  </span>
-                  {isActive && (
-                    <span
-                      className="absolute left-1/2 bottom-[3px] -translate-x-1/2 w-2 h-2 rounded-full z-[4] shadow-xs"
-                      style={{ background: 'var(--base, #CC0000)' }}
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
-              );
-
-              return (
-                <li key={item.href} role="none" className="flex h-full">
-                  {isRouterLink(item.href) ? (
-                    <Link
-                      role="menuitem"
-                      href={item.href}
-                      className={basePillClasses}
-                      style={pillStyle}
-                      aria-label={item.ariaLabel || item.label}
-                      onMouseEnter={() => handleEnter(i)}
-                      onMouseLeave={() => handleLeave(i)}
-                      onClick={(e) => handleLinkClick(e, item.href)}
-                    >
-                      {PContentWrapper(PillContent)}
-                    </Link>
-                  ) : (
-                    <a
-                      role="menuitem"
-                      href={item.href}
-                      className={basePillClasses}
-                      style={pillStyle}
-                      aria-label={item.ariaLabel || item.label}
-                      onMouseEnter={() => handleEnter(i)}
-                      onMouseLeave={() => handleLeave(i)}
-                      onClick={(e) => handleLinkClick(e, item.href)}
-                    >
-                      {PContentWrapper(PillContent)}
-                    </a>
-                  )}
-                </li>
-              );
-            })}
+            {/* Auth Buttons using the EXACT same UI button navigation */}
+            {authItems.map((item, j) =>
+              renderPillItem(item, items.length + j, true)
+            )}
           </ul>
         </div>
 
@@ -409,7 +441,7 @@ const PillNav: React.FC<PillNavProps> = ({
           onClick={toggleMobileMenu}
           aria-label="Toggle menu"
           aria-expanded={isMobileMenuOpen}
-          className="md:hidden rounded-full border border-brand-border flex flex-col items-center justify-center gap-1.5 cursor-pointer p-0 relative shadow-sm hover:bg-brand-surface transition-colors"
+          className="lg:hidden ml-2 rounded-full border border-brand-border/70 flex flex-col items-center justify-center gap-1.5 cursor-pointer p-0 relative shadow-xs hover:bg-brand-surface transition-colors"
           style={{
             width: 'var(--nav-h)',
             height: 'var(--nav-h)',
@@ -427,10 +459,10 @@ const PillNav: React.FC<PillNavProps> = ({
         </button>
       </nav>
 
-      {/* Mobile Drawer Dropdown */}
+      {/* Mobile Drawer Dropdown (Floating card) */}
       <div
         ref={mobileMenuRef}
-        className="md:hidden absolute top-[3.8em] left-0 right-0 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] z-[998] origin-top p-3 border border-brand-border bg-white"
+        className="lg:hidden absolute top-[3.8em] left-0 right-0 rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.18)] z-[998] origin-top p-3 border border-brand-border bg-white/98 backdrop-blur-lg"
         style={cssVars}
       >
         <ul className="list-none m-0 p-0 flex flex-col gap-1.5">
@@ -478,21 +510,36 @@ const PillNav: React.FC<PillNavProps> = ({
               </li>
             );
           })}
-        </ul>
 
-        {/* Optional Extra Mobile Content (e.g. Auth Buttons) */}
-        {extraMobileContent && (
-          <div className="pt-3 mt-2 border-t border-brand-border/60">
-            {extraMobileContent}
-          </div>
-        )}
+          {/* Auth Pill Buttons in Mobile Menu */}
+          {authItems.length > 0 && (
+            <li className="pt-2 mt-1 border-t border-brand-border/60 flex gap-2">
+              {authItems.map((authItem) => {
+                const isPrimary = authItem.variant === 'primary';
+                return (
+                  <Link
+                    key={authItem.href}
+                    href={authItem.href}
+                    onClick={(e) => {
+                      handleLinkClick(e, authItem.href);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`flex-1 py-2.5 px-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
+                      isPrimary
+                        ? 'bg-brand-red text-white shadow-xs hover:bg-brand-red-hover'
+                        : 'bg-brand-surface text-brand-text border border-brand-border hover:bg-gray-100'
+                    }`}
+                  >
+                    {authItem.label}
+                  </Link>
+                );
+              })}
+            </li>
+          )}
+        </ul>
       </div>
     </div>
   );
 };
-
-function PContentWrapper(content: React.ReactNode) {
-  return content;
-}
 
 export default PillNav;
