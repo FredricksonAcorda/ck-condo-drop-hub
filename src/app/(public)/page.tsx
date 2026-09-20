@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import LogoLoop, { LogoItem } from "@/components/ui/LogoLoop";
 
 /* ------------------------------------------------------------------ */
 /*  Section 1: Hero                                                    */
@@ -90,55 +91,93 @@ function HeroSection() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Section 2: Courier Partners                                        */
+/*  Section 2: Courier Partners (Full-width LogoLoop Marquee)          */
 /* ------------------------------------------------------------------ */
+const courierLogos: LogoItem[] = [
+  {
+    node: (
+      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+        <div className="flex flex-col items-center">
+          <span className="text-3xl sm:text-4xl font-black italic tracking-tighter text-[#EE4D2D] leading-none select-none">
+            SPX
+          </span>
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#EE4D2D] mt-0.5 border-b-2 border-[#EE4D2D] pb-0.5 select-none">
+            EXPRESS
+          </span>
+        </div>
+        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
+          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">Shopee Xpress</span>
+          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
+        </div>
+      </div>
+    ),
+    title: "SPX Express",
+    ariaLabel: "SPX Express Courier Partner"
+  },
+  {
+    node: (
+      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight select-none">
+          <span>J&amp;T</span>
+          <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
+        </div>
+        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
+          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">J&amp;T Express</span>
+          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
+        </div>
+      </div>
+    ),
+    title: "J&T Express",
+    ariaLabel: "J&T Express Courier Partner"
+  },
+  {
+    node: (
+      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic text-black select-none">
+          <span>FL</span>
+          <span className="text-[#FFD600] inline-block -mx-0.5 transform -skew-x-6 text-3xl sm:text-4xl font-black drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">⚡</span>
+          <span>SH</span>
+          <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-black ml-1.5 not-italic">
+            EXPRESS
+          </span>
+        </div>
+        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
+          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">Flash Express</span>
+          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
+        </div>
+      </div>
+    ),
+    title: "Flash Express",
+    ariaLabel: "Flash Express Courier Partner"
+  }
+];
+
 function CourierStrip() {
   return (
-    <section className="bg-brand-surface py-8">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl border border-gray-200 px-8 py-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-          <div className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl font-bold tracking-wider text-brand-text leading-tight uppercase shrink-0 text-center md:text-left">
-            OUR PARTNER<br />COURIERS
-          </div>
+    <section className="bg-brand-surface py-10 sm:py-12 border-y border-brand-border/60 overflow-hidden w-full">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 mb-6 sm:mb-8 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] font-bold text-brand-text-secondary mb-1.5">
+          Fast &amp; Reliable Delivery Network
+        </p>
+        <h2 className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-brand-text uppercase">
+          OUR PARTNER <span className="text-brand-red">COURIERS</span>
+        </h2>
+      </div>
 
-          <div className="hidden md:block w-px h-14 bg-gray-200" />
-
-          {/* SPX Express */}
-          <div className="flex items-center justify-center shrink-0">
-            <div className="flex flex-col items-center">
-              <span className="text-3xl sm:text-4xl font-black italic tracking-tighter text-[#EE4D2D] leading-none">
-                SPX
-              </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#EE4D2D] mt-0.5 border-b-2 border-[#EE4D2D] pb-0.5">
-                EXPRESS
-              </span>
-            </div>
-          </div>
-
-          <div className="hidden md:block w-px h-14 bg-gray-200" />
-
-          {/* J&T Express */}
-          <div className="flex items-center justify-center shrink-0">
-            <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight">
-              <span>J&amp;T</span>
-              <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
-            </div>
-          </div>
-
-          <div className="hidden md:block w-px h-14 bg-gray-200" />
-
-          {/* Flash Express */}
-          <div className="flex items-center justify-center shrink-0">
-            <div className="flex items-center text-3xl sm:text-4xl font-black italic text-black">
-              <span>FL</span>
-              <span className="text-[#FFD600] inline-block -mx-0.5 transform -skew-x-6 text-3xl sm:text-4xl font-black drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">⚡</span>
-              <span>SH</span>
-              <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-black ml-1.5 not-italic">
-                EXPRESS
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Full-width infinite continuous loop */}
+      <div className="w-full relative overflow-hidden py-2">
+        <LogoLoop
+          logos={courierLogos}
+          speed={65}
+          direction="left"
+          gap={48}
+          logoHeight={68}
+          pauseOnHover={true}
+          scaleOnHover={true}
+          fadeOut={true}
+          fadeOutColor="#F7F9FA"
+          ariaLabel="Our Partner Couriers"
+        />
       </div>
     </section>
   );
