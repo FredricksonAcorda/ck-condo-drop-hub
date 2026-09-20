@@ -47,8 +47,8 @@ export default function PublicHeader() {
         const el = document.getElementById(sectionIds[i]);
         if (el) {
           const rect = el.getBoundingClientRect();
-          // Header height is 72px; when top of section crosses 140px from viewport top, activate it
-          if (rect.top <= 140) {
+          // Header height is 88px; when top of section crosses 150px from viewport top, activate it
+          if (rect.top <= 150) {
             current = sectionIds[i];
           }
         }
@@ -79,21 +79,26 @@ export default function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-[72px]">
-          {/* Logo */}
-          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center shrink-0 overflow-hidden py-1">
+        <div className="flex items-center justify-between h-[80px] lg:h-[88px]">
+          {/* Big, Prominent Logo (Protected from overlapping) */}
+          <Link
+            href="/#home"
+            onClick={(e) => scrollToSection(e, "/#home")}
+            className="flex items-center shrink-0 py-2 mr-4 xl:mr-8 group select-none"
+            aria-label="CK Condo Drop Hub Home"
+          >
             <Image
               src="/brand/logo.webp"
               alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={240}
-              height={75}
-              className="h-10 sm:h-11 w-auto max-h-[44px] object-contain select-none"
+              width={280}
+              height={87}
+              className="h-12 sm:h-13 lg:h-14 w-auto max-h-[56px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
               priority
             />
           </Link>
 
-          {/* Desktop Nav in strictly consecutive section order */}
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
+          {/* Desktop Nav in strictly consecutive section order (Balanced for zero overlap) */}
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 shrink-0" aria-label="Main navigation">
             {consecutiveNavLinks.map((link) => {
               const isActive = pathname === "/" ? activeSection === link.id : pathname === link.href;
               return (
@@ -101,7 +106,7 @@ export default function PublicHeader() {
                   key={link.id}
                   href={link.href}
                   onClick={(e) => scrollToSection(e, link.href)}
-                  className={`px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 ${
+                  className={`px-2.5 xl:px-3.5 py-2 text-[11px] xl:text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 whitespace-nowrap ${
                     isActive
                       ? "text-brand-red bg-brand-red-bg font-black"
                       : "text-brand-text-secondary hover:text-brand-text hover:bg-brand-surface"
@@ -114,17 +119,17 @@ export default function PublicHeader() {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0 ml-2">
             <Link
               href="/login"
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm whitespace-nowrap"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
               LOG IN
             </Link>
             <Link
               href="/register"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm whitespace-nowrap"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
               SIGN UP
@@ -133,7 +138,7 @@ export default function PublicHeader() {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 rounded-md hover:bg-brand-surface transition-colors"
+            className="lg:hidden p-2.5 rounded-md hover:bg-brand-surface transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}

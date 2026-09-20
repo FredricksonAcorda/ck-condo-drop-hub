@@ -15,21 +15,21 @@ const quickLinks = [
 
 export default function PublicFooter() {
   return (
-    <footer id="contact" className="bg-brand-dark text-white scroll-mt-20">
+    <footer id="contact" className="bg-brand-dark text-white scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Brand */}
           <div>
-            <Link href="/" className="inline-block mb-4">
+            <Link href="/" className="inline-block mb-5 group select-none" aria-label="CK Condo Drop Hub Home">
               <Image
                 src="/brand/logo-white.webp"
                 alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-                width={240}
-                height={75}
-                className="h-10 sm:h-11 w-auto max-h-[44px] object-contain select-none"
+                width={280}
+                height={87}
+                className="h-12 sm:h-14 lg:h-16 w-auto max-h-[64px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
               />
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
               Your trusted parcel and community service hub inside the condominium.
             </p>
             {/* Social Icons */}

@@ -6,7 +6,7 @@ import Link from "next/link";
 /* ------------------------------------------------------------------ */
 function HeroSection() {
   return (
-    <section id="home" className="relative bg-white overflow-hidden scroll-mt-20">
+    <section id="home" className="relative bg-white overflow-hidden scroll-mt-24">
       {/* Red curved overlay (matching the client's distinctive red wave) */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg className="absolute top-0 right-0 h-full w-[55%] hidden lg:block" viewBox="0 0 600 700" preserveAspectRatio="none">
@@ -187,7 +187,7 @@ function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="bg-white py-16 lg:py-20 scroll-mt-20">
+    <section id="services" className="bg-white py-16 lg:py-20 scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 text-center">
         <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl mb-2">
           OUR <span className="text-brand-red">SERVICES</span>
@@ -271,7 +271,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="bg-white py-16 lg:py-20 scroll-mt-20">
+    <section id="how-it-works" className="bg-white py-16 lg:py-20 scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-12">
           {/* Left: Heading & CTA */}
@@ -334,7 +334,7 @@ function HowItWorksSection() {
 /* ------------------------------------------------------------------ */
 function PricingSection() {
   return (
-    <section id="pricing" className="bg-brand-surface py-16 lg:py-20 scroll-mt-20">
+    <section id="pricing" className="bg-brand-surface py-16 lg:py-20 scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
           {/* Card 1: Membership Plans Red Header Card */}
@@ -565,7 +565,7 @@ function WhyChooseUsSection() {
   ];
 
   return (
-    <section id="about" className="bg-white py-16 lg:py-20 scroll-mt-20">
+    <section id="about" className="bg-white py-16 lg:py-20 scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Left: Woman holding branded parcel box */}
@@ -714,7 +714,7 @@ function AnnouncementsSection() {
   ];
 
   return (
-    <section id="announcements" className="bg-white py-16 lg:py-20 scroll-mt-20">
+    <section id="announcements" className="bg-white py-16 lg:py-20 scroll-mt-24">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-10">
           <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl">
