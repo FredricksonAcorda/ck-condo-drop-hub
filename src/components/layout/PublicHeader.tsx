@@ -81,27 +81,15 @@ export default function PublicHeader() {
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center gap-3 shrink-0">
-            <div className="w-12 h-12 relative">
-              <Image
-                src="/brand/logo.webp"
-                alt="CK Condo Drop Hub"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-            <div className="hidden sm:block">
-              <div className="font-[family-name:var(--font-heading)] text-xl leading-none tracking-wide">
-                <span className="text-brand-black">CK CONDO</span>
-                <br />
-                <span className="text-brand-red">DROP</span>{" "}
-                <span className="text-brand-black">HUB</span>
-              </div>
-              <p className="text-[9px] text-brand-text-secondary tracking-[0.15em] uppercase mt-0.5">
-                Quick Drops, Easy Pick Ups
-              </p>
-            </div>
+          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center gap-3 shrink-0 py-1">
+            <Image
+              src="/brand/logo.webp"
+              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+              width={220}
+              height={60}
+              className="h-11 sm:h-12 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Desktop Nav in strictly consecutive section order */}

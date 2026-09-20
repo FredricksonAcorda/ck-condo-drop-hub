@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -27,19 +28,18 @@ export default function AdminLayout({
       <aside className="hidden lg:flex flex-col w-[305px] shrink-0 bg-brand-black text-white min-h-screen sticky top-0 z-30">
         {/* Brand Header */}
         <div className="p-6 border-b border-white/10">
-          <Link href="/admin" className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-brand-red rounded-lg flex items-center justify-center shadow-md">
-              <span className="font-[family-name:var(--font-heading)] text-white text-2xl font-black">D</span>
-            </div>
-            <div>
-              <div className="font-[family-name:var(--font-heading)] text-lg leading-tight tracking-wider">
-                <span className="text-white">CK CONDO</span>{" "}
-                <span className="text-brand-red">DROP</span> HUB
-              </div>
-              <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-white/50 bg-white/10 px-2 py-0.5 rounded mt-1">
-                STAFF PORTAL • ADMIN
-              </span>
-            </div>
+          <Link href="/admin" className="block">
+            <Image
+              src="/brand/logo-white.webp"
+              alt="CK Condo Drop Hub"
+              width={200}
+              height={55}
+              className="h-10 w-auto object-contain mb-2"
+              priority
+            />
+            <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-white/60 bg-white/10 px-2.5 py-0.5 rounded">
+              STAFF PORTAL • ADMIN
+            </span>
           </Link>
         </div>
 
@@ -116,8 +116,16 @@ export default function AdminLayout({
           <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
-        <div className="font-[family-name:var(--font-heading)] text-sm tracking-wider">
-          CK CONDO <span className="text-brand-red">STAFF PORTAL</span>
+        <div className="flex items-center gap-2">
+          <Image
+            src="/brand/logo-white.webp"
+            alt="CK Condo Drop Hub"
+            width={140}
+            height={38}
+            className="h-7 w-auto object-contain"
+            priority
+          />
+          <span className="text-[10px] text-brand-red font-bold uppercase tracking-wider">STAFF</span>
         </div>
 
         <div className="w-7 h-7 rounded-full bg-brand-red flex items-center justify-center text-xs font-bold">
@@ -132,9 +140,13 @@ export default function AdminLayout({
           <aside className="fixed left-0 top-0 bottom-0 w-[280px] bg-brand-black text-white z-50 lg:hidden overflow-y-auto p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="font-[family-name:var(--font-heading)] text-lg">
-                  CK CONDO <span className="text-brand-red">STAFF</span>
-                </div>
+                <Image
+                  src="/brand/logo-white.webp"
+                  alt="CK Condo Drop Hub"
+                  width={140}
+                  height={38}
+                  className="h-8 w-auto object-contain"
+                />
                 <button onClick={() => setDrawerOpen(false)} className="text-white/60 p-1">
                   ✕
                 </button>

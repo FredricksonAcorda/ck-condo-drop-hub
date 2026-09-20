@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -44,16 +45,15 @@ export default function CustomerLayout({
           </button>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-brand-red rounded-lg flex items-center justify-center">
-              <span className="font-[family-name:var(--font-heading)] text-white text-lg font-bold">D</span>
-            </div>
-            <div className="hidden sm:block font-[family-name:var(--font-heading)] text-sm leading-none tracking-wide">
-              <span className="text-brand-black">CK CONDO</span>
-              <br />
-              <span className="text-brand-red">DROP</span>{" "}
-              <span className="text-brand-black">HUB</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 py-1">
+            <Image
+              src="/brand/logo.webp"
+              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+              width={180}
+              height={50}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Desktop nav */}

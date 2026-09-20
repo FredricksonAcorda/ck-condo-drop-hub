@@ -49,3 +49,6 @@ src-app/
 tmp/pdfs/*.png
 tmp/pdfs/qa.json
 output/pdf/
+scratch/
+IMG_20260824_133458_807.png
+

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const quickLinks = [
   { label: "Home", href: "/#home" },
@@ -19,20 +20,15 @@ export default function PublicFooter() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-8 h-8 bg-brand-red rounded-full flex items-center justify-center">
-                  <span className="font-[family-name:var(--font-heading)] text-white text-sm font-bold">D</span>
-                </div>
-              </div>
-              <div>
-                <div className="font-[family-name:var(--font-heading)] text-lg leading-none tracking-wide">
-                  <span>CK CONDO</span>
-                  <br />
-                  <span className="text-brand-red">DROP</span> HUB
-                </div>
-              </div>
-            </div>
+            <Link href="/#home" className="inline-block mb-4">
+              <Image
+                src="/brand/logo-white.webp"
+                alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+                width={220}
+                height={60}
+                className="h-11 w-auto object-contain"
+              />
+            </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
               Your trusted parcel and community service hub inside the condominium.
             </p>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -8,18 +9,17 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen bg-brand-surface flex flex-col justify-between">
       {/* Auth Header */}
-      <header className="py-6 px-4 border-b border-brand-border bg-white">
+      <header className="py-5 px-4 border-b border-brand-border bg-white">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-brand-red rounded-lg flex items-center justify-center shadow">
-              <span className="font-[family-name:var(--font-heading)] text-white text-xl font-bold">D</span>
-            </div>
-            <div className="font-[family-name:var(--font-heading)] text-sm leading-none tracking-wide">
-              <span className="text-brand-black">CK CONDO</span>
-              <br />
-              <span className="text-brand-red">DROP</span>{" "}
-              <span className="text-brand-black">HUB</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 py-1">
+            <Image
+              src="/brand/logo.webp"
+              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+              width={180}
+              height={50}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
 
           <Link href="/" className="text-xs font-semibold text-brand-text-secondary hover:text-brand-red transition-colors">
