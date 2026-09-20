@@ -4,9 +4,8 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import PillNav, { PillNavItem } from "@/components/ui/PillNav";
 
-// Strictly the 5 requested sections: Home, Services, Pricing & Plans, About Us, and Contact Us
+// Navigation sections (Home is represented by the spinning brand logo emblem)
 const navItems: PillNavItem[] = [
-  { label: "Home", href: "/#home" },
   { label: "Services", href: "/#services" },
   { label: "Pricing & Plans", href: "/#pricing" },
   { label: "About Us", href: "/#about" },
@@ -21,15 +20,21 @@ const authItems: PillNavItem[] = [
 
 export default function PublicHeader() {
   const pathname = usePathname();
-  const [activeSection, setActiveSection] = useState<string>("home");
+  const [activeSection, setActiveSection] = useState<string>("");
 
-  // Scroll spy: Strictly tracks the 5 sections in order
+  // Scroll spy: Tracks sections in scroll order
   useEffect(() => {
     if (pathname !== "/") return;
 
-    const sectionIds = ["home", "services", "pricing", "about", "contact"];
+    const sectionIds = ["services", "pricing", "about", "contact"];
 
     const handleScroll = () => {
+      // If near the top (Home hero section), no inner pill is active (logo is Home)
+      if (window.scrollY < 180) {
+        setActiveSection("");
+        return;
+      }
+
       // If scrolled close to the bottom of page, activate the last section (Contact Us)
       const isAtBottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
@@ -38,7 +43,7 @@ export default function PublicHeader() {
         return;
       }
 
-      let current = sectionIds[0];
+      let current = "";
       for (let i = 0; i < sectionIds.length; i++) {
         const el = document.getElementById(sectionIds[i]);
         if (el) {
@@ -57,7 +62,7 @@ export default function PublicHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
-  const activeHref = pathname === "/" ? `/#${activeSection}` : pathname;
+  const activeHref = pathname === "/" ? (activeSection ? `/#${activeSection}` : "") : pathname;
 
   return (
     // Floating navigation header centered in the viewport with no full-width background
@@ -65,7 +70,8 @@ export default function PublicHeader() {
       <div className="pointer-events-auto max-w-full">
         <PillNav
           logo="/brand/logo-mark.webp"
-          logoAlt="CK Condo Drop Hub"
+          logoAlt="CK Condo Drop Hub Home"
+          logoHref="/#home"
           items={navItems}
           authItems={authItems}
           activeHref={activeHref}
