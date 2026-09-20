@@ -96,7 +96,7 @@ function HeroSection() {
 const courierLogos: LogoItem[] = [
   {
     node: (
-      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
         <div className="flex flex-col items-center">
           <span className="text-3xl sm:text-4xl font-black italic tracking-tighter text-[#EE4D2D] leading-none select-none">
             SPX
@@ -105,10 +105,6 @@ const courierLogos: LogoItem[] = [
             EXPRESS
           </span>
         </div>
-        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
-          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">Shopee Xpress</span>
-          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
-        </div>
       </div>
     ),
     title: "SPX Express",
@@ -116,14 +112,10 @@ const courierLogos: LogoItem[] = [
   },
   {
     node: (
-      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
         <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight select-none">
           <span>J&amp;T</span>
           <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
-        </div>
-        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
-          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">J&amp;T Express</span>
-          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
         </div>
       </div>
     ),
@@ -132,7 +124,7 @@ const courierLogos: LogoItem[] = [
   },
   {
     node: (
-      <div className="flex items-center gap-3 sm:gap-4 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
         <div className="flex items-center text-3xl sm:text-4xl font-black italic text-black select-none">
           <span>FL</span>
           <span className="text-[#FFD600] inline-block -mx-0.5 transform -skew-x-6 text-3xl sm:text-4xl font-black drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">⚡</span>
@@ -140,10 +132,6 @@ const courierLogos: LogoItem[] = [
           <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-black ml-1.5 not-italic">
             EXPRESS
           </span>
-        </div>
-        <div className="flex flex-col text-left border-l border-gray-200 pl-3">
-          <span className="text-xs font-bold text-brand-text uppercase tracking-wider">Flash Express</span>
-          <span className="text-[10px] text-brand-text-secondary font-medium uppercase tracking-wider">Official Partner</span>
         </div>
       </div>
     ),
