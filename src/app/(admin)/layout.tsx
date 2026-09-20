@@ -32,9 +32,9 @@ export default function AdminLayout({
             <Image
               src="/brand/logo-white.webp"
               alt="CK Condo Drop Hub"
-              width={200}
-              height={55}
-              className="h-10 w-auto object-contain mb-2"
+              width={240}
+              height={75}
+              className="h-10 w-auto max-h-[40px] object-contain mb-2 select-none"
               priority
             />
             <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-white/60 bg-white/10 px-2.5 py-0.5 rounded">
@@ -120,9 +120,9 @@ export default function AdminLayout({
           <Image
             src="/brand/logo-white.webp"
             alt="CK Condo Drop Hub"
-            width={140}
-            height={38}
-            className="h-7 w-auto object-contain"
+            width={160}
+            height={50}
+            className="h-7 w-auto max-h-[28px] object-contain select-none"
             priority
           />
           <span className="text-[10px] text-brand-red font-bold uppercase tracking-wider">STAFF</span>
@@ -143,9 +143,9 @@ export default function AdminLayout({
                 <Image
                   src="/brand/logo-white.webp"
                   alt="CK Condo Drop Hub"
-                  width={140}
-                  height={38}
-                  className="h-8 w-auto object-contain"
+                  width={160}
+                  height={50}
+                  className="h-8 w-auto max-h-[32px] object-contain select-none"
                 />
                 <button onClick={() => setDrawerOpen(false)} className="text-white/60 p-1">
                   ✕

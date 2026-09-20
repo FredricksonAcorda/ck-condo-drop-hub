@@ -49,9 +49,9 @@ export default function CustomerLayout({
             <Image
               src="/brand/logo.webp"
               alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={180}
-              height={50}
-              className="h-10 w-auto object-contain"
+              width={240}
+              height={75}
+              className="h-10 w-auto max-h-[40px] object-contain select-none"
               priority
             />
           </Link>

@@ -20,13 +20,13 @@ export default function PublicFooter() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Brand */}
           <div>
-            <Link href="/#home" className="inline-block mb-4">
+            <Link href="/" className="inline-block mb-4">
               <Image
                 src="/brand/logo-white.webp"
                 alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-                width={220}
-                height={60}
-                className="h-11 w-auto object-contain"
+                width={240}
+                height={75}
+                className="h-10 sm:h-11 w-auto max-h-[44px] object-contain select-none"
               />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">

@@ -81,13 +81,13 @@ export default function PublicHeader() {
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center gap-3 shrink-0 py-1">
+          <Link href="/#home" onClick={(e) => scrollToSection(e, "/#home")} className="flex items-center shrink-0 overflow-hidden py-1">
             <Image
               src="/brand/logo.webp"
               alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={220}
-              height={60}
-              className="h-11 sm:h-12 w-auto object-contain"
+              width={240}
+              height={75}
+              className="h-10 sm:h-11 w-auto max-h-[44px] object-contain select-none"
               priority
             />
           </Link>
