@@ -50,12 +50,12 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Right: Hub photo + benefit panel */}
+          {/* Right: Real hub storefront photo + benefit panel */}
           <div className="relative">
-            <div className="rounded-xl overflow-hidden shadow-lg">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-brand-border">
               <Image
-                src="/images/hero-hub.jpg"
-                alt="CK Condo Drop Hub interior — organized parcel receiving center"
+                src="/images/hub-exterior.png"
+                alt="CK Condo Drop Hub physical storefront at C1 Buildersville Condominium"
                 width={700}
                 height={500}
                 className="w-full h-auto object-cover"
@@ -93,32 +93,50 @@ function HeroSection() {
 /*  Section 2: Courier Partners                                        */
 /* ------------------------------------------------------------------ */
 function CourierStrip() {
-  const couriers = [
-    { name: "SPX Express", color: "#EE4D2D" },
-    { name: "J&T Express", color: "#D21F1F" },
-    { name: "Flash Express", color: "#FFD600" },
-  ];
-
   return (
-    <section className="bg-white border-y border-brand-border py-6">
+    <section className="bg-brand-surface py-8">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
-          <span className="text-xs uppercase tracking-[0.15em] text-brand-text-secondary font-semibold whitespace-nowrap">
-            Our Partner Couriers
-          </span>
-          <div className="flex items-center gap-8 flex-wrap justify-center">
-            {couriers.map((courier) => (
-              <div key={courier.name} className="flex items-center gap-2">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center font-[family-name:var(--font-heading)] text-white text-xs font-bold"
-                  style={{ backgroundColor: courier.color }}
-                >
-                  {courier.name.substring(0, 3).toUpperCase()}
-                </div>
-                <span className="font-bold text-sm text-brand-text">{courier.name}</span>
-              </div>
-            ))}
-            <span className="text-sm text-brand-text-muted italic">and more...</span>
+        <div className="bg-white rounded-2xl border border-gray-200 px-8 py-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+          <div className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl font-bold tracking-wider text-brand-text leading-tight uppercase shrink-0 text-center md:text-left">
+            OUR PARTNER<br />COURIERS
+          </div>
+
+          <div className="hidden md:block w-px h-14 bg-gray-200" />
+
+          {/* SPX Express */}
+          <div className="flex items-center justify-center shrink-0">
+            <div className="flex flex-col items-center">
+              <span className="text-3xl sm:text-4xl font-black italic tracking-tighter text-[#EE4D2D] leading-none">
+                SPX
+              </span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#EE4D2D] mt-0.5 border-b-2 border-[#EE4D2D] pb-0.5">
+                EXPRESS
+              </span>
+            </div>
+          </div>
+
+          <div className="hidden md:block w-px h-14 bg-gray-200" />
+
+          {/* J&T Express */}
+          <div className="flex items-center justify-center shrink-0">
+            <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight">
+              <span>J&amp;T</span>
+              <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
+            </div>
+          </div>
+
+          <div className="hidden md:block w-px h-14 bg-gray-200" />
+
+          {/* Flash Express */}
+          <div className="flex items-center justify-center shrink-0">
+            <div className="flex items-center text-3xl sm:text-4xl font-black italic text-black">
+              <span>FL</span>
+              <span className="text-[#FFD600] inline-block -mx-0.5 transform -skew-x-6 text-3xl sm:text-4xl font-black drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">⚡</span>
+              <span>SH</span>
+              <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-black ml-1.5 not-italic">
+                EXPRESS
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -202,46 +220,108 @@ function ServicesSection() {
 /* ------------------------------------------------------------------ */
 function HowItWorksSection() {
   const steps = [
-    { num: 1, icon: "👤", title: "SIGN UP", desc: "Create an account and choose a plan that suits your needs." },
-    { num: 2, icon: "📦", title: "WE RECEIVE", desc: "We accept your parcels from our partner couriers." },
-    { num: 3, icon: "🔔", title: "GET NOTIFIED", desc: "We'll notify you once your parcel is ready for pickup." },
-    { num: 4, icon: "✅", title: "PICK UP", desc: "Claim your parcel at the hub or enjoy door-to-door delivery (available for premium members)." },
+    {
+      num: 1,
+      title: "SIGN UP",
+      desc: "Create an account and choose a plan that suits your needs.",
+      icon: (
+        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      ),
+    },
+    {
+      num: 2,
+      title: "WE RECEIVE",
+      desc: "We accept your parcels from our partner couriers.",
+      icon: (
+        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+          <path d="m3.3 7 8.7 5 8.7-5" />
+          <path d="M12 22V12" />
+        </svg>
+      ),
+    },
+    {
+      num: 3,
+      title: "GET NOTIFIED",
+      desc: "We'll notify you once your parcel is ready for pickup.",
+      icon: (
+        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          <path d="M4 4c-.7.7-1 1.8-1 3" />
+          <path d="M20 4c.7.7 1 1.8 1 3" />
+        </svg>
+      ),
+    },
+    {
+      num: 4,
+      title: "PICK UP",
+      desc: "Claim your parcel at the hub or enjoy door-to-door delivery (available for premium members).",
+      icon: (
+        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2v8M8 6h8" />
+          <path d="M4 14l8-4 8 4-8 4-8-4z" />
+          <path d="M4 14v4l8 4 8-4v-4" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <section id="how-it-works" className="bg-brand-surface py-16 lg:py-20 scroll-mt-20">
+    <section id="how-it-works" className="bg-white py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-12">
-          <div>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl mb-2">
-              HOW IT <span className="text-brand-red">WORKS</span>
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-12">
+          {/* Left: Heading & CTA */}
+          <div className="lg:w-1/4 text-center lg:text-left shrink-0">
+            <h2 className="font-[family-name:var(--font-heading)] text-4xl sm:text-5xl lg:text-6xl leading-[0.95] mb-3">
+              HOW IT<br />
+              <span className="text-brand-red">WORKS</span>
             </h2>
-            <p className="text-brand-text-secondary">Get your parcels in 4 easy steps.</p>
+            <p className="text-brand-text-secondary text-sm sm:text-base mb-6 leading-relaxed">
+              Get your parcels in 4 easy steps.
+            </p>
+            <Link
+              href="/register"
+              className="btn btn-primary btn-md px-6 shadow-sm inline-flex items-center gap-2"
+            >
+              GET STARTED →
+            </Link>
           </div>
-          <Link href="/register" className="btn btn-primary mt-4 sm:mt-0">
-            GET STARTED →
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((step, i) => (
-            <div key={step.num} className="relative flex flex-col items-center text-center">
-              {/* Connector arrow */}
-              {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-8 -right-3 text-brand-text-muted text-xl">→</div>
-              )}
-              <div className="relative mb-4">
-                <div className="w-16 h-16 bg-white border-2 border-brand-border rounded-full flex items-center justify-center text-2xl shadow-sm">
-                  {step.icon}
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-brand-red rounded-full flex items-center justify-center text-white text-xs font-bold">
+          {/* Right: 4 Steps Horizontal Chain */}
+          <div className="lg:w-3/4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {steps.map((step, i) => (
+              <div key={step.num} className="relative flex flex-col items-center text-center">
+                {/* Connector Arrow */}
+                {i < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-14 -right-4 text-gray-300 text-2xl font-light z-10 select-none">
+                    →
+                  </div>
+                )}
+
+                {/* Number Badge */}
+                <div className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center mb-2 shadow-sm">
                   {step.num}
                 </div>
+
+                {/* Pale Pink Icon Circle */}
+                <div className="w-24 h-24 rounded-full bg-[#FFF0ED] flex items-center justify-center mb-4 transition-transform duration-200 hover:scale-105">
+                  {step.icon}
+                </div>
+
+                {/* Title & Description */}
+                <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-brand-text mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-brand-text-secondary leading-relaxed max-w-[190px]">
+                  {step.desc}
+                </p>
               </div>
-              <h3 className="font-bold text-sm mb-2">{step.title}</h3>
-              <p className="text-xs text-brand-text-secondary leading-relaxed max-w-[200px]">{step.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -487,38 +567,53 @@ function WhyChooseUsSection() {
   return (
     <section id="about" className="bg-white py-16 lg:py-20 scroll-mt-20">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          {/* Photo */}
-          <div className="rounded-xl overflow-hidden shadow-lg">
-            <Image
-              src="/images/woman-parcel.jpg"
-              alt="Happy resident receiving her parcel"
-              width={600}
-              height={500}
-              className="w-full h-auto object-cover"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          {/* Left: Woman holding branded parcel box */}
+          <div className="lg:col-span-4 flex justify-center">
+            <div className="rounded-2xl overflow-hidden shadow-md max-w-[360px] w-full border border-gray-100">
+              <Image
+                src="/images/woman-branded-box.png"
+                alt="Resident receiving parcel with CK Condo Drop Hub branded box"
+                width={500}
+                height={550}
+                className="w-full h-auto object-cover"
+                priority
+              />
+            </div>
           </div>
 
-          {/* Content */}
-          <div>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl mb-6">
+          {/* Middle: Feature checklist */}
+          <div className="lg:col-span-5">
+            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl leading-[1.0] mb-6">
               WHY CHOOSE<br />
               <span className="text-brand-red">CK CONDO DROP HUB?</span>
             </h2>
-            <ul className="space-y-4 mb-8">
+            <ul className="space-y-4">
               {benefits.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-brand-red rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div className="w-6 h-6 rounded-full bg-brand-red flex items-center justify-center shrink-0 mt-0.5 text-white shadow-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </div>
-                  <span className="text-brand-text-secondary">{benefit}</span>
+                  <span className="text-sm sm:text-base font-semibold text-brand-text">
+                    {benefit}
+                  </span>
                 </li>
               ))}
             </ul>
-            <div className="bg-brand-surface rounded-xl p-6 border border-brand-border">
-              <p className="font-[family-name:var(--font-heading)] text-2xl text-brand-text italic leading-snug">
-                &ldquo;Making condo living easier,<br />one parcel at a time.&rdquo;
-              </p>
+          </div>
+
+          {/* Right: Master handwritten script quote with red swoosh */}
+          <div className="lg:col-span-3 flex justify-center items-center">
+            <div className="w-full max-w-[280px]">
+              <Image
+                src="/images/script-quote-trimmed.png"
+                alt="“Making condo living easier, one parcel at a time.”"
+                width={400}
+                height={360}
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
         </div>
@@ -539,37 +634,54 @@ function CommunityBanner() {
           src="/images/community.jpg"
           alt="Condo community"
           fill
-          className="object-cover opacity-30"
+          className="object-cover opacity-35"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/80 to-brand-dark/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/65" />
       </div>
 
       <div className="relative max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl leading-[1.05] mb-4">
-            A MORE CONVENIENT<br />
-            CONDO COMMUNITY TOGETHER.
-          </h2>
-          <p className="text-white/80 mb-8 max-w-lg">
-            Reliable parcel handling and essential services, right at your doorstep.
-          </p>
-          <Link href="/register" className="btn btn-primary btn-lg">
-            JOIN NOW →
-          </Link>
-        </div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10">
+          {/* Left: Headline & Button */}
+          <div className="max-w-xl">
+            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl leading-[1.05] mb-3">
+              A MORE CONVENIENT<br />
+              <span className="text-brand-red">CONDO COMMUNITY</span> TOGETHER.
+            </h2>
+            <p className="text-white/90 text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
+              Reliable parcel handling and essential services, right at your doorstep.
+            </p>
+            <Link href="/register" className="btn btn-primary btn-lg shadow-sm">
+              JOIN NOW →
+            </Link>
+          </div>
 
-        {/* Value icons */}
-        <div className="flex flex-wrap gap-10 mt-12">
-          {[
-            { icon: "👥", label: "For Residents" },
-            { icon: "🛡️", label: "For a Safer Community" },
-            { icon: "❤️", label: "For a Better Living" },
-          ].map((item) => (
-            <div key={item.label} className="flex flex-col items-center gap-2 text-center">
-              <span className="text-3xl">{item.icon}</span>
-              <span className="text-sm text-white/90">{item.label}</span>
+          {/* Right: 3 Value items with vertical dividers */}
+          <div className="flex items-center justify-start lg:justify-end gap-6 sm:gap-10 flex-wrap">
+            <div className="flex flex-col items-center text-center gap-2">
+              <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+              </svg>
+              <span className="text-xs sm:text-sm text-white font-semibold whitespace-nowrap">For Residents</span>
             </div>
-          ))}
+
+            <div className="hidden sm:block w-px h-14 bg-white/30" />
+
+            <div className="flex flex-col items-center text-center gap-2">
+              <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+              </svg>
+              <span className="text-xs sm:text-sm text-white font-semibold whitespace-nowrap">For a Safer Community</span>
+            </div>
+
+            <div className="hidden sm:block w-px h-14 bg-white/30" />
+
+            <div className="flex flex-col items-center text-center gap-2">
+              <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span className="text-xs sm:text-sm text-white font-semibold whitespace-nowrap">For a Better Living</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
