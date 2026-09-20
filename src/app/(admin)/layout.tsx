@@ -2,16 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/context";
 
 const adminNav = [
   { label: "DASHBOARD", href: "/admin", icon: "📊" },
   { label: "SCAN / RECEIVE", href: "/admin/scanner", icon: "📷" },
-  { label: "PARCEL INVENTORY", href: "/admin/parcels", icon: "📦" },
   { label: "CUSTOMERS & UNITS", href: "/admin/customers", icon: "👥" },
-  { label: "ACTIVITY LOGS", href: "/admin/reports", icon: "📜" },
-  { label: "SYSTEM SETTINGS", href: "/admin/settings", icon: "⚙️" },
+  { label: "TRACKING LOOKUP", href: "/track", icon: "🔍" },
 ];
 
 export default function AdminLayout({
@@ -20,7 +19,22 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const staffName = user?.role === "admin" ? user.name : "Station 1 Front Desk Staff";
+  const initials = staffName
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login?portal=staff");
+  };
 
   return (
     <div className="min-h-screen bg-brand-surface flex flex-col lg:flex-row">
@@ -89,20 +103,20 @@ export default function AdminLayout({
         <div className="p-4 border-t border-white/10 bg-brand-dark flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-brand-red/30 border border-brand-red flex items-center justify-center text-xs font-bold text-white">
-              MS
+              {initials}
             </div>
             <div>
-              <p className="text-xs font-bold text-white leading-tight">Maria Santos</p>
+              <p className="text-xs font-bold text-white leading-tight">{staffName}</p>
               <p className="text-[10px] text-white/60">Front Desk Officer</p>
             </div>
           </div>
-          <Link
-            href="/login"
-            className="text-white/50 hover:text-brand-red transition-colors text-xs font-bold"
+          <button
+            onClick={handleLogout}
+            className="text-white/50 hover:text-brand-red transition-colors text-xs font-bold cursor-pointer"
             title="Log Out"
           >
             LOGOUT
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -129,7 +143,7 @@ export default function AdminLayout({
         </div>
 
         <div className="w-7 h-7 rounded-full bg-brand-red flex items-center justify-center text-xs font-bold">
-          MS
+          {initials}
         </div>
       </header>
 
@@ -168,9 +182,15 @@ export default function AdminLayout({
               </nav>
             </div>
             <div className="pt-4 border-t border-white/10">
-              <Link href="/login" className="text-xs text-brand-red font-bold">
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  handleLogout();
+                }}
+                className="text-xs text-brand-red font-bold cursor-pointer"
+              >
                 🚪 LOG OUT OF PORTAL
-              </Link>
+              </button>
             </div>
           </aside>
         </>

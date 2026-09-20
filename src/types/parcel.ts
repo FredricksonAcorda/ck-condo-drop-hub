@@ -5,12 +5,20 @@ export interface Parcel {
   trackingNumber: string;
   courier: string;
   courierColor: string;
+  residentId: string;
+  residentName: string;
+  unit: string;
+  tower?: string;
+  shelf: string;
+  size?: "Small" | "Medium" | "Large" | "Bulky" | "Oversize";
   dateArrived: string;
   deadline: string;
   holdingFee: string;
   status: ParcelStatus;
-  shelf: string;
   claimCode: string;
+  claimedAt?: string;
+  claimedBy?: string;
+  notes?: string;
 }
 
 export interface RecentParcel {
@@ -29,5 +37,17 @@ export interface ParcelHistoryItem {
   courier: string;
   dateClaimed: string;
   claimedBy: string;
-  status: "Claimed";
+  status: string;
+  fee?: string;
+}
+
+export interface CreateParcelInput {
+  trackingNumber: string;
+  courier: string;
+  residentId: string;
+  residentName: string;
+  unit: string;
+  shelf: string;
+  size?: "Small" | "Medium" | "Large" | "Bulky" | "Oversize";
+  notes?: string;
 }

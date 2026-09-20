@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/context";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -18,7 +20,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -40,11 +42,25 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    // Simulate account generation latency
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await register({
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        unit: unit.trim(),
+        tower,
+        plan,
+        password,
+      });
+
       router.push("/parcels");
-    }, 750);
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to register account. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -216,7 +216,7 @@ export default function ScannerPage() {
 
             <div className="flex gap-2">
               <Link
-                href="/admin"
+                href={`/admin?tracking=${encodeURIComponent(lastScanned)}&courier=${encodeURIComponent(detectedCourier || "SPX Express")}`}
                 className="btn btn-primary btn-sm whitespace-nowrap"
               >
                 Log In Intake Form →

@@ -1,16 +1,6 @@
 export type MembershipTier = "FREE" | "REGULAR" | "PREMIUM";
 
-export interface ResidentProfile {
-  id: string;
-  name: string;
-  unit: string;
-  tower: string;
-  mobile: string;
-  email: string;
-  membershipTier: MembershipTier;
-  residentCode: string;
-  authorizedClaimants?: string[];
-}
+export { type ResidentProfile } from "./auth";
 
 export interface CustomerDirectoryItem {
   id: string;

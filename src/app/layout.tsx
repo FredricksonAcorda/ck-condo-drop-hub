@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Bebas_Neue } from "next/font/google";
 import "./globals.css";
+import { AppProviders } from "@/context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${bebasNeue.variable}`}>
       <body className="font-[family-name:var(--font-body)] antialiased">
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

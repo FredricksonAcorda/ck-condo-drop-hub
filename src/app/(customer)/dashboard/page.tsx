@@ -1,25 +1,57 @@
 "use client";
 
 import Link from "next/link";
+import { useAuth, useParcels } from "@/context";
 
 export default function CustomerDashboardPage() {
+  const { user } = useAuth();
+  const { parcels } = useParcels();
+
+  const firstName = user?.name ? user.name.split(" ")[0].toUpperCase() : "RESIDENT";
+  const unitInfo = user?.unit ? `${user.unit}, ${user.tower || "Tower A"}` : "Unit 101, Tower A";
+
+  // Filter parcels for the current user
+  const userParcels = parcels.filter(
+    (p) => p.residentId === user?.id || (user?.name && p.residentName.toLowerCase() === user.name.toLowerCase())
+  );
+
+  const readyParcels = userParcels.filter((p) => p.status === "READY");
+  const overdueParcels = userParcels.filter((p) => p.status === "OVERDUE");
+  const totalActive = readyParcels.length + overdueParcels.length;
+
+  const deliveryCreditsText =
+    user?.plan === "PREMIUM" ? "2 of 5 Left" : "0 Credits (Pay-Per-Trip)";
+
   return (
     <div className="space-y-6">
       {/* Welcome Hero Banner */}
       <div className="bg-gradient-to-r from-brand-black via-brand-dark to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
         <div className="relative z-10 max-w-xl">
           <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-            Resident Portal • Unit 101, Tower A
+            Resident Portal • {unitInfo}
           </span>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl mt-2 mb-2 tracking-wide uppercase">
-            WELCOME BACK, <span className="text-brand-red">JUAN</span>
+            WELCOME BACK, <span className="text-brand-red">{firstName}</span>
           </h1>
           <p className="text-white/80 text-sm leading-relaxed mb-6">
-            You currently have <strong className="text-white">3 parcels ready for pickup</strong> at the Ground Floor Hub. 1 parcel is nearing its free holding period.
+            {totalActive > 0 ? (
+              <>
+                You currently have <strong className="text-white">{totalActive} parcel{totalActive > 1 ? "s" : ""} ready for pickup</strong> at the Ground Floor Hub.
+                {overdueParcels.length > 0 && (
+                  <span className="text-yellow-300 ml-1">
+                    ({overdueParcels.length} parcel is past the free holding deadline).
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                You have <strong className="text-white">0 parcels pending pickup</strong>. We will notify you by SMS as soon as couriers drop off your deliveries.
+              </>
+            )}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/parcels" className="btn btn-primary btn-sm">
-              VIEW READY PARCELS →
+              VIEW READY PARCELS ({totalActive}) →
             </Link>
             <Link href="/track" className="btn btn-outline btn-sm !text-white !border-white/40 hover:!bg-white/10">
               TRACK NEW PARCEL
@@ -43,7 +75,9 @@ export default function CustomerDashboardPage() {
           </div>
           <div>
             <span className="text-xs text-brand-text-secondary uppercase font-semibold">Ready for Pickup</span>
-            <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black">3 Parcels</div>
+            <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black">
+              {totalActive} Parcel{totalActive === 1 ? "" : "s"}
+            </div>
           </div>
         </div>
 
@@ -53,7 +87,9 @@ export default function CustomerDashboardPage() {
           </div>
           <div>
             <span className="text-xs text-brand-text-secondary uppercase font-semibold">Door Delivery Credits</span>
-            <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black">2 of 5 Left</div>
+            <div className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-brand-black">
+              {deliveryCreditsText}
+            </div>
           </div>
         </div>
 
@@ -63,7 +99,9 @@ export default function CustomerDashboardPage() {
           </div>
           <div>
             <span className="text-xs text-brand-text-secondary uppercase font-semibold">Holding Alert</span>
-            <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-red">1 Overdue</div>
+            <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-red">
+              {overdueParcels.length} Overdue
+            </div>
           </div>
         </div>
       </div>

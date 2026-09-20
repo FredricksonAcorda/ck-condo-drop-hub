@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
+import { useAuth } from "@/context";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   const isInitialStaff =
     searchParams.get("portal") === "staff" || searchParams.get("role") === "admin";
@@ -25,7 +27,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -37,15 +39,25 @@ function LoginForm() {
 
     setIsLoading(true);
 
-    // Simulate realistic network latency before redirecting
-    setTimeout(() => {
-      setIsLoading(false);
-      if (role === "admin") {
+    try {
+      const authUser = await login({
+        emailOrPhone: emailOrPhone.trim(),
+        password: password.trim(),
+        role,
+      });
+
+      if (authUser.role === "admin") {
         router.push("/admin");
       } else {
         router.push("/parcels");
       }
-    }, 600);
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to sign in. Please check your credentials."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectRole = (newRole: "resident" | "admin") => {

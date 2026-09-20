@@ -1,51 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useParcels } from "@/context";
+import { Parcel } from "@/types";
 
-export default function TrackParcelPage() {
-  const [query, setQuery] = useState("SPX-PH-2026-8921");
-  const [result, setResult] = useState<{
-    tracking: string;
-    courier: string;
-    recipient: string;
-    unit: string;
-    status: "READY" | "PICKED_UP" | "IN_TRANSIT";
-    dateArrived: string;
-    deadline: string;
-    shelf: string;
-    holdingFee: string;
-  } | null>({
-    tracking: "SPX-PH-2026-8921",
-    courier: "SPX Express",
-    recipient: "Juan Dela Cruz",
-    unit: "Unit 101 – Tower A",
-    status: "READY",
-    dateArrived: "Sept 18, 2026 • 10:45 AM",
-    deadline: "Sept 21, 2026",
-    shelf: "Shelf A-04",
-    holdingFee: "₱0.00 (Within 3-Day Free Holding Period)",
-  });
+function TrackParcelContent() {
+  const searchParams = useSearchParams();
+  const { getParcelByTracking } = useParcels();
+  const initialNum = searchParams.get("num") || "SPX-PH-2026-8921";
+
+  const [query, setQuery] = useState(initialNum);
+  const [result, setResult] = useState<Parcel | null>(null);
+  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const executeLookup = useCallback(async (trackingNumber: string) => {
+    if (!trackingNumber.trim()) return;
+    setLoading(true);
+    setSearched(true);
+    try {
+      const match = await getParcelByTracking(trackingNumber.trim());
+      setResult(match);
+    } finally {
+      setLoading(false);
+    }
+  }, [getParcelByTracking]);
+
+  // Initial lookup on mount
+  useEffect(() => {
+    if (initialNum) {
+      executeLookup(initialNum);
+    }
+  }, [initialNum, executeLookup]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query) return;
-
-    setResult({
-      tracking: query.toUpperCase(),
-      courier: query.toUpperCase().startsWith("SPX")
-        ? "SPX Express"
-        : query.toUpperCase().startsWith("JT")
-        ? "J&T Express"
-        : "Flash Express",
-      recipient: "Juan Dela Cruz",
-      unit: "Unit 101 – Tower A",
-      status: "READY",
-      dateArrived: "Today • Just Received",
-      deadline: "3 Days from Today",
-      shelf: "Front Desk Sorting Bin",
-      holdingFee: "₱0.00 (Free)",
-    });
+    executeLookup(query);
   };
 
   return (
@@ -73,9 +65,10 @@ export default function TrackParcelPage() {
             placeholder="Enter tracking number (e.g. SPX-PH-2026-8921)..."
             className="input text-base font-mono uppercase flex-1"
             required
+            disabled={loading}
           />
-          <button type="submit" className="btn btn-primary sm:w-44 py-3">
-            TRACK PARCEL 🔍
+          <button type="submit" disabled={loading} className="btn btn-primary sm:w-44 py-3 font-bold uppercase">
+            {loading ? "SEARCHING..." : "TRACK PARCEL 🔍"}
           </button>
         </form>
 
@@ -83,7 +76,10 @@ export default function TrackParcelPage() {
           <span>Try Sample Numbers:</span>
           <button
             type="button"
-            onClick={() => setQuery("SPX-PH-2026-8921")}
+            onClick={() => {
+              setQuery("SPX-PH-2026-8921");
+              executeLookup("SPX-PH-2026-8921");
+            }}
             className="text-brand-red font-mono font-semibold hover:underline"
           >
             SPX-PH-2026-8921
@@ -91,7 +87,10 @@ export default function TrackParcelPage() {
           <span>•</span>
           <button
             type="button"
-            onClick={() => setQuery("JT-PH-9920148")}
+            onClick={() => {
+              setQuery("JT-PH-9920148");
+              executeLookup("JT-PH-9920148");
+            }}
             className="text-brand-red font-mono font-semibold hover:underline"
           >
             JT-PH-9920148
@@ -99,16 +98,30 @@ export default function TrackParcelPage() {
           <span>•</span>
           <button
             type="button"
-            onClick={() => setQuery("FL-2026-58190")}
+            onClick={() => {
+              setQuery("FL-2026-58190");
+              executeLookup("FL-2026-58190");
+            }}
             className="text-brand-red font-mono font-semibold hover:underline"
           >
             FL-2026-58190
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("SPX-PH-2026-7734");
+              executeLookup("SPX-PH-2026-7734");
+            }}
+            className="text-brand-red font-mono font-semibold hover:underline"
+          >
+            SPX-PH-2026-7734 (Claimed)
           </button>
         </div>
       </div>
 
       {/* Tracking Result Card */}
-      {result && (
+      {result ? (
         <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-lg animate-in fade-in">
           {/* Header Banner */}
           <div className="bg-gradient-to-r from-brand-black to-brand-dark text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -117,13 +130,25 @@ export default function TrackParcelPage() {
                 {result.courier}
               </span>
               <div className="font-mono text-xl sm:text-2xl font-black tracking-wide text-white">
-                {result.tracking}
+                {result.trackingNumber}
               </div>
             </div>
 
-            <span className="bg-[#107C41] text-white text-xs font-bold px-3 py-1 rounded-full uppercase self-start sm:self-auto flex items-center gap-1.5">
+            <span
+              className={`text-white text-xs font-bold px-3 py-1 rounded-full uppercase self-start sm:self-auto flex items-center gap-1.5 ${
+                result.status === "PICKED_UP"
+                  ? "bg-blue-600"
+                  : result.status === "OVERDUE"
+                  ? "bg-brand-red"
+                  : "bg-[#107C41]"
+              }`}
+            >
               <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              READY FOR PICKUP
+              {result.status === "PICKED_UP"
+                ? "CLAIMED / RELEASED"
+                : result.status === "OVERDUE"
+                ? "READY (OVERDUE)"
+                : "READY FOR PICKUP"}
             </span>
           </div>
 
@@ -132,18 +157,26 @@ export default function TrackParcelPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-1">
                 <span className="text-brand-text-muted uppercase font-bold text-[10px]">
-                  Intake Location
+                  Storage Slot / Status
                 </span>
                 <div className="font-bold text-sm text-brand-black">{result.shelf}</div>
-                <div className="text-brand-text-secondary">CK Condo Drop Hub • Ground Floor Lobby</div>
+                <div className="text-brand-text-secondary">CK Condo Drop Hub • Station 1 Front Desk</div>
               </div>
 
               <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-1">
                 <span className="text-brand-text-muted uppercase font-bold text-[10px]">
-                  Free Holding Period
+                  Holding Status & Fee
                 </span>
-                <div className="font-bold text-sm text-brand-black">{result.deadline}</div>
-                <div className="text-green-700 font-semibold">{result.holdingFee}</div>
+                <div className="font-bold text-sm text-brand-black">
+                  {result.status === "PICKED_UP" ? "Completed" : `Deadline: ${result.deadline}`}
+                </div>
+                <div
+                  className={`font-semibold ${
+                    result.status === "OVERDUE" ? "text-brand-red" : "text-green-700"
+                  }`}
+                >
+                  {result.holdingFee}
+                </div>
               </div>
             </div>
 
@@ -160,34 +193,70 @@ export default function TrackParcelPage() {
                   </span>
                   <span className="text-brand-text-secondary">{result.dateArrived}</span>
                   <p className="text-brand-text-muted mt-0.5">
-                    Scanned into inventory slot {result.shelf}. SMS notification dispatched.
+                    Logged into slot {result.shelf} for recipient unit {result.unit}.
                   </p>
                 </div>
 
-                <div className="relative">
-                  <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-gray-300 border-2 border-white" />
-                  <span className="font-semibold text-brand-text-secondary block">
-                    Awaiting Resident Pickup / Release
-                  </span>
-                  <span className="text-brand-text-muted">
-                    Show claim code to the receptionist on duty.
-                  </span>
-                </div>
+                {result.status === "PICKED_UP" ? (
+                  <div className="relative">
+                    <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white" />
+                    <span className="font-bold text-brand-black block">
+                      Picked Up & Released
+                    </span>
+                    <span className="text-brand-text-secondary">
+                      {result.claimedAt || "Released at Front Desk"}
+                    </span>
+                    <p className="text-brand-text-muted mt-0.5">
+                      Claimed by {result.claimedBy || "Resident"}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-yellow-500 border-2 border-white" />
+                    <span className="font-semibold text-brand-text-secondary block">
+                      Awaiting Resident Pickup / Release
+                    </span>
+                    <span className="text-brand-text-muted">
+                      Show claim code at the front desk to retrieve package.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Claim CTA */}
             <div className="pt-4 border-t border-brand-border flex flex-col sm:flex-row gap-3 items-center justify-between">
               <div className="text-xs text-brand-text-secondary">
-                Are you the recipient? View your claim code in your portal account.
+                Are you the recipient? View your claim passcode in your resident portal.
               </div>
-              <Link href="/login" className="btn btn-primary btn-sm whitespace-nowrap">
-                VIEW CLAIM CODE →
+              <Link href="/parcels" className="btn btn-primary btn-sm whitespace-nowrap font-bold uppercase">
+                GO TO MY PARCELS →
               </Link>
             </div>
           </div>
         </div>
-      )}
+      ) : searched ? (
+        <div className="bg-white rounded-2xl border border-brand-border p-8 text-center space-y-3 shadow-md">
+          <div className="text-4xl">🚚</div>
+          <h3 className="font-bold text-base text-brand-black">Package Not Yet Arrived at Drop Hub</h3>
+          <p className="text-xs text-brand-text-secondary max-w-md mx-auto">
+            No record found for tracking number <span className="font-mono font-bold text-brand-black">&quot;{query}&quot;</span> in the condominium hub storage. Your rider may still be in transit.
+          </p>
+          <div className="pt-2">
+            <Link href="/" className="btn btn-outline btn-sm">
+              Return to Homepage
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+export default function TrackParcelPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading parcel tracking...</div>}>
+      <TrackParcelContent />
+    </Suspense>
   );
 }

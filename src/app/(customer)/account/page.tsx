@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context";
 
 export default function MyAccountPage() {
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"details" | "password" | "notifications" | "delivery">("details");
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form states
-  const [fullName, setFullName] = useState("Juan Dela Cruz");
-  const [email, setEmail] = useState("juan.delacruz@example.com");
-  const [phone, setPhone] = useState("0917 123 4567");
-  const [unit, setUnit] = useState("Unit 101");
-  const [tower, setTower] = useState("Tower A");
+  const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
+  const [email, setEmail] = useState(user?.email || "juan.delacruz@example.com");
+  const [phone, setPhone] = useState(user?.phone || "0917 123 4567");
+  const [unit, setUnit] = useState(user?.unit || "Unit 101");
+  const [tower, setTower] = useState(user?.tower || "Tower A");
   const building = "CK Buildersville Condominium";
   const [authorizedClaimant, setAuthorizedClaimant] = useState("Maria Dela Cruz (Spouse)");
   const [claimantPhone, setClaimantPhone] = useState("0918 987 6543");
@@ -23,11 +27,54 @@ export default function MyAccountPage() {
   const [emailDigest, setEmailDigest] = useState(false);
   const [promoUpdates, setPromoUpdates] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  // Synchronize when active user changes (e.g. via demo switcher)
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name);
+      setEmail(user.email);
+      setPhone(user.phone);
+      if (user.unit) setUnit(user.unit);
+      if (user.tower) setTower(user.tower);
+    }
+  }, [user]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    setSaveError(null);
+    setIsSaving(true);
+
+    try {
+      await updateProfile({
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        unit: unit.trim(),
+        tower: tower.trim(),
+        authorizedClaimant: authorizedClaimant.trim(),
+        claimantPhone: claimantPhone.trim(),
+        notifications: {
+          smsArrival,
+          smsReminder,
+          emailDigest,
+          promoUpdates,
+        },
+      });
+
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const initials = fullName
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="space-y-6">
@@ -56,9 +103,20 @@ export default function MyAccountPage() {
       {savedSuccess && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between text-sm animate-in fade-in">
           <span className="flex items-center gap-2 font-medium">
-            ✅ Profile changes saved successfully!
+            ✅ Profile changes saved successfully to database!
           </span>
           <button onClick={() => setSavedSuccess(false)} className="text-green-600 hover:text-green-800">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between text-sm animate-in fade-in">
+          <span className="flex items-center gap-2 font-medium">
+            ⚠️ {saveError}
+          </span>
+          <button onClick={() => setSaveError(null)} className="text-red-600 hover:text-red-800">
             ✕
           </button>
         </div>
@@ -80,7 +138,7 @@ export default function MyAccountPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center gap-2 px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap cursor-pointer ${
                     activeTab === tab.id
                       ? "border-brand-red text-brand-red bg-white"
                       : "border-transparent text-brand-text-secondary hover:text-brand-text hover:bg-white/50"
@@ -108,8 +166,9 @@ export default function MyAccountPage() {
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="input"
+                        className="input w-full"
                         required
+                        disabled={isSaving}
                       />
                     </div>
                     <div>
@@ -120,8 +179,9 @@ export default function MyAccountPage() {
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="input"
+                        className="input w-full"
                         required
+                        disabled={isSaving}
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -132,8 +192,9 @@ export default function MyAccountPage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="input"
+                        className="input w-full"
                         required
+                        disabled={isSaving}
                       />
                     </div>
                   </div>
@@ -152,8 +213,9 @@ export default function MyAccountPage() {
                         type="text"
                         value={unit}
                         onChange={(e) => setUnit(e.target.value)}
-                        className="input"
+                        className="input w-full"
                         required
+                        disabled={isSaving}
                       />
                     </div>
                     <div>
@@ -164,8 +226,9 @@ export default function MyAccountPage() {
                         type="text"
                         value={tower}
                         onChange={(e) => setTower(e.target.value)}
-                        className="input"
+                        className="input w-full"
                         required
+                        disabled={isSaving}
                       />
                     </div>
                     <div>
@@ -174,9 +237,9 @@ export default function MyAccountPage() {
                       </label>
                       <input
                         type="text"
-                        value="CK-000123"
+                        value={user?.residentCode || "CK-000123"}
                         disabled
-                        className="input bg-brand-surface text-brand-text-muted cursor-not-allowed"
+                        className="input w-full bg-brand-surface text-brand-text-muted cursor-not-allowed font-mono"
                       />
                     </div>
                     <div className="md:col-span-3">
@@ -187,7 +250,7 @@ export default function MyAccountPage() {
                         type="text"
                         value={building}
                         disabled
-                        className="input bg-brand-surface text-brand-text-muted cursor-not-allowed"
+                        className="input w-full bg-brand-surface text-brand-text-muted cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -209,7 +272,8 @@ export default function MyAccountPage() {
                         type="text"
                         value={authorizedClaimant}
                         onChange={(e) => setAuthorizedClaimant(e.target.value)}
-                        className="input"
+                        className="input w-full"
+                        disabled={isSaving}
                       />
                     </div>
                     <div>
@@ -220,18 +284,20 @@ export default function MyAccountPage() {
                         type="tel"
                         value={claimantPhone}
                         onChange={(e) => setClaimantPhone(e.target.value)}
-                        className="input"
+                        className="input w-full"
+                        disabled={isSaving}
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-brand-border flex items-center justify-end gap-3">
-                  <button type="button" className="btn btn-outline btn-sm">
-                    CANCEL
-                  </button>
-                  <button type="submit" className="btn btn-primary btn-sm">
-                    SAVE CHANGES
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="btn btn-primary btn-sm font-bold uppercase"
+                  >
+                    {isSaving ? "Saving Changes..." : "SAVE CHANGES"}
                   </button>
                 </div>
               </form>
@@ -244,22 +310,22 @@ export default function MyAccountPage() {
                   <label className="block text-xs font-semibold text-brand-text mb-1">
                     Current Password
                   </label>
-                  <input type="password" placeholder="••••••••" className="input" required />
+                  <input type="password" placeholder="••••••••" className="input w-full" required />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-brand-text mb-1">
                     New Password
                   </label>
-                  <input type="password" placeholder="At least 8 characters" className="input" required />
+                  <input type="password" placeholder="At least 8 characters" className="input w-full" required />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-brand-text mb-1">
                     Confirm New Password
                   </label>
-                  <input type="password" placeholder="Repeat new password" className="input" required />
+                  <input type="password" placeholder="Repeat new password" className="input w-full" required />
                 </div>
                 <div className="pt-3">
-                  <button type="submit" className="btn btn-primary btn-sm">
+                  <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
                     UPDATE PASSWORD
                   </button>
                 </div>
@@ -279,7 +345,7 @@ export default function MyAccountPage() {
                     },
                     {
                       title: "Pickup Deadline Reminder",
-                      desc: "Alert 24 hours before the free 3-day holding period expires to avoid fees.",
+                      desc: "Alert 24 hours before the free holding period expires to avoid fees.",
                       checked: smsReminder,
                       setter: setSmsReminder,
                     },
@@ -315,7 +381,7 @@ export default function MyAccountPage() {
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} className="btn btn-primary btn-sm">
+                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
                     SAVE PREFERENCES
                   </button>
                 </div>
@@ -339,7 +405,7 @@ export default function MyAccountPage() {
                     <label className="block text-xs font-semibold text-brand-text mb-1">
                       Preferred Delivery Window
                     </label>
-                    <select className="input">
+                    <select className="input w-full cursor-pointer">
                       <option>Morning (10:00 AM - 12:00 PM)</option>
                       <option>Afternoon (2:00 PM - 5:00 PM)</option>
                       <option>Evening (6:00 PM - 8:30 PM)</option>
@@ -353,13 +419,13 @@ export default function MyAccountPage() {
                     <textarea
                       rows={3}
                       defaultValue="Please ring doorbell and place parcels on the shoe rack outside the unit if no response."
-                      className="input"
+                      className="input w-full"
                     />
                   </div>
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} className="btn btn-primary btn-sm">
+                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
                     SAVE DELIVERY INSTRUCTIONS
                   </button>
                 </div>
@@ -373,45 +439,45 @@ export default function MyAccountPage() {
           {/* Resident Identity Card */}
           <div className="bg-white border border-brand-border rounded-xl p-5 shadow-sm space-y-4 text-center">
             <div className="w-20 h-20 bg-brand-red text-white font-[family-name:var(--font-heading)] text-3xl font-bold rounded-full flex items-center justify-center mx-auto shadow-md">
-              JD
+              {initials}
             </div>
             <div>
               <h3 className="font-bold text-base text-brand-black">{fullName}</h3>
               <p className="text-xs text-brand-text-secondary">{email}</p>
               <div className="mt-2 inline-flex items-center gap-1.5 bg-brand-surface px-3 py-1 rounded-full border border-brand-border text-xs font-mono font-bold text-brand-red">
-                <span>PASSCODE:</span> CK-000123
+                <span>PASSCODE:</span> {user?.residentCode || "CK-000123"}
               </div>
             </div>
 
             <div className="pt-3 border-t border-brand-border text-left text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-brand-text-secondary">Unit / Tower:</span>
-                <span className="font-semibold text-brand-text">Unit 101, Tower A</span>
+                <span className="font-semibold text-brand-text">{unit}, {tower}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Member Since:</span>
-                <span className="font-semibold text-brand-text">January 2026</span>
+                <span className="text-brand-text-secondary">Membership Tier:</span>
+                <span className="font-semibold text-brand-red uppercase">{user?.plan || "PREMIUM"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Total Parcels Handled:</span>
-                <span className="font-semibold text-brand-red">42 Packages</span>
+                <span className="text-brand-text-secondary">Account Status:</span>
+                <span className="font-semibold text-green-700">● Active</span>
               </div>
             </div>
           </div>
 
           {/* Plan Upgrade Box */}
-          <div className="bg-[#FFFDF4] border-2 border-premium-gold/40 rounded-xl p-5 space-y-3">
+          <div className="bg-[#FFFDF4] border-2 border-amber-300/80 rounded-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-premium-gold tracking-wide">
+              <span className="text-xs font-black uppercase text-amber-800 tracking-wide">
                 MEMBERSHIP
               </span>
               <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 Active
               </span>
             </div>
-            <p className="text-sm font-bold text-brand-black">Premium Monthly Plan</p>
+            <p className="text-sm font-bold text-brand-black">{user?.plan || "PREMIUM"} Plan</p>
             <p className="text-xs text-brand-text-secondary">
-              Includes 7-day holding grace period & 5 door delivery credits each billing cycle.
+              Includes {user?.plan === "PREMIUM" ? "7" : "3"}-day holding grace period & concierge front desk handling.
             </p>
             <Link href="/membership" className="btn btn-outline btn-sm w-full text-center block">
               Manage Subscription

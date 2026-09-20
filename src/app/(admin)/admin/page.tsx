@@ -1,118 +1,150 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { RecentParcel } from "@/types";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useParcels } from "@/context";
+import { db } from "@/lib/db/local-store";
+import { ResidentProfile, Parcel } from "@/types";
 
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
+  const searchParams = useSearchParams();
+  const { parcels, logParcel, verifyClaimCode, releaseParcel, getParcelByTracking } = useParcels();
+
+  // Residents list for intake recipient selector
+  const [residents, setResidents] = useState<ResidentProfile[]>([]);
+
   // Receive workflow state
-  const [trackingInput, setTrackingInput] = useState("");
-  const [courier, setCourier] = useState("SPX Express");
-  const [recipient, setRecipient] = useState("Juan Dela Cruz (Unit 101)");
+  const initialTracking = searchParams.get("tracking") || "";
+  const initialCourier = searchParams.get("courier") || "SPX Express";
+
+  const [trackingInput, setTrackingInput] = useState(initialTracking);
+  const [courier, setCourier] = useState(initialCourier);
+  const [selectedResidentId, setSelectedResidentId] = useState("");
   const [shelf, setShelf] = useState("Shelf A-04");
-  const [parcelSize, setParcelSize] = useState("Small");
+  const [parcelSize, setParcelSize] = useState<"Small" | "Medium" | "Large" | "Oversize">("Small");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiveSuccess, setReceiveSuccess] = useState<string | null>(null);
+  const [receiveError, setReceiveError] = useState<string | null>(null);
 
   // Pickup workflow state
   const [pickupCodeInput, setPickupCodeInput] = useState("CK-8921");
-  const [verifiedResult, setVerifiedResult] = useState<{
-    name: string;
-    unit: string;
-    code: string;
-    tracking: string;
-    courier: string;
-    holdingFee: string;
-    status: string;
-  } | null>(null);
+  const [verifiedParcel, setVerifiedParcel] = useState<Parcel | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [isReleasing, setIsReleasing] = useState(false);
   const [pickupSuccess, setPickupSuccess] = useState<string | null>(null);
 
-  // Recent parcels list
-  const [recentParcels, setRecentParcels] = useState<RecentParcel[]>([
-    {
-      id: "r1",
-      tracking: "SPX-PH-2026-8921",
-      recipient: "Juan Dela Cruz",
-      unit: "Unit 101 - Tower A",
-      courier: "SPX Express",
-      time: "10:45 AM",
-      status: "READY",
-      shelf: "Shelf A-04",
-    },
-    {
-      id: "r2",
-      tracking: "JT-PH-9920148",
-      recipient: "Maria Santos",
-      unit: "Unit 304 - Tower B",
-      courier: "J&T Express",
-      time: "09:30 AM",
-      status: "READY",
-      shelf: "Shelf B-12",
-    },
-    {
-      id: "r3",
-      tracking: "FL-2026-58190",
-      recipient: "Robert Lim",
-      unit: "Unit 512 - Tower A",
-      courier: "Flash Express",
-      time: "Yesterday",
-      status: "OVERDUE",
-      shelf: "Shelf C-01",
-    },
-    {
-      id: "r4",
-      tracking: "SPX-PH-2026-7734",
-      recipient: "Angela Cruz",
-      unit: "Unit 202 - Tower C",
-      courier: "SPX Express",
-      time: "Yesterday",
-      status: "PICKED_UP",
-      shelf: "Released",
-    },
-  ]);
+  // Fetch residents on mount
+  useEffect(() => {
+    async function loadResidents() {
+      const res = await db.getAllResidents();
+      setResidents(res);
+      if (res.length > 0 && !selectedResidentId) {
+        setSelectedResidentId(res[0].id);
+      }
+    }
+    loadResidents();
+  }, [selectedResidentId]);
 
-  const handleReceiveSubmit = (e: React.FormEvent) => {
+  // Update tracking/courier if query params change (e.g. from scanner)
+  useEffect(() => {
+    const t = searchParams.get("tracking");
+    const c = searchParams.get("courier");
+    if (t) setTrackingInput(t);
+    if (c) setCourier(c);
+  }, [searchParams]);
+
+  // Compute live KPIs
+  const readyCount = parcels.filter((p) => p.status === "READY").length;
+  const overdueCount = parcels.filter((p) => p.status === "OVERDUE").length;
+  const activeInHub = readyCount + overdueCount;
+  const pickedUpCount = parcels.filter((p) => p.status === "PICKED_UP").length;
+  const registeredResidentsCount = residents.length;
+
+  const handleReceiveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackingInput) return;
+    setReceiveError(null);
+    setReceiveSuccess(null);
 
-    const newParcel: RecentParcel = {
-      id: `p-${Date.now()}`,
-      tracking: trackingInput,
-      recipient: recipient.split(" (")[0],
-      unit: recipient.split(" (")[1]?.replace(")", "") || "Unit 101",
-      courier,
-      time: "Just Now",
-      status: "READY",
-      shelf,
-    };
+    if (!trackingInput.trim()) {
+      setReceiveError("Please provide a tracking number or scan barcode.");
+      return;
+    }
 
-    setRecentParcels([newParcel, ...recentParcels]);
-    setReceiveSuccess(`Parcel ${trackingInput} logged to ${shelf}. SMS dispatched to resident!`);
-    setTrackingInput("");
-    setTimeout(() => setReceiveSuccess(null), 5000);
+    const resident = residents.find((r) => r.id === selectedResidentId);
+    if (!resident) {
+      setReceiveError("Please select a valid condo resident.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const newParcel = await logParcel({
+        trackingNumber: trackingInput.trim(),
+        courier,
+        residentId: resident.id,
+        residentName: resident.name,
+        unit: `${resident.unit} - ${resident.tower}`,
+        shelf,
+        size: parcelSize,
+        notes: notes.trim() || undefined,
+      });
+
+      setReceiveSuccess(
+        `Parcel ${newParcel.trackingNumber} successfully logged to ${newParcel.shelf}! Passcode [${newParcel.claimCode}] generated & SMS notification dispatched to ${resident.name}.`
+      );
+      setTrackingInput("");
+      setNotes("");
+    } catch (err: unknown) {
+      setReceiveError(err instanceof Error ? err.message : "Failed to log parcel");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleVerifyPickup = (e: React.FormEvent) => {
+  const handleVerifyPickup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pickupCodeInput) return;
+    setVerifyError(null);
+    setVerifiedParcel(null);
 
-    // Simulate verification
-    setVerifiedResult({
-      name: "Juan Dela Cruz",
-      unit: "Unit 101 – Tower A",
-      code: pickupCodeInput.toUpperCase(),
-      tracking: "SPX-PH-2026-8921",
-      courier: "SPX Express",
-      holdingFee: "₱0.00 (Within 3-Day Free Period)",
-      status: "AUTHORIZED FOR RELEASE",
-    });
+    const cleanInput = pickupCodeInput.trim();
+    if (!cleanInput) {
+      setVerifyError("Please enter a claim code or tracking number.");
+      return;
+    }
+
+    // Try claim code first
+    let found = await verifyClaimCode(cleanInput);
+    // If not found, try tracking number
+    if (!found) {
+      found = await getParcelByTracking(cleanInput);
+    }
+
+    if (found) {
+      if (found.status === "PICKED_UP") {
+        setVerifyError(`Parcel ${found.trackingNumber} was already released to ${found.claimedBy || "resident"} at ${found.claimedAt || "earlier"}.`);
+      } else {
+        setVerifiedParcel(found);
+      }
+    } else {
+      setVerifyError(`No active parcel found matching code "${cleanInput}". Please verify code with resident.`);
+    }
   };
 
-  const handleConfirmRelease = () => {
-    if (!verifiedResult) return;
-    setPickupSuccess(`Parcel ${verifiedResult.tracking} successfully released to ${verifiedResult.name}!`);
-    setVerifiedResult(null);
-    setPickupCodeInput("");
-    setTimeout(() => setPickupSuccess(null), 5000);
+  const handleConfirmRelease = async () => {
+    if (!verifiedParcel) return;
+    setIsReleasing(true);
+    try {
+      const released = await releaseParcel(verifiedParcel.id, verifiedParcel.residentName);
+      setPickupSuccess(`Parcel ${released.trackingNumber} successfully released to ${released.residentName}!`);
+      setVerifiedParcel(null);
+      setPickupCodeInput("");
+    } catch (err: unknown) {
+      setVerifyError(err instanceof Error ? err.message : "Failed to release parcel");
+    } finally {
+      setIsReleasing(false);
+    }
   };
 
   return (
@@ -149,31 +181,31 @@ export default function AdminDashboardPage() {
         <div className="bg-white border-l-4 border-l-[#107C41] border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              READY FOR PICKUP
+              ACTIVE IN HUB
             </span>
             <span className="text-xl">📦</span>
           </div>
           <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            28
+            {activeInHub}
           </div>
           <span className="text-[11px] text-[#107C41] font-semibold">
-            ● Active in Hub Storage
+            ● {readyCount} Ready • {overdueCount} Overdue
           </span>
         </div>
 
-        {/* Card 2: Picked Up Today */}
+        {/* Card 2: Picked Up */}
         <div className="bg-white border-l-4 border-l-blue-600 border border-brand-border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              PICKED UP TODAY
+              TOTAL RELEASED
             </span>
             <span className="text-xl">✅</span>
           </div>
           <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            45
+            {pickedUpCount}
           </div>
           <span className="text-[11px] text-blue-600 font-semibold">
-            +12% vs yesterday
+            Successfully claimed
           </span>
         </div>
 
@@ -186,10 +218,10 @@ export default function AdminDashboardPage() {
             <span className="text-xl">⚠️</span>
           </div>
           <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-red mt-2">
-            4
+            {overdueCount}
           </div>
           <span className="text-[11px] text-brand-red font-semibold">
-            Exceeded 3-Day Grace Period
+            {overdueCount > 0 ? "Subject to ₱10/day holding fee" : "All within grace period"}
           </span>
         </div>
 
@@ -202,10 +234,10 @@ export default function AdminDashboardPage() {
             <span className="text-xl">👥</span>
           </div>
           <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            312
+            {registeredResidentsCount}
           </div>
           <span className="text-[11px] text-brand-text-secondary font-semibold">
-            Across Tower A, B, C
+            Condo Units in Database
           </span>
         </div>
       </div>
@@ -213,15 +245,22 @@ export default function AdminDashboardPage() {
       {/* Notifications / Feedback */}
       {receiveSuccess && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
-          <span>✅ {receiveSuccess}</span>
-          <button onClick={() => setReceiveSuccess(null)} className="text-green-600 font-bold">✕</button>
+          <span className="font-medium">✅ {receiveSuccess}</span>
+          <button onClick={() => setReceiveSuccess(null)} className="text-green-600 font-bold ml-3">✕</button>
+        </div>
+      )}
+
+      {receiveError && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
+          <span className="font-medium">⚠️ {receiveError}</span>
+          <button onClick={() => setReceiveError(null)} className="text-red-600 font-bold ml-3">✕</button>
         </div>
       )}
 
       {pickupSuccess && (
         <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
-          <span>🎉 {pickupSuccess}</span>
-          <button onClick={() => setPickupSuccess(null)} className="text-blue-600 font-bold">✕</button>
+          <span className="font-medium">🎉 {pickupSuccess}</span>
+          <button onClick={() => setPickupSuccess(null)} className="text-blue-600 font-bold ml-3">✕</button>
         </div>
       )}
 
@@ -245,7 +284,7 @@ export default function AdminDashboardPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                  Tracking Number / Barcode
+                  Tracking Number / Barcode <span className="text-brand-red">*</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -253,8 +292,9 @@ export default function AdminDashboardPage() {
                     placeholder="Scan courier label or type number..."
                     value={trackingInput}
                     onChange={(e) => setTrackingInput(e.target.value)}
-                    className="input font-mono uppercase"
+                    className="input font-mono uppercase w-full"
                     required
+                    disabled={isSubmitting}
                   />
                   <Link
                     href="/admin/scanner"
@@ -274,14 +314,16 @@ export default function AdminDashboardPage() {
                   <select
                     value={courier}
                     onChange={(e) => setCourier(e.target.value)}
-                    className="input text-xs"
+                    className="input text-xs w-full cursor-pointer"
+                    disabled={isSubmitting}
                   >
-                    <option>SPX Express</option>
-                    <option>J&T Express</option>
-                    <option>Flash Express</option>
-                    <option>Lalamove</option>
-                    <option>GrabExpress</option>
-                    <option>Other / Unlisted</option>
+                    <option value="SPX Express">SPX Express</option>
+                    <option value="J&T Express">J&T Express</option>
+                    <option value="Flash Express">Flash Express</option>
+                    <option value="LBC Express">LBC Express</option>
+                    <option value="Ninja Van">Ninja Van</option>
+                    <option value="Lalamove">Lalamove</option>
+                    <option value="GrabExpress">GrabExpress</option>
                   </select>
                 </div>
 
@@ -291,13 +333,14 @@ export default function AdminDashboardPage() {
                   </label>
                   <select
                     value={parcelSize}
-                    onChange={(e) => setParcelSize(e.target.value)}
-                    className="input text-xs"
+                    onChange={(e) => setParcelSize(e.target.value as typeof parcelSize)}
+                    className="input text-xs w-full cursor-pointer"
+                    disabled={isSubmitting}
                   >
-                    <option>Small (Pouch / Envelopes)</option>
-                    <option>Medium (Shoebox size)</option>
-                    <option>Large (Heavy Box)</option>
-                    <option>Oversize / Bulky</option>
+                    <option value="Small">Small (Pouch / Envelopes)</option>
+                    <option value="Medium">Medium (Shoebox size)</option>
+                    <option value="Large">Large (Heavy Box)</option>
+                    <option value="Oversize">Oversize / Bulky</option>
                   </select>
                 </div>
               </div>
@@ -305,18 +348,19 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                    Resident Recipient
+                    Resident Recipient <span className="text-brand-red">*</span>
                   </label>
                   <select
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    className="input text-xs"
+                    value={selectedResidentId}
+                    onChange={(e) => setSelectedResidentId(e.target.value)}
+                    className="input text-xs w-full cursor-pointer"
+                    disabled={isSubmitting}
                   >
-                    <option>Juan Dela Cruz (Unit 101)</option>
-                    <option>Maria Santos (Unit 304)</option>
-                    <option>Robert Lim (Unit 512)</option>
-                    <option>Angela Cruz (Unit 202)</option>
-                    <option>David Tan (Unit 808)</option>
+                    {residents.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.unit} - {r.tower})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -327,21 +371,31 @@ export default function AdminDashboardPage() {
                   <select
                     value={shelf}
                     onChange={(e) => setShelf(e.target.value)}
-                    className="input text-xs"
+                    className="input text-xs w-full cursor-pointer"
+                    disabled={isSubmitting}
                   >
-                    <option>Shelf A-01</option>
-                    <option>Shelf A-04</option>
-                    <option>Shelf B-12</option>
-                    <option>Shelf C-01</option>
-                    <option>Oversize Area (Floor)</option>
+                    <option value="Shelf A-01">Shelf A-01</option>
+                    <option value="Shelf A-04">Shelf A-04</option>
+                    <option value="Shelf B-02">Shelf B-02</option>
+                    <option value="Shelf B-12">Shelf B-12</option>
+                    <option value="Shelf C-01">Shelf C-01</option>
+                    <option value="Oversize Area (Floor)">Oversize Area (Floor)</option>
                   </select>
                 </div>
               </div>
             </div>
 
             <div className="pt-4 border-t border-brand-border">
-              <button type="submit" className="btn btn-primary w-full py-3">
-                LOG PARCEL & SEND SMS NOTIFICATION 📲
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn btn-primary w-full py-3 font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <span>Logging to Inventory...</span>
+                ) : (
+                  <span>LOG PARCEL & SEND SMS NOTIFICATION 📲</span>
+                )}
               </button>
             </div>
           </form>
@@ -372,53 +426,71 @@ export default function AdminDashboardPage() {
                     type="text"
                     placeholder="e.g. CK-8921 or tracking #..."
                     value={pickupCodeInput}
-                    onChange={(e) => setPickupCodeInput(e.target.value)}
-                    className="input font-mono uppercase"
+                    onChange={(e) => {
+                      setPickupCodeInput(e.target.value);
+                      if (verifyError) setVerifyError(null);
+                    }}
+                    className="input font-mono uppercase w-full"
                     required
                   />
-                  <button type="submit" className="btn btn-primary btn-sm shrink-0">
+                  <button type="submit" className="btn btn-primary btn-sm shrink-0 font-bold uppercase">
                     VERIFY CODE
                   </button>
                 </div>
               </form>
 
+              {verifyError && (
+                <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {verifyError}
+                </div>
+              )}
+
               {/* Verification Result Box */}
-              {verifiedResult ? (
+              {verifiedParcel ? (
                 <div className="mt-4 p-4 rounded-xl border-2 border-green-500 bg-green-50/50 space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded uppercase">
-                      ✓ {verifiedResult.status}
+                      ✓ AUTHORIZED FOR RELEASE
                     </span>
                     <span className="text-xs font-mono font-bold text-brand-black">
-                      Code: {verifiedResult.code}
+                      Code: {verifiedParcel.claimCode}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-brand-text-secondary block">Resident Name:</span>
-                      <strong className="text-brand-black text-sm">{verifiedResult.name}</strong>
+                      <strong className="text-brand-black text-sm">{verifiedParcel.residentName}</strong>
                     </div>
                     <div>
                       <span className="text-brand-text-secondary block">Condo Unit:</span>
-                      <strong className="text-brand-black text-sm">{verifiedResult.unit}</strong>
+                      <strong className="text-brand-black text-sm">{verifiedParcel.unit}</strong>
                     </div>
                     <div>
                       <span className="text-brand-text-secondary block">Package Matched:</span>
-                      <span className="font-mono text-brand-black">{verifiedResult.tracking}</span>
+                      <span className="font-mono text-brand-black">{verifiedParcel.trackingNumber}</span>
                     </div>
                     <div>
-                      <span className="text-brand-text-secondary block">Holding Fee Due:</span>
-                      <span className="font-bold text-green-700">{verifiedResult.holdingFee}</span>
+                      <span className="text-brand-text-secondary block">Holding Status:</span>
+                      <span className="font-bold text-green-700">{verifiedParcel.holdingFee}</span>
+                    </div>
+                    <div>
+                      <span className="text-brand-text-secondary block">Assigned Shelf:</span>
+                      <strong className="text-brand-black">{verifiedParcel.shelf}</strong>
+                    </div>
+                    <div>
+                      <span className="text-brand-text-secondary block">Courier:</span>
+                      <span className="text-brand-text font-semibold">{verifiedParcel.courier}</span>
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-green-200">
                     <button
                       onClick={handleConfirmRelease}
-                      className="btn btn-primary btn-sm w-full !bg-green-700 hover:!bg-green-800"
+                      disabled={isReleasing}
+                      className="btn btn-primary btn-sm w-full !bg-green-700 hover:!bg-green-800 font-bold uppercase tracking-wider"
                     >
-                      CONFIRM RELEASE TO RESIDENT ✓
+                      {isReleasing ? "Releasing..." : "CONFIRM RELEASE TO RESIDENT ✓"}
                     </button>
                   </div>
                 </div>
@@ -453,9 +525,9 @@ export default function AdminDashboardPage() {
                 RECENT PARCELS ACTIVITY
               </h3>
             </div>
-            <Link href="/admin/parcels" className="text-xs font-bold text-brand-red hover:underline">
-              View All Parcels →
-            </Link>
+            <span className="text-xs text-brand-text-secondary font-medium">
+              Live database stream ({parcels.length} total)
+            </span>
           </div>
 
           <div className="overflow-x-auto">
@@ -467,17 +539,17 @@ export default function AdminDashboardPage() {
                   <th className="px-4 py-3">Courier</th>
                   <th className="px-4 py-3">Shelf</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Time</th>
+                  <th className="px-4 py-3 text-right">Claim Code</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
-                {recentParcels.map((parcel) => (
+                {parcels.slice(0, 10).map((parcel) => (
                   <tr key={parcel.id} className="hover:bg-brand-surface/60 transition-colors">
                     <td className="px-4 py-3 font-mono font-semibold text-brand-black">
-                      {parcel.tracking}
+                      {parcel.trackingNumber}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-brand-text">{parcel.recipient}</div>
+                      <div className="font-semibold text-brand-text">{parcel.residentName}</div>
                       <div className="text-[10px] text-brand-text-secondary">{parcel.unit}</div>
                     </td>
                     <td className="px-4 py-3">{parcel.courier}</td>
@@ -495,8 +567,8 @@ export default function AdminDashboardPage() {
                         {parcel.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-brand-text-secondary">
-                      {parcel.time}
+                    <td className="px-4 py-3 text-right font-mono font-bold text-brand-red">
+                      {parcel.claimCode}
                     </td>
                   </tr>
                 ))}
@@ -515,10 +587,15 @@ export default function AdminDashboardPage() {
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-brand-text-secondary">Hub Storage Capacity:</span>
-                <span className="font-bold text-brand-black">68% (136/200 Slots)</span>
+                <span className="font-bold text-brand-black">
+                  {Math.round((activeInHub / 200) * 100)}% ({activeInHub}/200 Slots)
+                </span>
               </div>
               <div className="w-full bg-brand-surface rounded-full h-2">
-                <div className="bg-brand-red h-2 rounded-full w-[68%]" />
+                <div
+                  className="bg-brand-red h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((activeInHub / 200) * 100))}%` }}
+                />
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-brand-border">
@@ -529,9 +606,9 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-brand-text-secondary">SMS Gateway (Semaphore):</span>
+                <span className="text-brand-text-secondary">Storage Engine:</span>
                 <span className="font-bold text-green-600 flex items-center gap-1">
-                  ● Operational
+                  ● Live Browser Store (Reactive)
                 </span>
               </div>
 
@@ -562,21 +639,29 @@ export default function AdminDashboardPage() {
                 👥 Customers
               </Link>
               <Link
-                href="/admin/reports"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
-              >
-                📊 Reports
-              </Link>
-              <Link
                 href="/track"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
               >
                 🔍 Tracking
+              </Link>
+              <Link
+                href="/parcels"
+                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
+              >
+                📦 Resident View
               </Link>
             </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading hub station...</div>}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }

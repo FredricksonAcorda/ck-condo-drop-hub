@@ -3,84 +3,23 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Parcel } from "@/types";
-
-const readyParcels: Parcel[] = [
-  {
-    id: "p1",
-    trackingNumber: "SPX-PH-2026-8921",
-    courier: "SPX Express",
-    courierColor: "#EE4D2D",
-    dateArrived: "Sept 18, 2026 • 10:45 AM",
-    deadline: "Sept 21, 2026",
-    holdingFee: "₱0.00 (Free)",
-    status: "READY",
-    shelf: "Shelf A-04",
-    claimCode: "CK-8921",
-  },
-  {
-    id: "p2",
-    trackingNumber: "JT-PH-9920148",
-    courier: "J&T Express",
-    courierColor: "#D21F1F",
-    dateArrived: "Sept 19, 2026 • 02:15 PM",
-    deadline: "Sept 22, 2026",
-    holdingFee: "₱0.00 (Free)",
-    status: "READY",
-    shelf: "Shelf B-12",
-    claimCode: "CK-0148",
-  },
-  {
-    id: "p3",
-    trackingNumber: "FL-2026-58190",
-    courier: "Flash Express",
-    courierColor: "#FFB800",
-    dateArrived: "Sept 16, 2026 • 11:30 AM",
-    deadline: "Sept 19, 2026 (Overdue)",
-    holdingFee: "₱10.00 (1 Day)",
-    status: "OVERDUE",
-    shelf: "Shelf C-01",
-    claimCode: "CK-8190",
-  },
-];
-
-const parcelHistory = [
-  {
-    trackingNumber: "SPX-PH-2026-7734",
-    courier: "SPX Express",
-    dateClaimed: "Sept 15, 2026 • 05:20 PM",
-    claimedBy: "Juan Dela Cruz (Self)",
-    status: "PICKED UP",
-    fee: "₱0.00",
-  },
-  {
-    trackingNumber: "JT-PH-8830112",
-    courier: "J&T Express",
-    dateClaimed: "Sept 12, 2026 • 07:10 PM",
-    claimedBy: "Maria Dela Cruz (Authorized)",
-    status: "DELIVERED (DOOR)",
-    fee: "Free (Plan)",
-  },
-  {
-    trackingNumber: "LAL-PH-449102",
-    courier: "Lalamove",
-    dateClaimed: "Sept 08, 2026 • 01:45 PM",
-    claimedBy: "Juan Dela Cruz (Self)",
-    status: "PICKED UP",
-    fee: "₱0.00",
-  },
-  {
-    trackingNumber: "FL-2026-44019",
-    courier: "Flash Express",
-    dateClaimed: "Aug 30, 2026 • 04:30 PM",
-    claimedBy: "Juan Dela Cruz (Self)",
-    status: "PICKED UP",
-    fee: "₱0.00",
-  },
-];
+import { useAuth, useParcels } from "@/context";
 
 export default function MyParcelsPage() {
+  const { user } = useAuth();
+  const { parcels, loading } = useParcels();
   const [selectedClaimParcel, setSelectedClaimParcel] = useState<Parcel | null>(null);
   const [filter, setFilter] = useState<"ALL" | "READY" | "HISTORY">("ALL");
+
+  // Filter parcels for the current user
+  const userParcels = parcels.filter(
+    (p) => p.residentId === user?.id || (user?.name && p.residentName.toLowerCase() === user.name.toLowerCase())
+  );
+
+  const readyParcels = userParcels.filter((p) => p.status === "READY" || p.status === "OVERDUE");
+  const historyParcels = userParcels.filter((p) => p.status === "PICKED_UP");
+
+  const freeHoldingDays = user?.plan === "PREMIUM" ? 7 : 3;
 
   return (
     <div className="space-y-6">
@@ -102,12 +41,14 @@ export default function MyParcelsPage() {
           <Link href="/track" className="btn btn-outline btn-sm">
             🔍 Track by Number
           </Link>
-          <button
-            onClick={() => setSelectedClaimParcel(readyParcels[0])}
-            className="btn btn-primary btn-sm"
-          >
-            Show Pickup QR
-          </button>
+          {readyParcels.length > 0 && (
+            <button
+              onClick={() => setSelectedClaimParcel(readyParcels[0])}
+              className="btn btn-primary btn-sm font-bold uppercase"
+            >
+              Show Pickup QR
+            </button>
+          )}
         </div>
       </div>
 
@@ -117,13 +58,17 @@ export default function MyParcelsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-4 py-2 rounded-lg transition-colors cursor-pointer ${
               filter === f
                 ? "bg-brand-red text-white shadow-sm"
                 : "text-brand-text-secondary hover:text-brand-black"
             }`}
           >
-            {f === "ALL" ? "All Parcels" : f === "READY" ? "Ready for Pickup" : "Past History"}
+            {f === "ALL"
+              ? `All Parcels (${userParcels.length})`
+              : f === "READY"
+              ? `Ready for Pickup (${readyParcels.length})`
+              : `Past History (${historyParcels.length})`}
           </button>
         ))}
       </div>
@@ -134,272 +79,293 @@ export default function MyParcelsPage() {
         <div className="xl:col-span-2 space-y-6">
           {/* Section 1: Ready for Pickup Card */}
           {filter !== "HISTORY" && (
-          <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
-            {/* Card Header with Green Accent */}
-            <div className="bg-[#107C41] text-white px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">✅</span>
-                <div>
-                  <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
-                    READY FOR PICKUP ({readyParcels.length} PARCELS)
-                  </h2>
-                  <p className="text-xs text-white/80">
-                    Located at Station 1 • Front Reception Desk
+            <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
+              {/* Card Header with Green Accent */}
+              <div className="bg-[#107C41] text-white px-5 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
+                      READY FOR PICKUP ({readyParcels.length} PARCEL{readyParcels.length === 1 ? "" : "S"})
+                    </h2>
+                    <p className="text-xs text-white/80">
+                      Located at Station 1 • Front Reception Desk
+                    </p>
+                  </div>
+                </div>
+                <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-bold">
+                  Hub Hours: 8 AM - 9 PM
+                </span>
+              </div>
+
+              {/* Policy Notice */}
+              <div className="bg-brand-red-bg px-5 py-2.5 border-b border-brand-red-light/30 flex items-center gap-2 text-xs text-brand-red font-medium">
+                <span>⚠️</span>
+                <span>
+                  Your plan grants {freeHoldingDays} days free holding. Overdue parcels incur ₱10.00/day holding fee after deadline.
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="p-8 text-center text-xs text-brand-text-secondary">
+                  Loading incoming parcels...
+                </div>
+              ) : readyParcels.length === 0 ? (
+                <div className="p-8 text-center space-y-2">
+                  <div className="text-3xl">📭</div>
+                  <p className="text-sm font-bold text-brand-black">No parcels currently awaiting pickup</p>
+                  <p className="text-xs text-brand-text-secondary max-w-sm mx-auto">
+                    When a delivery rider arrives at the condo, your package will be registered here and an SMS notification will be sent.
                   </p>
                 </div>
-              </div>
-              <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-bold">
-                Hub Hours: 8 AM - 9 PM
-              </span>
-            </div>
+              ) : (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-brand-surface text-brand-text-secondary text-xs uppercase border-b border-brand-border">
+                        <tr>
+                          <th className="px-4 py-3">Tracking & Courier</th>
+                          <th className="px-4 py-3">Arrival Date</th>
+                          <th className="px-4 py-3">Pickup Deadline</th>
+                          <th className="px-4 py-3">Holding Status</th>
+                          <th className="px-4 py-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-brand-border">
+                        {readyParcels.map((parcel) => (
+                          <tr key={parcel.id} className="hover:bg-brand-surface/60 transition-colors">
+                            <td className="px-4 py-3.5">
+                              <div className="font-semibold text-brand-black">{parcel.trackingNumber}</div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span
+                                  className="inline-block w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: parcel.courierColor }}
+                                />
+                                <span className="text-xs text-brand-text-secondary">{parcel.courier}</span>
+                                <span className="text-[10px] bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border text-brand-text-muted">
+                                  {parcel.shelf}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-brand-text-secondary">
+                              {parcel.dateArrived}
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <span
+                                className={`text-xs font-semibold ${
+                                  parcel.status === "OVERDUE"
+                                    ? "text-brand-red font-bold"
+                                    : "text-brand-text"
+                                }`}
+                              >
+                                {parcel.deadline}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                  parcel.status === "OVERDUE"
+                                    ? "bg-brand-red-light text-brand-red"
+                                    : "bg-green-50 text-green-700"
+                                }`}
+                              >
+                                {parcel.holdingFee}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-right">
+                              <button
+                                onClick={() => setSelectedClaimParcel(parcel)}
+                                className="btn btn-primary btn-sm font-bold uppercase"
+                              >
+                                CLAIM CODE
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-            {/* Policy Notice */}
-            <div className="bg-brand-red-bg px-5 py-2.5 border-b border-brand-red-light/30 flex items-center gap-2 text-xs text-brand-red font-medium">
-              <span>⚠️</span>
-              <span>
-                Free holding period is 3 days. Overdue parcels incur ₱10.00/day holding fee after deadline.
-              </span>
-            </div>
-
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-brand-surface text-brand-text-secondary text-xs uppercase border-b border-brand-border">
-                  <tr>
-                    <th className="px-4 py-3">Tracking & Courier</th>
-                    <th className="px-4 py-3">Arrival Date</th>
-                    <th className="px-4 py-3">Pickup Deadline</th>
-                    <th className="px-4 py-3">Holding Fee</th>
-                    <th className="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-border">
-                  {readyParcels.map((parcel) => (
-                    <tr key={parcel.id} className="hover:bg-brand-surface/60 transition-colors">
-                      <td className="px-4 py-3.5">
-                        <div className="font-semibold text-brand-black">{parcel.trackingNumber}</div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                  {/* Mobile Card Stack */}
+                  <div className="md:hidden divide-y divide-brand-border">
+                    {readyParcels.map((parcel) => (
+                      <div key={parcel.id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-bold text-sm text-brand-black">{parcel.trackingNumber}</span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: parcel.courierColor }}
+                              />
+                              <span className="text-xs text-brand-text-secondary">{parcel.courier}</span>
+                              <span className="text-[10px] bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border">
+                                {parcel.shelf}
+                              </span>
+                            </div>
+                          </div>
                           <span
-                            className="inline-block w-2 h-2 rounded-full"
-                            style={{ backgroundColor: parcel.courierColor }}
-                          />
-                          <span className="text-xs text-brand-text-secondary">{parcel.courier}</span>
-                          <span className="text-[10px] bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border text-brand-text-muted">
-                            {parcel.shelf}
+                            className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                              parcel.status === "OVERDUE"
+                                ? "bg-brand-red-light text-brand-red"
+                                : "bg-green-50 text-green-700"
+                            }`}
+                          >
+                            {parcel.holdingFee}
                           </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-brand-text-secondary">
-                        {parcel.dateArrived}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`text-xs font-semibold ${
-                            parcel.status === "OVERDUE"
-                              ? "text-brand-red font-bold"
-                              : "text-brand-text"
-                          }`}
-                        >
-                          {parcel.deadline}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                            parcel.status === "OVERDUE"
-                              ? "bg-brand-red-light text-brand-red"
-                              : "bg-green-50 text-green-700"
-                          }`}
-                        >
-                          {parcel.holdingFee}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
+
+                        <div className="grid grid-cols-2 gap-2 text-xs bg-brand-surface p-2.5 rounded-lg">
+                          <div>
+                            <span className="text-brand-text-muted block">Arrived:</span>
+                            <span className="font-medium text-brand-text">{parcel.dateArrived}</span>
+                          </div>
+                          <div>
+                            <span className="text-brand-text-muted block">Deadline:</span>
+                            <span
+                              className={`font-medium ${
+                                parcel.status === "OVERDUE" ? "text-brand-red font-bold" : "text-brand-text"
+                              }`}
+                            >
+                              {parcel.deadline}
+                            </span>
+                          </div>
+                        </div>
+
                         <button
                           onClick={() => setSelectedClaimParcel(parcel)}
-                          className="btn btn-primary btn-sm"
+                          className="btn btn-primary btn-sm w-full font-bold uppercase"
                         >
-                          CLAIM CODE
+                          VIEW CLAIM CODE & QR
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card Stack */}
-            <div className="md:hidden divide-y divide-brand-border">
-              {readyParcels.map((parcel) => (
-                <div key={parcel.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-bold text-sm text-brand-black">{parcel.trackingNumber}</span>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: parcel.courierColor }}
-                        />
-                        <span className="text-xs text-brand-text-secondary">{parcel.courier}</span>
-                        <span className="text-[10px] bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border">
-                          {parcel.shelf}
-                        </span>
                       </div>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        parcel.status === "OVERDUE"
-                          ? "bg-brand-red-light text-brand-red"
-                          : "bg-green-50 text-green-700"
-                      }`}
-                    >
-                      {parcel.holdingFee}
-                    </span>
+                    ))}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-brand-surface p-2.5 rounded-lg">
-                    <div>
-                      <span className="text-brand-text-muted block">Arrived:</span>
-                      <span className="font-medium text-brand-text">{parcel.dateArrived}</span>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-muted block">Deadline:</span>
-                      <span
-                        className={`font-medium ${
-                          parcel.status === "OVERDUE" ? "text-brand-red font-bold" : "text-brand-text"
-                        }`}
-                      >
-                        {parcel.deadline}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedClaimParcel(parcel)}
-                    className="btn btn-primary btn-sm w-full"
-                  >
-                    VIEW CLAIM CODE & QR
-                  </button>
-                </div>
-              ))}
+                </>
+              )}
             </div>
-          </div>
           )}
 
           {/* Section 2: Parcel History Table */}
           {filter !== "READY" && (
-          <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
-            <div className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📜</span>
-                <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-brand-black">
-                  PARCEL HISTORY & LOGS
-                </h2>
-              </div>
-              <span className="text-xs text-brand-text-secondary">Showing last 30 days</span>
-            </div>
-
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-brand-surface text-brand-text-secondary text-xs uppercase border-b border-brand-border">
-                  <tr>
-                    <th className="px-4 py-3">Tracking Number</th>
-                    <th className="px-4 py-3">Courier</th>
-                    <th className="px-4 py-3">Date Claimed</th>
-                    <th className="px-4 py-3">Claimed By</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-border">
-                  {parcelHistory.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-brand-surface/60 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-brand-black">{item.trackingNumber}</td>
-                      <td className="px-4 py-3 text-xs text-brand-text-secondary">{item.courier}</td>
-                      <td className="px-4 py-3 text-xs text-brand-text-secondary">{item.dateClaimed}</td>
-                      <td className="px-4 py-3 text-xs font-medium text-brand-text">{item.claimedBy}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-[11px] bg-brand-surface text-brand-text font-bold px-2 py-0.5 rounded border border-brand-border">
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button className="text-brand-red text-xs font-semibold hover:underline">
-                          View Receipt
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile History Stack */}
-            <div className="md:hidden divide-y divide-brand-border">
-              {parcelHistory.map((item, idx) => (
-                <div key={idx} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-bold text-sm text-brand-black">{item.trackingNumber}</span>
-                      <p className="text-xs text-brand-text-secondary">{item.courier}</p>
-                    </div>
-                    <span className="text-[10px] bg-brand-surface text-brand-text font-bold px-2 py-0.5 rounded border border-brand-border">
-                      {item.status}
-                    </span>
-                  </div>
-                  <div className="text-xs text-brand-text-secondary">
-                    <span>Claimed: {item.dateClaimed} by </span>
-                    <span className="font-semibold text-brand-text">{item.claimedBy}</span>
-                  </div>
-                  <button className="text-brand-red text-xs font-semibold hover:underline pt-1">
-                    View Receipt →
-                  </button>
+            <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
+              <div className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📜</span>
+                  <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-brand-black">
+                    PARCEL HISTORY & LOGS
+                  </h2>
                 </div>
-              ))}
+                <span className="text-xs text-brand-text-secondary">
+                  {historyParcels.length} completed pick-ups
+                </span>
+              </div>
+
+              {historyParcels.length === 0 ? (
+                <div className="p-8 text-center text-xs text-brand-text-secondary">
+                  No completed pick-ups recorded yet.
+                </div>
+              ) : (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-brand-surface text-brand-text-secondary text-xs uppercase border-b border-brand-border">
+                        <tr>
+                          <th className="px-4 py-3">Tracking Number</th>
+                          <th className="px-4 py-3">Courier</th>
+                          <th className="px-4 py-3">Date Claimed</th>
+                          <th className="px-4 py-3">Claimed By</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3 text-right">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-brand-border">
+                        {historyParcels.map((item) => (
+                          <tr key={item.id} className="hover:bg-brand-surface/60 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-brand-black">{item.trackingNumber}</td>
+                            <td className="px-4 py-3 text-xs text-brand-text-secondary">{item.courier}</td>
+                            <td className="px-4 py-3 text-xs text-brand-text-secondary">{item.claimedAt || item.dateArrived}</td>
+                            <td className="px-4 py-3 text-xs font-medium text-brand-text">{item.claimedBy || "Resident"}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">
+                                PICKED UP
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="text-brand-red text-xs font-semibold">
+                                ✓ Verified
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile History Stack */}
+                  <div className="md:hidden divide-y divide-brand-border">
+                    {historyParcels.map((item) => (
+                      <div key={item.id} className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-bold text-sm text-brand-black">{item.trackingNumber}</span>
+                            <p className="text-xs text-brand-text-secondary">{item.courier}</p>
+                          </div>
+                          <span className="text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">
+                            PICKED UP
+                          </span>
+                        </div>
+                        <div className="text-xs text-brand-text-secondary">
+                          <span>Claimed: {item.claimedAt || item.dateArrived} by </span>
+                          <span className="font-semibold text-brand-text">{item.claimedBy || "Resident"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-          </div>
           )}
         </div>
 
         {/* Right Rail: Membership Status, Plan Perks, Payment Marks */}
         <div className="space-y-6">
           {/* Membership Status Card (Golden / Cream) */}
-          <div className="bg-[#FFFDF4] border-2 border-premium-gold/40 rounded-xl p-5 shadow-sm space-y-4">
+          <div className="bg-[#FFFDF4] border-2 border-amber-300/80 rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <span className="bg-premium-gold text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="bg-amber-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 ACTIVE PLAN
               </span>
-              <span className="text-xs text-premium-gold font-bold">Expires: Oct 25, 2026</span>
+              <span className="text-xs text-amber-800 font-bold">Auto-Renews Monthly</span>
             </div>
 
             <div>
               <h3 className="font-[family-name:var(--font-heading)] text-2xl text-brand-black">
-                PREMIUM <span className="text-brand-red">DROP HUB</span> PLAN
+                {user?.plan || "PREMIUM"} <span className="text-brand-red">DROP HUB</span> PLAN
               </h3>
               <p className="text-xs text-brand-text-secondary mt-0.5">
-                Full concierge parcel handling with doorstep delivery credits.
+                Full concierge parcel handling with doorstep delivery options.
               </p>
             </div>
 
             {/* Progress / Quota */}
-            <div className="space-y-2 pt-2 border-t border-premium-gold/20">
+            <div className="space-y-2 pt-2 border-t border-amber-200">
               <div className="flex justify-between text-xs">
-                <span className="text-brand-text-secondary">Door Delivery Credits:</span>
-                <span className="font-bold text-brand-black">2 of 5 remaining</span>
-              </div>
-              <div className="w-full bg-premium-gold/20 rounded-full h-2">
-                <div className="bg-premium-gold h-2 rounded-full w-[60%]" />
-              </div>
-
-              <div className="flex justify-between text-xs pt-1">
                 <span className="text-brand-text-secondary">Holding Period Allowance:</span>
-                <span className="font-bold text-green-700">7 Days Free</span>
+                <span className="font-bold text-green-700">{freeHoldingDays} Days Free</span>
+              </div>
+              <div className="flex justify-between text-xs pt-1">
+                <span className="text-brand-text-secondary">Door Delivery Credits:</span>
+                <span className="font-bold text-brand-black">
+                  {user?.plan === "PREMIUM" ? "2 of 5 remaining" : "Pay per request"}
+                </span>
               </div>
             </div>
 
             <div className="pt-2">
-              <Link href="/membership" className="btn btn-outline btn-sm w-full text-center">
+              <Link href="/membership" className="btn btn-outline btn-sm w-full text-center block">
                 UPGRADE / RENEW PLAN
               </Link>
             </div>
@@ -414,9 +380,9 @@ export default function MyParcelsPage() {
               </h3>
             </div>
             <p className="text-xs text-brand-text-secondary">
-              Busy or not at home? Have the reception team deliver your ready parcels directly to Unit 101.
+              Busy or not at home? Have the reception team deliver your ready parcels directly to {user?.unit || "your unit"}.
             </p>
-            <button className="btn btn-primary btn-sm w-full">
+            <button className="btn btn-primary btn-sm w-full font-bold uppercase">
               SCHEDULE DOOR DELIVERY
             </button>
           </div>
@@ -526,7 +492,7 @@ export default function MyParcelsPage() {
 
             <button
               onClick={() => setSelectedClaimParcel(null)}
-              className="btn btn-outline btn-sm w-full"
+              className="btn btn-outline btn-sm w-full font-bold uppercase"
             >
               CLOSE
             </button>
