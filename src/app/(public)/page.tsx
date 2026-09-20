@@ -297,49 +297,21 @@ function HowItWorksSection() {
       num: 1,
       title: "SIGN UP",
       desc: "Create an account and choose a plan that suits your needs.",
-      icon: (
-        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      ),
     },
     {
       num: 2,
       title: "WE RECEIVE",
       desc: "We accept your parcels from our partner couriers.",
-      icon: (
-        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-          <path d="m3.3 7 8.7 5 8.7-5" />
-          <path d="M12 22V12" />
-        </svg>
-      ),
     },
     {
       num: 3,
       title: "GET NOTIFIED",
       desc: "We'll notify you once your parcel is ready for pickup.",
-      icon: (
-        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          <path d="M4 4c-.7.7-1 1.8-1 3" />
-          <path d="M20 4c.7.7 1 1.8 1 3" />
-        </svg>
-      ),
     },
     {
       num: 4,
       title: "PICK UP",
       desc: "Claim your parcel at the hub or enjoy door-to-door delivery (available for premium members).",
-      icon: (
-        <svg className="w-10 h-10 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2v8M8 6h8" />
-          <path d="M4 14l8-4 8 4-8 4-8-4z" />
-          <path d="M4 14v4l8 4 8-4v-4" />
-        </svg>
-      ),
     },
   ];
 
@@ -367,22 +339,17 @@ function HowItWorksSection() {
           {/* Right: 4 Steps Horizontal Chain */}
           <div className="lg:w-3/4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
             {steps.map((step, i) => (
-              <div key={step.num} className="relative flex flex-col items-center text-center">
+              <div key={step.num} className="relative flex flex-col items-center text-center group">
                 {/* Connector Arrow */}
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-14 -right-4 text-gray-300 text-2xl font-light z-10 select-none">
+                  <div className="hidden lg:block absolute top-8 sm:top-10 -right-4 text-gray-300 text-2xl font-light z-10 select-none">
                     →
                   </div>
                 )}
 
-                {/* Number Badge */}
-                <div className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center mb-2 shadow-sm">
+                {/* Big Number Circle */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-brand-red text-white flex items-center justify-center mb-5 font-[family-name:var(--font-heading)] font-black text-3xl sm:text-4xl shadow-md shadow-brand-red/20 ring-4 ring-brand-red/10 transition-transform duration-200 group-hover:scale-105 select-none">
                   {step.num}
-                </div>
-
-                {/* Pale Pink Icon Circle */}
-                <div className="w-24 h-24 rounded-full bg-[#FFF0ED] flex items-center justify-center mb-4 transition-transform duration-200 hover:scale-105">
-                  {step.icon}
                 </div>
 
                 {/* Title & Description */}
