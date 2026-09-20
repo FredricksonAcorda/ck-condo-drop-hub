@@ -249,107 +249,222 @@ function HowItWorksSection() {
 }
 
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
 /*  Section 5: Membership Plans                                        */
 /* ------------------------------------------------------------------ */
 function PricingSection() {
-  const plans = [
-    {
-      name: "Per Parcel",
-      price: "₱15",
-      unit: "PER PARCEL",
-      features: ["3 Days Free Holding"],
-      cta: "SELECT PLAN",
-      featured: false,
-    },
-    {
-      name: "Regular Plan",
-      price: "₱149",
-      unit: "15 DAYS",
-      features: ["Unlimited Parcels", "3 Days Free Holding"],
-      cta: "SELECT PLAN",
-      featured: false,
-    },
-    {
-      name: "Premium Plan",
-      price: "₱299",
-      unit: "30 DAYS",
-      features: ["Unlimited Parcels", "7 Days Holding Period", "5 Free Door-to-Door Delivery"],
-      cta: "SELECT PLAN",
-      featured: true,
-    },
-  ];
-
   return (
-    <section id="pricing" className="relative overflow-hidden scroll-mt-20">
-      {/* Red intro panel */}
-      <div className="bg-brand-red text-white py-12 lg:py-16">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-            <div className="lg:w-1/3">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">👑</span>
+    <section id="pricing" className="bg-brand-surface py-16 lg:py-20 scroll-mt-20">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+          {/* Card 1: Membership Plans Red Header Card */}
+          <div className="bg-brand-red text-white rounded-2xl p-6 sm:p-7 shadow-lg flex flex-col justify-between">
+            <div>
+              {/* Header with Crown & Title */}
+              <div className="flex items-start gap-4 mb-3">
+                <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="2" cy="7" r="1.5" />
+                    <circle cx="7" cy="9.5" r="1.5" />
+                    <circle cx="12" cy="5" r="1.5" />
+                    <circle cx="17" cy="9.5" r="1.5" />
+                    <circle cx="22" cy="7" r="1.5" />
+                    <path d="M2.5 9 L5 17 H19 L21.5 9 L15.5 13.5 L12 7.5 L8.5 13.5 Z" />
+                    <rect x="5" y="18" width="14" height="2.5" rx="1" />
+                  </svg>
+                </div>
                 <div>
-                  <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl leading-none">
+                  <h3 className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl leading-none font-bold tracking-wide">
                     MEMBERSHIP<br />PLANS
-                  </h2>
+                  </h3>
                 </div>
               </div>
-              <p className="text-white/90 mb-4">Choose the plan that fits your lifestyle.</p>
-              <ul className="space-y-2 mb-6">
-                {["More Convenience", "Priority Handling", "Affordable Rates", "Designed for Condo Residents"].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    {item}
+              <p className="text-xs sm:text-sm text-white/90 leading-snug pl-1 mb-6">
+                Choose the plan that fits your lifestyle.
+              </p>
+
+              {/* Feature Checkmarks */}
+              <ul className="space-y-3.5 my-6">
+                {[
+                  "More Convenience",
+                  "Priority Handling",
+                  "Affordable Rates",
+                  "Designed for Condo Residents",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm font-medium">
+                    <span className="w-5 h-5 rounded-full bg-white flex items-center justify-center shrink-0">
+                      <svg className="w-3 h-3 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/#pricing" className="btn bg-white text-brand-red hover:bg-gray-100 btn-sm">
-                VIEW FULL PRICING →
-              </Link>
             </div>
 
-            {/* Cards */}
-            <div className="lg:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`rounded-xl p-6 text-center relative ${
-                    plan.featured
-                      ? "bg-premium-cream border-2 border-premium-border text-brand-text"
-                      : "bg-white text-brand-text"
-                  }`}
-                >
-                  {plan.featured && (
-                    <span className="absolute -top-3 right-4 bg-brand-red text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
-                      Best Value!
-                    </span>
-                  )}
-                  <div className="w-10 h-10 mx-auto mb-3 bg-brand-red-bg rounded-full flex items-center justify-center">
-                    <span className="text-brand-red text-lg">📦</span>
-                  </div>
-                  <h3 className="font-bold text-sm mb-1">{plan.name}</h3>
-                  <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-red my-2">
-                    {plan.price}
-                  </div>
-                  <p className="text-xs text-brand-text-secondary uppercase tracking-wider mb-4">{plan.unit}</p>
-                  <ul className="space-y-2 mb-5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-xs justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-brand-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button className={`w-full py-2.5 rounded-md text-sm font-semibold border-2 transition-colors ${
-                    plan.featured
-                      ? "bg-brand-red text-white border-brand-red hover:bg-brand-red-dark"
-                      : "bg-white text-brand-text border-brand-text hover:bg-brand-text hover:text-white"
-                  }`}>
-                    {plan.cta}
-                  </button>
+            {/* View Full Pricing CTA */}
+            <Link
+              href="/#pricing"
+              className="w-full py-3 bg-white text-brand-red font-bold text-xs uppercase tracking-wider rounded-lg text-center hover:bg-gray-100 transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-6"
+            >
+              VIEW FULL PRICING →
+            </Link>
+          </div>
+
+          {/* Card 2: Per Parcel */}
+          <div className="bg-white rounded-2xl p-6 sm:p-7 border border-brand-border shadow-sm flex flex-col justify-between text-center relative hover:shadow-md transition-shadow">
+            <div>
+              {/* Icon */}
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-brand-red flex items-center justify-center text-white shadow-sm">
+                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                  <path d="M12 22V12" />
+                </svg>
+              </div>
+
+              {/* Title */}
+              <h4 className="font-bold text-lg sm:text-xl text-brand-text mb-1">Per Parcel</h4>
+
+              {/* Price */}
+              <div className="my-3">
+                <div className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl font-bold text-brand-red leading-none">
+                  ₱15
                 </div>
-              ))}
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-text mt-2">
+                  PER PARCEL
+                </div>
+              </div>
+
+              {/* Tag */}
+              <div className="my-6">
+                <div className="bg-[#FFF0ED] text-brand-text font-bold text-xs uppercase tracking-wide py-2.5 px-3 rounded-lg mx-auto w-full">
+                  3 DAYS FREE HOLDING
+                </div>
+              </div>
             </div>
+
+            {/* CTA */}
+            <Link
+              href="/register"
+              className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider border-2 border-brand-red text-brand-red bg-white hover:bg-brand-red hover:text-white transition-colors block"
+            >
+              SELECT PLAN
+            </Link>
+          </div>
+
+          {/* Card 3: Regular Plan */}
+          <div className="bg-white rounded-2xl p-6 sm:p-7 border border-brand-border shadow-sm flex flex-col justify-between text-center relative hover:shadow-md transition-shadow">
+            <div>
+              {/* Icon */}
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-brand-red flex items-center justify-center text-white shadow-sm">
+                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <circle cx="8" cy="14" r="1" fill="currentColor" />
+                  <circle cx="12" cy="14" r="1" fill="currentColor" />
+                  <circle cx="16" cy="14" r="1" fill="currentColor" />
+                  <circle cx="8" cy="18" r="1" fill="currentColor" />
+                  <circle cx="12" cy="18" r="1" fill="currentColor" />
+                  <circle cx="16" cy="18" r="1" fill="currentColor" />
+                </svg>
+              </div>
+
+              {/* Title */}
+              <h4 className="font-bold text-lg sm:text-xl text-brand-text mb-1">Regular Plan</h4>
+
+              {/* Price */}
+              <div className="my-3">
+                <div className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl font-bold text-brand-red leading-none">
+                  ₱149
+                </div>
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-text mt-2 leading-tight">
+                  15 DAYS<br />UNLIMITED PARCELS
+                </div>
+              </div>
+
+              {/* Tag */}
+              <div className="my-6">
+                <div className="bg-[#FFF0ED] text-brand-text font-bold text-xs uppercase tracking-wide py-2.5 px-3 rounded-lg mx-auto w-full">
+                  3 DAYS FREE HOLDING
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <Link
+              href="/register"
+              className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider border-2 border-brand-red text-brand-red bg-white hover:bg-brand-red hover:text-white transition-colors block"
+            >
+              SELECT PLAN
+            </Link>
+          </div>
+
+          {/* Card 4: Premium Plan */}
+          <div className="bg-[#FCF8EE] rounded-2xl p-6 sm:p-7 border-2 border-[#E5A824] shadow-md flex flex-col justify-between text-center relative hover:shadow-lg transition-shadow">
+            {/* Best Value Badge */}
+            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-red text-white text-[11px] font-bold px-4 py-1 rounded-md tracking-wider shadow-sm uppercase whitespace-nowrap">
+              BEST VALUE!
+            </span>
+
+            <div>
+              {/* Icon */}
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#DA9A26] flex items-center justify-center text-white shadow-sm">
+                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="2" cy="7" r="1.5" />
+                  <circle cx="7" cy="9.5" r="1.5" />
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="17" cy="9.5" r="1.5" />
+                  <circle cx="22" cy="7" r="1.5" />
+                  <path d="M2.5 9 L5 17 H19 L21.5 9 L15.5 13.5 L12 7.5 L8.5 13.5 Z" />
+                  <rect x="5" y="18" width="14" height="2.5" rx="1" />
+                </svg>
+              </div>
+
+              {/* Title */}
+              <h4 className="font-bold text-lg sm:text-xl text-brand-red mb-1">Premium Plan</h4>
+
+              {/* Price */}
+              <div className="my-3">
+                <div className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl font-bold text-brand-red leading-none">
+                  ₱299
+                </div>
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-text mt-2 leading-tight">
+                  30 DAYS<br />UNLIMITED PARCELS
+                </div>
+              </div>
+
+              {/* Feature List */}
+              <ul className="my-6 space-y-2.5 text-left mx-auto w-full">
+                <li className="flex items-center gap-2.5 text-[11px] sm:text-xs font-bold uppercase text-brand-text">
+                  <span className="w-4 h-4 rounded-full bg-brand-red flex items-center justify-center shrink-0">
+                    <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>7 DAYS HOLDING PERIOD</span>
+                </li>
+                <li className="flex items-center gap-2.5 text-[11px] sm:text-xs font-bold uppercase text-brand-text">
+                  <span className="w-4 h-4 rounded-full bg-brand-red flex items-center justify-center shrink-0">
+                    <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>5 FREE DOOR-TO-DOOR DELIVERY</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <Link
+              href="/register"
+              className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-brand-red text-white hover:bg-brand-red-dark transition-colors shadow-sm block"
+            >
+              SELECT PLAN
+            </Link>
           </div>
         </div>
       </div>
