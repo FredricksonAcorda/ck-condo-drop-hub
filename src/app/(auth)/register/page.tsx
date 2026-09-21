@@ -102,7 +102,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
           Create an Account
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed">
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed text-balance max-w-[340px] mx-auto">
           Sign up your condo unit for secure 24/7 parcel drop-off & SMS arrival alerts
         </p>
       </div>
