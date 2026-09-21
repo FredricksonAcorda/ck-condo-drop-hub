@@ -7,12 +7,12 @@ import { useState } from "react";
 import { useAuth } from "@/context";
 
 const navItems = [
-  { icon: "🏠", label: "Dashboard", href: "/dashboard" },
-  { icon: "📦", label: "My Parcels", href: "/parcels" },
-  { icon: "🔍", label: "Track Parcel", href: "/dashboard?tab=track" },
-  { icon: "👤", label: "My Account", href: "/account" },
-  { icon: "⭐", label: "Membership", href: "/membership" },
-  { icon: "❓", label: "Help Center", href: "/help" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "My Parcels", href: "/parcels" },
+  { label: "Track Parcel", href: "/dashboard?tab=track" },
+  { label: "My Account", href: "/account" },
+  { label: "Membership", href: "/membership" },
+  { label: "Help Center", href: "/help" },
 ];
 
 export default function CustomerLayout({
@@ -73,16 +73,17 @@ export default function CustomerLayout({
           <nav className="hidden lg:flex items-center gap-1" aria-label="Customer navigation">
             {[
               { label: "DASHBOARD", href: "/dashboard" },
-              { label: "MY PARCELS", href: "/parcels", icon: "📦" },
-              { label: "TRACK PARCEL", href: "/dashboard?tab=track", icon: "🔍" },
-              { label: "MY ACCOUNT", href: "/account", icon: "👤" },
-              { label: "STAFF TERMINAL", href: "/admin", icon: "🛡️" },
+              { label: "MY PARCELS", href: "/parcels" },
+              { label: "TRACK PARCEL", href: "/dashboard?tab=track" },
+              { label: "MY ACCOUNT", href: "/account" },
+              { label: "MEMBERSHIP", href: "/membership" },
+              { label: "HELP CENTER", href: "/help" },
             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                  pathname === item.href || (item.href.startsWith("/dashboard") && pathname === "/dashboard")
+                  pathname === item.href || (item.href.startsWith("/dashboard") && pathname === "/dashboard" && !item.href.includes("tab=track"))
                     ? "text-brand-red font-bold"
                     : "text-brand-text-secondary hover:text-brand-text"
                 }`}
@@ -168,21 +169,19 @@ export default function CustomerLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
+                className={`flex items-center px-4 py-3 rounded-lg text-sm transition-colors ${
                   pathname === item.href
                     ? "bg-brand-red-light text-brand-red font-semibold"
                     : "text-brand-text-secondary hover:bg-brand-surface"
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
                 {item.label}
               </Link>
             ))}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:bg-brand-surface hover:text-brand-red cursor-pointer transition-colors"
+              className="w-full flex items-center px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:bg-brand-surface hover:text-brand-red cursor-pointer transition-colors"
             >
-              <span className="text-base">🚪</span>
               Log Out
             </button>
           </nav>
@@ -231,13 +230,12 @@ export default function CustomerLayout({
                     key={item.href}
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm ${
+                    className={`flex items-center px-4 py-3 rounded-lg text-sm ${
                       pathname === item.href
                         ? "bg-brand-red-light text-brand-red font-semibold"
                         : "text-brand-text-secondary"
                     }`}
                   >
-                    <span>{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
@@ -246,9 +244,8 @@ export default function CustomerLayout({
                     setDrawerOpen(false);
                     handleLogout();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:text-brand-red"
+                  className="w-full flex items-center px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:text-brand-red"
                 >
-                  <span>🚪</span>
                   Log Out
                 </button>
               </nav>

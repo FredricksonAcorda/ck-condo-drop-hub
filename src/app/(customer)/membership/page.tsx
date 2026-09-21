@@ -131,15 +131,12 @@ export default function MembershipPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-xl border border-brand-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">⭐</span>
-            <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-              MEMBERSHIP & <span className="text-brand-red">BILLING</span>
-            </h1>
-          </div>
-          <p className="text-sm text-brand-text-secondary mt-1">
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-gray-900 uppercase tracking-wide">
+            MEMBERSHIP & <span className="text-brand-red">BILLING</span>
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Manage your condo drop hub subscription, payment methods, and holding allowances.
           </p>
         </div>
@@ -162,28 +159,23 @@ export default function MembershipPage() {
       {/* Success Notification */}
       {successMessage && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
-          <span>✅ {successMessage}</span>
-          <button onClick={() => setSuccessMessage(null)} className="text-green-600 hover:text-green-800">
+          <span>{successMessage}</span>
+          <button onClick={() => setSuccessMessage(null)} className="text-green-600 hover:text-green-800 cursor-pointer">
             ✕
           </button>
         </div>
       )}
 
-      {/* Pending Payment Alert Card (If pending) */}
+      {/* Pending Payment Alert Card */}
       {isPendingPayment && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-amber-500 text-black font-black rounded-xl flex items-center justify-center shrink-0 text-xl">
-              ⚠️
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-brand-black">
-                Your {currentPlan} Subscription is Awaiting Payment
-              </h3>
-              <p className="text-xs text-brand-text-secondary mt-1 max-w-xl">
-                Please complete your {planPrices[currentPlan]} payment using GCash QR or visit Station 1 Front Desk to unlock your {holdingDays[currentPlan]}-day free holding period and doorstep deliveries.
-              </p>
-            </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-sm text-gray-900">
+              Your {currentPlan} Subscription is Awaiting Payment
+            </h3>
+            <p className="text-xs text-gray-600 max-w-xl">
+              Please complete your {planPrices[currentPlan]} payment using GCash QR or visit Station 1 Front Desk to unlock your {holdingDays[currentPlan]}-day free holding period and doorstep deliveries.
+            </p>
           </div>
           <button
             type="button"
@@ -193,13 +185,13 @@ export default function MembershipPage() {
             }}
             className="btn btn-primary btn-sm whitespace-nowrap font-bold uppercase cursor-pointer"
           >
-            Pay Now via GCash / Counter 💳
+            Pay Now via GCash / Counter
           </button>
         </div>
       )}
 
       {/* Current Active Plan Overview Banner */}
-      <div className="bg-gradient-to-r from-brand-black via-brand-dark to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
           <div className="lg:col-span-2 space-y-2">
             <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -248,7 +240,7 @@ export default function MembershipPage() {
 
       {/* 3 Tier Plan Cards Comparison */}
       <div className="space-y-4">
-        <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-brand-black">
+        <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-gray-900">
           AVAILABLE MEMBERSHIP PLANS
         </h2>
 
@@ -258,26 +250,26 @@ export default function MembershipPage() {
             className={`bg-white rounded-2xl border p-6 flex flex-col justify-between transition-all ${
               currentPlan === "PER_PARCEL"
                 ? "border-brand-red ring-2 ring-brand-red/30 shadow-md"
-                : "border-brand-border hover:border-gray-400 shadow-sm"
+                : "border-gray-200 hover:border-gray-300 shadow-sm"
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-lg text-brand-black">Per Parcel</h3>
+                <h3 className="font-bold text-lg text-gray-900">Per Parcel</h3>
                 {currentPlan === "PER_PARCEL" && (
                   <span className="bg-brand-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
                     Current Plan
                   </span>
                 )}
               </div>
-              <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black mb-1">
-                ₱15 <span className="text-xs font-normal text-brand-text-secondary">/ claim</span>
+              <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mb-1">
+                ₱15 <span className="text-xs font-normal text-gray-500">/ claim</span>
               </div>
-              <p className="text-xs text-brand-text-secondary mb-4">
+              <p className="text-xs text-gray-500 mb-4">
                 Best for residents who only receive 1–2 deliveries a month.
               </p>
 
-              <ul className="text-xs space-y-2.5 text-brand-text border-t border-brand-border pt-4">
+              <ul className="text-xs space-y-2.5 text-gray-700 border-t border-gray-100 pt-4">
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> 3 Days Free Holding
                 </li>
@@ -287,7 +279,7 @@ export default function MembershipPage() {
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> Pay only when you pick up
                 </li>
-                <li className="flex items-center gap-2 text-brand-text-muted">
+                <li className="flex items-center gap-2 text-gray-400">
                   <span>✕</span> No free door delivery credits
                 </li>
               </ul>
@@ -315,26 +307,26 @@ export default function MembershipPage() {
             className={`bg-white rounded-2xl border p-6 flex flex-col justify-between transition-all ${
               currentPlan === "REGULAR"
                 ? "border-brand-red ring-2 ring-brand-red/30 shadow-md"
-                : "border-brand-border hover:border-gray-400 shadow-sm"
+                : "border-gray-200 hover:border-gray-300 shadow-sm"
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-lg text-brand-black">Regular Plan</h3>
+                <h3 className="font-bold text-lg text-gray-900">Regular Plan</h3>
                 {currentPlan === "REGULAR" && (
                   <span className="bg-brand-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
                     Current Plan
                   </span>
                 )}
               </div>
-              <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black mb-1">
-                ₱149 <span className="text-xs font-normal text-brand-text-secondary">/ month</span>
+              <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mb-1">
+                ₱149 <span className="text-xs font-normal text-gray-500">/ month</span>
               </div>
-              <p className="text-xs text-brand-text-secondary mb-4">
+              <p className="text-xs text-gray-500 mb-4">
                 Ideal for frequent online shoppers and small families.
               </p>
 
-              <ul className="text-xs space-y-2.5 text-brand-text border-t border-brand-border pt-4">
+              <ul className="text-xs space-y-2.5 text-gray-700 border-t border-gray-100 pt-4">
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> <strong>Unlimited Parcels</strong> Stored
                 </li>
@@ -367,7 +359,7 @@ export default function MembershipPage() {
             </div>
           </div>
 
-          {/* Plan 3: Premium (Popular) */}
+          {/* Plan 3: Premium */}
           <div
             className={`bg-[#FFFDF4] rounded-2xl border-2 p-6 flex flex-col justify-between transition-all relative ${
               currentPlan === "PREMIUM"
@@ -381,21 +373,21 @@ export default function MembershipPage() {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-lg text-brand-black">Premium VIP</h3>
+                <h3 className="font-bold text-lg text-gray-900">Premium VIP</h3>
                 {currentPlan === "PREMIUM" && (
                   <span className="bg-brand-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
                     Current Plan
                   </span>
                 )}
               </div>
-              <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black mb-1">
-                ₱299 <span className="text-xs font-normal text-brand-text-secondary">/ month</span>
+              <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mb-1">
+                ₱299 <span className="text-xs font-normal text-gray-500">/ month</span>
               </div>
-              <p className="text-xs text-brand-text-secondary mb-4">
+              <p className="text-xs text-gray-500 mb-4">
                 Full-service package with extended holding and doorstep deliveries.
               </p>
 
-              <ul className="text-xs space-y-2.5 text-brand-text border-t border-amber-200 pt-4">
+              <ul className="text-xs space-y-2.5 text-gray-700 border-t border-amber-200 pt-4">
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> <strong>7 Days Extended Free Holding</strong>
                 </li>
@@ -431,20 +423,17 @@ export default function MembershipPage() {
       </div>
 
       {/* Billing & Invoice History */}
-      <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm space-y-4 p-5">
-        <div className="flex items-center justify-between border-b border-brand-border pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🧾</span>
-            <h3 className="font-[family-name:var(--font-heading)] text-lg text-brand-black uppercase">
-              PAYMENT & BILLING RECEIPTS
-            </h3>
-          </div>
-          <span className="text-xs text-brand-text-secondary">Official Receipts issued by CK Condo Hub</span>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm space-y-4 p-5">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 className="font-[family-name:var(--font-heading)] text-lg text-gray-900 uppercase">
+            PAYMENT & BILLING RECEIPTS
+          </h3>
+          <span className="text-xs text-gray-500">Official Receipts issued by CK Condo Hub</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-brand-surface text-brand-text-secondary text-xs uppercase border-b border-brand-border">
+            <thead className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
               <tr>
                 <th className="px-4 py-2.5">Invoice #</th>
                 <th className="px-4 py-2.5">Date</th>
@@ -455,14 +444,14 @@ export default function MembershipPage() {
                 <th className="px-4 py-2.5 text-right">Receipt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-brand-border text-xs">
+            <tbody className="divide-y divide-gray-200 text-xs">
               {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-brand-surface/60 transition-colors">
-                  <td className="px-4 py-3 font-mono font-semibold text-brand-black">{inv.id}</td>
-                  <td className="px-4 py-3 text-brand-text-secondary">{inv.date}</td>
-                  <td className="px-4 py-3 font-medium text-brand-text">{inv.plan}</td>
-                  <td className="px-4 py-3 font-bold text-brand-black">{inv.amount}</td>
-                  <td className="px-4 py-3 text-brand-text-secondary">{inv.method}</td>
+                <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 font-mono font-semibold text-gray-900">{inv.id}</td>
+                  <td className="px-4 py-3 text-gray-500">{inv.date}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{inv.plan}</td>
+                  <td className="px-4 py-3 font-bold text-gray-900">{inv.amount}</td>
+                  <td className="px-4 py-3 text-gray-500">{inv.method}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`px-2 py-0.5 rounded font-bold text-[10px] ${
@@ -480,7 +469,7 @@ export default function MembershipPage() {
                       onClick={() => setSelectedInvoice(inv)}
                       className="text-brand-red font-semibold hover:underline cursor-pointer"
                     >
-                      View Receipt 📄
+                      View Receipt
                     </button>
                   </td>
                 </tr>
@@ -493,16 +482,16 @@ export default function MembershipPage() {
       {/* Interactive Payment / Switch Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-brand-border space-y-5 text-left animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between">
               <div>
                 <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                   Subscription Payment
                 </span>
-                <h3 className="font-[family-name:var(--font-heading)] text-2xl text-brand-black uppercase mt-1">
+                <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase mt-1">
                   {selectedPlanToSwitch ? `SWITCH TO ${selectedPlanToSwitch}` : `SETTLE ${currentPlan}`}
                 </h3>
-                <p className="text-xs text-brand-text-secondary mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Amount Due:{" "}
                   <strong className="text-green-700 text-sm">
                     {planPrices[selectedPlanToSwitch || currentPlan]}
@@ -525,42 +514,40 @@ export default function MembershipPage() {
                 onClick={() => setPaymentMethod("GCASH")}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   paymentMethod === "GCASH"
-                    ? "bg-[#005CEE]/10 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
-                    : "bg-brand-surface border-brand-border text-brand-text-secondary"
+                    ? "bg-blue-50 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
                 }`}
               >
-                <span>📱</span>
-                <span>GCash QR Code</span>
+                GCash QR Code
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("CASH_COUNTER")}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   paymentMethod === "CASH_COUNTER"
-                    ? "bg-amber-100 border-amber-600 text-amber-900 ring-1 ring-amber-600"
-                    : "bg-brand-surface border-brand-border text-brand-text-secondary"
+                    ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-600"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
                 }`}
               >
-                <span>🏢</span>
-                <span>Cash at Counter</span>
+                Cash at Counter
               </button>
             </div>
 
             {/* GCash Form */}
             {paymentMethod === "GCASH" ? (
               <div className="space-y-4">
-                <div className="bg-brand-surface p-4 rounded-xl border border-brand-border text-center space-y-2">
-                  <div className="flex justify-between text-xs border-b border-brand-border pb-1">
-                    <span className="text-brand-text-muted">Merchant:</span>
-                    <span className="font-bold text-brand-black">CK CONDO DROP HUB</span>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2">
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
+                    <span className="text-gray-500">Merchant:</span>
+                    <span className="font-bold text-gray-900">CK CONDO DROP HUB</span>
                   </div>
-                  <div className="flex justify-between text-xs border-b border-brand-border pb-1">
-                    <span className="text-brand-text-muted">GCash Mobile:</span>
-                    <span className="font-mono font-bold text-brand-black">0917 123 4567</span>
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
+                    <span className="text-gray-500">GCash Mobile:</span>
+                    <span className="font-mono font-bold text-gray-900">0917 123 4567</span>
                   </div>
 
-                  <div className="bg-white p-3 rounded-xl border border-brand-border inline-block shadow-inner mx-auto my-1">
-                    <div className="w-32 h-32 bg-[#005CEE]/5 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
+                  <div className="bg-white p-3 rounded-xl border border-gray-200 inline-block shadow-inner mx-auto my-1">
+                    <div className="w-32 h-32 bg-blue-50/50 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
                       <svg className="w-24 h-24" viewBox="0 0 100 100" fill="currentColor">
                         <rect x="10" y="10" width="24" height="24" rx="2" />
                         <rect x="14" y="14" width="16" height="16" fill="white" />
@@ -582,13 +569,13 @@ export default function MembershipPage() {
                       <span className="text-[8px] font-black uppercase text-[#005CEE]">SCAN GCASH QR</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-brand-text-secondary">
+                  <p className="text-[11px] text-gray-500">
                     Scan using your GCash app and input your reference number below.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-brand-text mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     GCash Reference Number
                   </label>
                   <input
@@ -620,17 +607,17 @@ export default function MembershipPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-2 text-xs text-brand-text">
-                  <div className="font-bold text-sm text-brand-black">Front Desk Cashier:</div>
-                  <p className="text-brand-text-secondary">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
+                  <div className="font-bold text-sm text-gray-900">Front Desk Cashier:</div>
+                  <p className="text-gray-600">
                     Please bring cash payment to Station 1 Front Desk (Ground Floor Lobby).
                   </p>
-                  <div className="p-2.5 bg-white rounded-lg border border-brand-border space-y-1">
+                  <div className="p-2.5 bg-white rounded-lg border border-gray-200 space-y-1">
                     <div>• Resident Passcode: <strong className="font-mono text-brand-red">{user?.residentCode}</strong></div>
                     <div>• Plan Selected: <strong>{(selectedPlanToSwitch || currentPlan).replace("_", " ")}</strong></div>
                     <div>• Amount: <strong className="text-green-700">{planPrices[selectedPlanToSwitch || currentPlan]}</strong></div>
                   </div>
-                  <p className="text-brand-text-muted text-[11px]">
+                  <p className="text-gray-500 text-[11px]">
                     Your subscription will stay in Pending status until confirmed by reception staff.
                   </p>
                 </div>
@@ -652,45 +639,42 @@ export default function MembershipPage() {
       {/* Printable Receipt Modal */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-brand-border text-center animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-              ✓
-            </div>
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-center animate-in fade-in zoom-in-95">
             <div>
-              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-brand-black uppercase">
+              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase">
                 OFFICIAL RECEIPT
               </h3>
-              <p className="text-xs text-brand-text-secondary">CK Condo Drop Hub • Buildersville Condominium</p>
+              <p className="text-xs text-gray-500">CK Condo Drop Hub • Buildersville Condominium</p>
             </div>
 
-            <div className="bg-brand-surface p-4 rounded-xl text-xs space-y-2 text-left border border-brand-border font-mono">
+            <div className="bg-gray-50 p-4 rounded-xl text-xs space-y-2 text-left border border-gray-200 font-mono">
               <div className="flex justify-between">
-                <span>Receipt #:</span>
-                <span className="font-bold text-brand-black">{selectedInvoice.id}</span>
+                <span className="text-gray-500">Receipt #:</span>
+                <span className="font-bold text-gray-900">{selectedInvoice.id}</span>
               </div>
               <div className="flex justify-between">
-                <span>Date:</span>
+                <span className="text-gray-500">Date:</span>
                 <span>{selectedInvoice.date}</span>
               </div>
               <div className="flex justify-between">
-                <span>Resident:</span>
+                <span className="text-gray-500">Resident:</span>
                 <span>{user?.name} ({user?.unit})</span>
               </div>
               <div className="flex justify-between">
-                <span>Plan:</span>
+                <span className="text-gray-500">Plan:</span>
                 <span className="font-bold">{selectedInvoice.plan}</span>
               </div>
               <div className="flex justify-between">
-                <span>Method:</span>
+                <span className="text-gray-500">Method:</span>
                 <span>{selectedInvoice.method}</span>
               </div>
               {selectedInvoice.reference && (
-                <div className="flex justify-between text-[11px] text-brand-text-muted">
+                <div className="flex justify-between text-[11px] text-gray-500">
                   <span>Ref No:</span>
                   <span>{selectedInvoice.reference}</span>
                 </div>
               )}
-              <div className="flex justify-between border-t border-brand-border pt-2 text-sm font-bold">
+              <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold">
                 <span>Total Paid:</span>
                 <span className="text-green-700">{selectedInvoice.amount}</span>
               </div>
@@ -702,7 +686,7 @@ export default function MembershipPage() {
                 onClick={() => window.print()}
                 className="btn btn-outline btn-sm flex-1 font-bold uppercase text-xs cursor-pointer"
               >
-                🖨️ Print
+                Print
               </button>
               <button
                 type="button"

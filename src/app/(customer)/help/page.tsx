@@ -68,15 +68,12 @@ export default function HelpCenterPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-xl border border-brand-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">❓</span>
-            <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-              RESIDENT <span className="text-brand-red">HELP CENTER</span>
-            </h1>
-          </div>
-          <p className="text-sm text-brand-text-secondary mt-1">
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-gray-900 uppercase tracking-wide">
+            RESIDENT <span className="text-brand-red">HELP CENTER</span>
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Station 1 Front Desk assistance, parcel retrieval policies, and fee calculator.
           </p>
         </div>
@@ -84,16 +81,15 @@ export default function HelpCenterPage() {
         <div className="flex items-center gap-2">
           <a
             href="tel:09171234567"
-            className="btn btn-primary btn-sm font-bold uppercase flex items-center gap-2"
+            className="btn btn-primary btn-sm font-bold uppercase"
           >
-            <span>📞</span>
-            <span>Call Hotline: 0917 123 4567</span>
+            Call Hotline: 0917 123 4567
           </a>
         </div>
       </div>
 
       {/* Concierge Info Banner */}
-      <div className="bg-gradient-to-r from-brand-black via-brand-dark to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
           <div className="lg:col-span-2 space-y-2">
             <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -131,22 +127,21 @@ export default function HelpCenterPage() {
       {/* Grid: Fee Calculator & Contact Form */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Interactive Holding Fee Calculator */}
-        <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-            <span className="text-xl">🧮</span>
-            <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
+          <div className="border-b border-gray-200 pb-3">
+            <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
               HOLDING FEE CALCULATOR
             </h3>
           </div>
 
-          <p className="text-xs text-brand-text-secondary leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed">
             Estimate overdue storage charges before picking up your package. Free holding days depend on your active membership tier.
           </p>
 
           <div className="space-y-4">
             {/* Plan Tier Selector */}
             <div>
-              <label className="block text-xs font-semibold text-brand-text mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 Select Your Membership Tier:
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -161,12 +156,12 @@ export default function HelpCenterPage() {
                     onClick={() => setCalcPlan(p.id)}
                     className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       calcPlan === p.id
-                        ? "border-brand-red bg-brand-red-bg text-brand-red font-bold"
-                        : "border-brand-border bg-white text-brand-text-secondary hover:text-black"
+                        ? "border-brand-red bg-red-50 text-brand-red font-bold"
+                        : "border-gray-200 bg-white text-gray-600 hover:text-black"
                     }`}
                   >
                     <div className="text-xs">{p.label}</div>
-                    <div className="text-[10px] text-brand-text-muted">{p.days} Days Free</div>
+                    <div className="text-[10px] text-gray-500">{p.days} Days Free</div>
                   </button>
                 ))}
               </div>
@@ -174,7 +169,7 @@ export default function HelpCenterPage() {
 
             {/* Days Stored Slider / Buttons */}
             <div>
-              <div className="flex justify-between text-xs font-semibold text-brand-text mb-1.5">
+              <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1.5">
                 <span>Days Parcel Stored in Hub:</span>
                 <span className="text-brand-red font-bold text-sm">{calcDays} Day{calcDays === 1 ? "" : "s"}</span>
               </div>
@@ -186,7 +181,7 @@ export default function HelpCenterPage() {
                 onChange={(e) => setCalcDays(Number(e.target.value))}
                 className="w-full accent-brand-red cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-brand-text-muted mt-1 font-mono">
+              <div className="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
                 <span>1 Day</span>
                 <span>7 Days</span>
                 <span>15 Days</span>
@@ -194,23 +189,23 @@ export default function HelpCenterPage() {
             </div>
 
             {/* Calculation Result Box */}
-            <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-2 text-xs">
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Free Grace Period:</span>
+                <span className="text-gray-500">Free Grace Period:</span>
                 <span className="font-bold text-green-700">{freeDaysAllowed} Days Free</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Days Overdue:</span>
-                <span className={`font-bold ${overdueDays > 0 ? "text-brand-red" : "text-brand-text"}`}>
+                <span className="text-gray-500">Days Overdue:</span>
+                <span className={`font-bold ${overdueDays > 0 ? "text-brand-red" : "text-gray-900"}`}>
                   {overdueDays} Day{overdueDays === 1 ? "" : "s"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Rate per Overdue Day:</span>
+                <span className="text-gray-500">Rate per Overdue Day:</span>
                 <span className="font-mono">₱10.00 / day</span>
               </div>
-              <div className="flex justify-between border-t border-brand-border pt-2 text-sm font-bold">
-                <span className="text-brand-black">Total Holding Fee Due:</span>
+              <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold">
+                <span className="text-gray-900">Total Holding Fee Due:</span>
                 <span className={calculatedFee > 0 ? "text-brand-red text-base" : "text-green-700 text-base"}>
                   {calculatedFee > 0 ? `₱${calculatedFee}.00` : "₱0.00 (FREE)"}
                 </span>
@@ -220,28 +215,26 @@ export default function HelpCenterPage() {
         </div>
 
         {/* Contact Concierge Message Form */}
-        <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-            <span className="text-xl">✉️</span>
-            <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
+          <div className="border-b border-gray-200 pb-3">
+            <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
               SEND DESK INQUIRY
             </h3>
           </div>
 
-          <p className="text-xs text-brand-text-secondary leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed">
             Have a question about a delayed parcel, proxy authorization, or doorstep delivery? Message the Station 1 desk team.
           </p>
 
           {submitted && (
             <div className="p-3 bg-green-50 border border-green-200 text-green-800 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
-              <span>✅</span>
               <span>Your message has been dispatched to Station 1 Front Desk! A concierge staff member will respond shortly.</span>
             </div>
           )}
 
           <form onSubmit={handleInquirySubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-brand-text mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Inquiry Category:
               </label>
               <select
@@ -260,7 +253,7 @@ export default function HelpCenterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-brand-text mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Courier Tracking Number (Optional):
               </label>
               <input
@@ -274,7 +267,7 @@ export default function HelpCenterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-brand-text mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Message to Desk Staff:
               </label>
               <textarea
@@ -293,22 +286,21 @@ export default function HelpCenterPage() {
               disabled={isSending}
               className="btn btn-primary btn-sm w-full font-bold uppercase cursor-pointer"
             >
-              {isSending ? "Sending to Station 1..." : "Send Message to Concierge 📨"}
+              {isSending ? "Sending to Station 1..." : "Send Message to Concierge"}
             </button>
           </form>
         </div>
       </div>
 
-      {/* Comprehensive FAQs Accordion */}
-      <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-          <span className="text-xl">💡</span>
-          <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+      {/* FAQs Accordion */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
             FREQUENTLY ASKED QUESTIONS
           </h3>
         </div>
 
-        <div className="space-y-3 divide-y divide-brand-border">
+        <div className="space-y-3 divide-y divide-gray-200">
           {faqs.map((faq, idx) => {
             const isOpen = openFaq === idx;
             return (
@@ -316,13 +308,13 @@ export default function HelpCenterPage() {
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between text-left gap-4 py-1 text-sm font-bold text-brand-black hover:text-brand-red transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between text-left gap-4 py-1 text-sm font-bold text-gray-900 hover:text-brand-red transition-colors cursor-pointer"
                 >
                   <span>{faq.q}</span>
                   <span className="text-brand-red font-bold text-lg">{isOpen ? "−" : "+"}</span>
                 </button>
                 {isOpen && (
-                  <p className="text-xs text-brand-text-secondary leading-relaxed mt-2 pb-2 animate-in fade-in">
+                  <p className="text-xs text-gray-600 leading-relaxed mt-2 pb-2 animate-in fade-in">
                     {faq.a}
                   </p>
                 )}

@@ -79,15 +79,12 @@ export default function MyAccountPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-white p-6 rounded-xl border border-brand-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">👤</span>
-            <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-              MY <span className="text-brand-red">ACCOUNT</span>
-            </h1>
-          </div>
-          <p className="text-sm text-brand-text-secondary mt-1">
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-gray-900 uppercase tracking-wide">
+            MY <span className="text-brand-red">ACCOUNT</span>
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Manage your resident credentials, contact information, and delivery preferences.
           </p>
         </div>
@@ -102,10 +99,10 @@ export default function MyAccountPage() {
 
       {savedSuccess && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between text-sm animate-in fade-in">
-          <span className="flex items-center gap-2 font-medium">
-            ✅ Profile changes saved successfully to database!
+          <span className="font-medium">
+            Profile changes saved successfully to database!
           </span>
-          <button onClick={() => setSavedSuccess(false)} className="text-green-600 hover:text-green-800">
+          <button onClick={() => setSavedSuccess(false)} className="text-green-600 hover:text-green-800 cursor-pointer">
             ✕
           </button>
         </div>
@@ -113,10 +110,10 @@ export default function MyAccountPage() {
 
       {saveError && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between text-sm animate-in fade-in">
-          <span className="flex items-center gap-2 font-medium">
-            ⚠️ {saveError}
+          <span className="font-medium">
+            {saveError}
           </span>
-          <button onClick={() => setSaveError(null)} className="text-red-600 hover:text-red-800">
+          <button onClick={() => setSaveError(null)} className="text-red-600 hover:text-red-800 cursor-pointer">
             ✕
           </button>
         </div>
@@ -126,25 +123,24 @@ export default function MyAccountPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left 2 Columns: Tabs & Forms */}
         <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             {/* Tabs Navigation */}
-            <div className="flex border-b border-brand-border overflow-x-auto bg-brand-surface/50">
+            <div className="flex border-b border-gray-200 overflow-x-auto bg-gray-50">
               {[
-                { id: "details", label: "Account Details", icon: "📋" },
-                { id: "password", label: "Change Password", icon: "🔒" },
-                { id: "notifications", label: "Notifications", icon: "🔔" },
-                { id: "delivery", label: "Door Delivery", icon: "🚪" },
+                { id: "details", label: "Account Details" },
+                { id: "password", label: "Change Password" },
+                { id: "notifications", label: "Notifications" },
+                { id: "delivery", label: "Door Delivery" },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center gap-2 px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap cursor-pointer ${
+                  className={`px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap cursor-pointer ${
                     activeTab === tab.id
                       ? "border-brand-red text-brand-red bg-white"
-                      : "border-transparent text-brand-text-secondary hover:text-brand-text hover:bg-white/50"
+                      : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-white/50"
                   }`}
                 >
-                  <span>{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
@@ -154,12 +150,12 @@ export default function MyAccountPage() {
             {activeTab === "details" && (
               <form onSubmit={handleSave} className="p-6 space-y-6">
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-brand-black mb-4">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
                     Personal Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Full Name
                       </label>
                       <input
@@ -172,7 +168,7 @@ export default function MyAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Mobile Phone (for SMS pickup alerts)
                       </label>
                       <input
@@ -185,7 +181,7 @@ export default function MyAccountPage() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Email Address
                       </label>
                       <input
@@ -200,13 +196,13 @@ export default function MyAccountPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-brand-border">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-brand-black mb-4">
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
                     Condominium Unit Address
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Unit Number
                       </label>
                       <input
@@ -219,7 +215,7 @@ export default function MyAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Tower / Cluster
                       </label>
                       <input
@@ -232,40 +228,40 @@ export default function MyAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Resident Code
                       </label>
                       <input
                         type="text"
                         value={user?.residentCode || "CK-000123"}
                         disabled
-                        className="input w-full bg-brand-surface text-brand-text-muted cursor-not-allowed font-mono"
+                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed font-mono"
                       />
                     </div>
                     <div className="md:col-span-3">
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Condominium Property
                       </label>
                       <input
                         type="text"
                         value={building}
                         disabled
-                        className="input w-full bg-brand-surface text-brand-text-muted cursor-not-allowed"
+                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-brand-border">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-brand-black mb-2">
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-1">
                     Authorized Parcel Claimants
                   </h3>
-                  <p className="text-xs text-brand-text-secondary mb-4">
+                  <p className="text-xs text-gray-500 mb-4">
                     Allow family members or housemates to claim parcels on your behalf with their ID.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Authorized Person & Relationship
                       </label>
                       <input
@@ -277,7 +273,7 @@ export default function MyAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-brand-text mb-1">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Claimant Mobile Number
                       </label>
                       <input
@@ -291,13 +287,13 @@ export default function MyAccountPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-brand-border flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="btn btn-primary btn-sm font-bold uppercase"
+                    className="btn btn-primary btn-sm font-bold uppercase cursor-pointer"
                   >
-                    {isSaving ? "Saving Changes..." : "SAVE CHANGES"}
+                    {isSaving ? "Saving Changes..." : "Save Changes"}
                   </button>
                 </div>
               </form>
@@ -307,26 +303,26 @@ export default function MyAccountPage() {
             {activeTab === "password" && (
               <form onSubmit={handleSave} className="p-6 space-y-4 max-w-md">
                 <div>
-                  <label className="block text-xs font-semibold text-brand-text mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Current Password
                   </label>
                   <input type="password" placeholder="••••••••" className="input w-full" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-brand-text mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     New Password
                   </label>
                   <input type="password" placeholder="At least 8 characters" className="input w-full" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-brand-text mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Confirm New Password
                   </label>
                   <input type="password" placeholder="Repeat new password" className="input w-full" required />
                 </div>
                 <div className="pt-3">
-                  <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
-                    UPDATE PASSWORD
+                  <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
+                    Update Password
                   </button>
                 </div>
               </form>
@@ -362,10 +358,10 @@ export default function MyAccountPage() {
                       setter: setPromoUpdates,
                     },
                   ].map((item, idx) => (
-                    <div key={idx} className="flex items-start justify-between gap-4 p-3 rounded-lg border border-brand-border hover:bg-brand-surface/40 transition-colors">
+                    <div key={idx} className="flex items-start justify-between gap-4 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                       <div>
-                        <div className="text-sm font-bold text-brand-text">{item.title}</div>
-                        <div className="text-xs text-brand-text-secondary">{item.desc}</div>
+                        <div className="text-sm font-bold text-gray-900">{item.title}</div>
+                        <div className="text-xs text-gray-500">{item.desc}</div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                         <input
@@ -381,8 +377,8 @@ export default function MyAccountPage() {
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
-                    SAVE PREFERENCES
+                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
+                    Save Preferences
                   </button>
                 </div>
               </div>
@@ -391,18 +387,18 @@ export default function MyAccountPage() {
             {/* Tab 4: Door Delivery */}
             {activeTab === "delivery" && (
               <div className="p-6 space-y-4">
-                <div className="bg-brand-red-bg p-4 rounded-xl border border-brand-red-light/40">
-                  <h4 className="font-bold text-sm text-brand-red mb-1">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <h4 className="font-bold text-sm text-gray-900 mb-1">
                     DOORSTEP CONCIERGE PREFERENCES
                   </h4>
-                  <p className="text-xs text-brand-text-secondary">
+                  <p className="text-xs text-gray-500">
                     Configure instructions for hub runners when bringing parcels to your front door.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-brand-text mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Preferred Delivery Window
                     </label>
                     <select className="input w-full cursor-pointer">
@@ -413,7 +409,7 @@ export default function MyAccountPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-brand-text mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Drop-off Instructions
                     </label>
                     <textarea
@@ -425,8 +421,8 @@ export default function MyAccountPage() {
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase">
-                    SAVE DELIVERY INSTRUCTIONS
+                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
+                    Save Delivery Instructions
                   </button>
                 </div>
               </div>
@@ -437,29 +433,29 @@ export default function MyAccountPage() {
         {/* Right Rail: Profile Summary, Membership Plan, Support Links */}
         <div className="space-y-6">
           {/* Resident Identity Card */}
-          <div className="bg-white border border-brand-border rounded-xl p-5 shadow-sm space-y-4 text-center">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4 text-center">
             <div className="w-20 h-20 bg-brand-red text-white font-[family-name:var(--font-heading)] text-3xl font-bold rounded-full flex items-center justify-center mx-auto shadow-md">
               {initials}
             </div>
             <div>
-              <h3 className="font-bold text-base text-brand-black">{fullName}</h3>
-              <p className="text-xs text-brand-text-secondary">{email}</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 bg-brand-surface px-3 py-1 rounded-full border border-brand-border text-xs font-mono font-bold text-brand-red">
+              <h3 className="font-bold text-base text-gray-900">{fullName}</h3>
+              <p className="text-xs text-gray-500">{email}</p>
+              <div className="mt-2 inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 text-xs font-mono font-bold text-brand-red">
                 <span>PASSCODE:</span> {user?.residentCode || "CK-000123"}
               </div>
             </div>
 
-            <div className="pt-3 border-t border-brand-border text-left text-xs space-y-2">
+            <div className="pt-3 border-t border-gray-200 text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Unit / Tower:</span>
-                <span className="font-semibold text-brand-text">{unit}, {tower}</span>
+                <span className="text-gray-500">Unit / Tower:</span>
+                <span className="font-semibold text-gray-900">{unit}, {tower}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Membership Tier:</span>
+                <span className="text-gray-500">Membership Tier:</span>
                 <span className="font-semibold text-brand-red uppercase">{user?.plan || "PREMIUM"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Account Status:</span>
+                <span className="text-gray-500">Account Status:</span>
                 <span className={`font-semibold ${user?.planStatus === "PENDING_PAYMENT" ? "text-amber-600" : "text-green-700"}`}>
                   ● {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
                 </span>
@@ -468,9 +464,9 @@ export default function MyAccountPage() {
           </div>
 
           {/* Plan Upgrade Box */}
-          <div className="bg-[#FFFDF4] border-2 border-amber-300/80 rounded-xl p-5 space-y-3">
+          <div className="bg-[#FFFDF4] border-2 border-amber-300 rounded-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-amber-800 tracking-wide">
+              <span className="text-xs font-black uppercase text-amber-900 tracking-wide">
                 MEMBERSHIP
               </span>
               <span
@@ -483,28 +479,28 @@ export default function MyAccountPage() {
                 {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
               </span>
             </div>
-            <p className="text-sm font-bold text-brand-black">{user?.plan || "PREMIUM"} Plan</p>
-            <p className="text-xs text-brand-text-secondary">
+            <p className="text-sm font-bold text-gray-900">{user?.plan || "PREMIUM"} Plan</p>
+            <p className="text-xs text-gray-500">
               Includes {user?.plan === "PREMIUM" ? "7" : "3"}-day holding grace period & concierge front desk handling.
             </p>
-            <Link href="/membership" className="btn btn-outline btn-sm w-full text-center block">
+            <Link href="/membership" className="btn btn-outline btn-sm w-full text-center block font-bold uppercase">
               Manage Subscription
             </Link>
           </div>
 
-          {/* Quick Help */}
-          <div className="bg-brand-surface border border-brand-border rounded-xl p-5 space-y-2">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-brand-text">
+          {/* Support Link */}
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-2">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-gray-900">
               NEED HELP?
             </h4>
-            <p className="text-xs text-brand-text-secondary">
+            <p className="text-xs text-gray-500">
               Need to change your registered condo unit or report a discrepancy?
             </p>
             <a
               href="tel:09171234567"
               className="text-xs font-bold text-brand-red hover:underline block pt-1"
             >
-              📞 Call Reception: 0917 123 4567
+              Call Reception: 0917 123 4567
             </a>
           </div>
         </div>

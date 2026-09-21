@@ -14,14 +14,8 @@ function DashboardContent() {
   const { user, updateProfile } = useAuth();
   const { parcels, getParcelByTracking } = useParcels();
 
-  // Keep activeTab in sync with query parameter
-  useEffect(() => {
-    if (searchParams.get("tab") === "track") {
-      setActiveTab("track");
-    }
-  }, [searchParams]);
-
-  // Payment Modal state for pending payment residents
+  // Modal states
+  const [selectedClaimParcel, setSelectedClaimParcel] = useState<Parcel | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"GCASH" | "CASH_COUNTER">("GCASH");
   const [gcashRef, setGcashRef] = useState("");
@@ -33,6 +27,13 @@ function DashboardContent() {
   const [trackResult, setTrackResult] = useState<Parcel | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Keep activeTab in sync with query parameter
+  useEffect(() => {
+    if (searchParams.get("tab") === "track") {
+      setActiveTab("track");
+    }
+  }, [searchParams]);
 
   const executeLookup = useCallback(
     async (trackingNumber: string) => {
@@ -93,14 +94,14 @@ function DashboardContent() {
   const firstName = user?.name ? user.name.split(" ")[0].toUpperCase() : "RESIDENT";
   const unitInfo = user?.unit ? `${user.unit}, ${user.tower || "Tower A"}` : "Unit 101, Tower A";
 
-  // Filter parcels for the current user
+  // Filter parcels for current user
   const userParcels = parcels.filter(
     (p) => p.residentId === user?.id || (user?.name && p.residentName.toLowerCase() === user.name.toLowerCase())
   );
 
-  const readyParcels = userParcels.filter((p) => p.status === "READY");
+  const readyParcels = userParcels.filter((p) => p.status === "READY" || p.status === "OVERDUE");
   const overdueParcels = userParcels.filter((p) => p.status === "OVERDUE");
-  const totalActive = readyParcels.length + overdueParcels.length;
+  const totalActive = readyParcels.length;
 
   const isPendingPayment = user?.planStatus === "PENDING_PAYMENT";
   const planPrice = user?.plan === "PREMIUM" ? "₱299/mo" : user?.plan === "REGULAR" ? "₱149/mo" : "₱15/claim";
@@ -109,64 +110,66 @@ function DashboardContent() {
     ? "Pending Payment"
     : user?.plan === "PREMIUM"
     ? "2 of 5 Left"
-    : "0 Credits (Pay-Per-Trip)";
+    : "0 (Pay-Per-Trip)";
 
   return (
     <div className="space-y-6">
       {/* Top View Selector: Overview vs Track Parcel */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-brand-border shadow-sm">
-        <div className="flex gap-1.5 bg-brand-surface p-1 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="flex gap-1.5 bg-gray-100 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setActiveTab("overview")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "overview"
                 ? "bg-white text-brand-red shadow-sm"
-                : "text-brand-text-secondary hover:text-brand-black"
+                : "text-gray-600 hover:text-black"
             }`}
           >
-            <span>🏠</span>
-            <span>Dashboard Overview</span>
+            Dashboard Overview
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("track")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "track"
                 ? "bg-brand-red text-white shadow-sm"
-                : "text-brand-text-secondary hover:text-brand-black"
+                : "text-gray-600 hover:text-black"
             }`}
           >
-            <span>🔍</span>
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="8" strokeWidth="2" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" strokeLinecap="round" />
+            </svg>
             <span>Track Parcel</span>
           </button>
         </div>
 
-        <div className="text-xs text-brand-text-secondary pr-2 hidden sm:block">
-          Unit: <strong className="text-brand-black">{unitInfo}</strong>
+        <div className="text-xs text-gray-500 pr-2 hidden sm:block">
+          Unit: <strong className="text-gray-900">{unitInfo}</strong>
         </div>
       </div>
 
-      {/* Pending Payment Alert Banner (If Resident has not yet paid for Premium or Regular) */}
+      {/* Pending Payment Alert Banner */}
       {isPendingPayment && (
-        <div className="bg-amber-500/10 border-2 border-amber-500/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-amber-500 text-black font-black rounded-xl flex items-center justify-center shrink-0 text-lg">
-              ⚠️
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                Action Required
+              </span>
+              <h3 className="font-bold text-sm text-gray-900">
+                Membership Pending Payment: {user?.plan} Tier ({planPrice})
+              </h3>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-brand-black">
-                  Membership Pending Payment: {user?.plan} Tier ({planPrice})
-                </h3>
-                <span className="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
-                  Action Required
-                </span>
-              </div>
-              <p className="text-xs text-brand-text-secondary mt-0.5 max-w-xl leading-relaxed">
-                You registered under the <strong>{user?.plan} Plan</strong>. Please settle your subscription via GCash QR or pay in cash at the Ground Floor Front Desk counter to activate extended holding days and door delivery perks.
-              </p>
-            </div>
+            <p className="text-xs text-gray-600 max-w-xl leading-relaxed">
+              You registered under the <strong>{user?.plan} Plan</strong>. Please settle your subscription via GCash QR or pay at Station 1 Front Desk to activate free holding days and concierge delivery perks.
+            </p>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
@@ -175,7 +178,7 @@ function DashboardContent() {
               onClick={() => setShowPaymentModal(true)}
               className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase whitespace-nowrap"
             >
-              Complete Payment 💳
+              Complete Payment
             </button>
             <Link
               href="/membership"
@@ -187,31 +190,26 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* View 1: Track Parcel (Integrated In-Dashboard Experience) */}
+      {/* View 1: Track Parcel */}
       {activeTab === "track" ? (
         <div className="space-y-6 animate-in fade-in">
           {/* Header Card */}
-          <div className="bg-gradient-to-r from-brand-black via-brand-dark to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
             <div className="relative z-10 max-w-xl">
               <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                Resident Live Tracking Tool
+                Station 1 Live Parcel Tracker
               </span>
               <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl mt-2 mb-2 tracking-wide uppercase">
                 TRACK YOUR <span className="text-brand-red">PARCEL</span>
               </h2>
               <p className="text-white/80 text-sm leading-relaxed">
-                Check whether your incoming courier parcel has checked in at Station 1 Front Desk without leaving your dashboard.
+                Check whether your incoming courier parcel has arrived and checked in at Station 1 Front Desk.
               </p>
-            </div>
-            <div className="absolute right-4 -bottom-10 opacity-10 pointer-events-none hidden md:block">
-              <span className="font-[family-name:var(--font-heading)] text-[160px] font-black leading-none">
-                TRACK
-              </span>
             </div>
           </div>
 
           {/* Search Box */}
-          <div className="bg-white p-5 rounded-2xl border border-brand-border shadow-sm space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
             <form onSubmit={handleTrackSubmit} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
@@ -225,15 +223,24 @@ function DashboardContent() {
               <button
                 type="submit"
                 disabled={isSearching}
-                className="btn btn-primary sm:w-44 py-3 font-bold uppercase cursor-pointer"
+                className="btn btn-primary sm:w-44 py-3 font-bold uppercase cursor-pointer flex items-center justify-center gap-2"
               >
-                {isSearching ? "Searching..." : "Track Parcel 🔍"}
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="11" cy="11" r="8" strokeWidth="2" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span>{isSearching ? "Searching..." : "Track Parcel"}</span>
               </button>
             </form>
 
             {/* Quick Sample Links */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-brand-border text-xs text-brand-text-secondary">
-              <span className="font-semibold text-brand-black">Quick Test Parcels:</span>
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+              <span className="font-semibold text-gray-900">Sample Numbers:</span>
               {[
                 { label: "SPX-PH-2026-8921 (Ready)", num: "SPX-PH-2026-8921" },
                 { label: "JT-PH-9920148 (Ready)", num: "JT-PH-9920148" },
@@ -247,7 +254,7 @@ function DashboardContent() {
                     setTrackQuery(sample.num);
                     executeLookup(sample.num);
                   }}
-                  className="text-brand-red font-mono font-semibold hover:underline bg-brand-surface px-2 py-0.5 rounded border border-brand-border cursor-pointer"
+                  className="text-brand-red font-mono font-semibold hover:underline bg-gray-50 px-2.5 py-1 rounded border border-gray-200 cursor-pointer"
                 >
                   {sample.label}
                 </button>
@@ -257,8 +264,8 @@ function DashboardContent() {
 
           {/* Search Result Card */}
           {trackResult ? (
-            <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-lg animate-in fade-in">
-              <div className="bg-gradient-to-r from-brand-black to-brand-dark text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-lg animate-in fade-in">
+              <div className="bg-gray-950 text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <span className="text-[10px] text-white/60 font-bold uppercase tracking-wider block">
                     {trackResult.courier}
@@ -288,19 +295,19 @@ function DashboardContent() {
 
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-1">
-                    <span className="text-brand-text-muted uppercase font-bold text-[10px]">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-1">
+                    <span className="text-gray-500 uppercase font-bold text-[10px]">
                       Storage Location
                     </span>
-                    <div className="font-bold text-sm text-brand-black">{trackResult.shelf}</div>
-                    <div className="text-brand-text-secondary">Station 1 Front Desk</div>
+                    <div className="font-bold text-sm text-gray-900">{trackResult.shelf}</div>
+                    <div className="text-gray-500">Station 1 Front Desk</div>
                   </div>
 
-                  <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-1">
-                    <span className="text-brand-text-muted uppercase font-bold text-[10px]">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-1">
+                    <span className="text-gray-500 uppercase font-bold text-[10px]">
                       Holding Status & Fee
                     </span>
-                    <div className="font-bold text-sm text-brand-black">
+                    <div className="font-bold text-sm text-gray-900">
                       {trackResult.status === "PICKED_UP" ? "Completed" : `Deadline: ${trackResult.deadline}`}
                     </div>
                     <div
@@ -312,28 +319,28 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-1">
-                    <span className="text-brand-text-muted uppercase font-bold text-[10px]">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-1">
+                    <span className="text-gray-500 uppercase font-bold text-[10px]">
                       Recipient Unit
                     </span>
-                    <div className="font-bold text-sm text-brand-black">{trackResult.unit}</div>
-                    <div className="text-brand-text-secondary">{trackResult.residentName}</div>
+                    <div className="font-bold text-sm text-gray-900">{trackResult.unit}</div>
+                    <div className="text-gray-500">{trackResult.residentName}</div>
                   </div>
                 </div>
 
-                {/* Stepper Timeline */}
+                {/* Timeline */}
                 <div className="space-y-4 pt-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-black">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
                     PACKAGE TIMELINE & CHECKPOINTS
                   </h4>
                   <div className="space-y-4 border-l-2 border-brand-red ml-3 pl-4 text-xs">
                     <div className="relative">
                       <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-brand-red border-2 border-white" />
-                      <span className="font-bold text-brand-black block">
+                      <span className="font-bold text-gray-900 block">
                         Arrived & Checked In at CK Drop Hub
                       </span>
-                      <span className="text-brand-text-secondary">{trackResult.dateArrived}</span>
-                      <p className="text-brand-text-muted mt-0.5">
+                      <span className="text-gray-500">{trackResult.dateArrived}</span>
+                      <p className="text-gray-500 mt-0.5">
                         Logged into shelf slot {trackResult.shelf} for recipient unit {trackResult.unit}.
                       </p>
                     </div>
@@ -341,23 +348,23 @@ function DashboardContent() {
                     {trackResult.status === "PICKED_UP" ? (
                       <div className="relative">
                         <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white" />
-                        <span className="font-bold text-brand-black block">
+                        <span className="font-bold text-gray-900 block">
                           Picked Up & Released
                         </span>
-                        <span className="text-brand-text-secondary">
+                        <span className="text-gray-500">
                           {trackResult.claimedAt || "Released at Front Desk"}
                         </span>
-                        <p className="text-brand-text-muted mt-0.5">
+                        <p className="text-gray-500 mt-0.5">
                           Claimed by {trackResult.claimedBy || "Resident"}.
                         </p>
                       </div>
                     ) : (
                       <div className="relative">
                         <div className="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-yellow-500 border-2 border-white" />
-                        <span className="font-semibold text-brand-text-secondary block">
+                        <span className="font-semibold text-gray-600 block">
                           Awaiting Resident Pickup
                         </span>
-                        <span className="text-brand-text-muted">
+                        <span className="text-gray-500">
                           Passcode: <strong className="font-mono text-brand-red">{trackResult.claimCode}</strong>
                         </span>
                       </div>
@@ -365,10 +372,10 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Footer Action */}
-                <div className="pt-4 border-t border-brand-border flex flex-col sm:flex-row gap-3 items-center justify-between">
-                  <div className="text-xs text-brand-text-secondary">
-                    Package matches your unit? You can view all your stored packages in My Parcels.
+                {/* Actions */}
+                <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Need to claim this parcel? Show the 4-digit code to the reception desk.
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -376,39 +383,38 @@ function DashboardContent() {
                       onClick={() => setActiveTab("overview")}
                       className="btn btn-outline btn-sm font-bold uppercase cursor-pointer"
                     >
-                      ← Back to Overview
+                      Back to Overview
                     </button>
                     <Link href="/parcels" className="btn btn-primary btn-sm font-bold uppercase">
-                      Go to My Parcels →
+                      Go to My Parcels
                     </Link>
                   </div>
                 </div>
               </div>
             </div>
           ) : hasSearched ? (
-            <div className="bg-white rounded-2xl border border-brand-border p-8 text-center space-y-3 shadow-md animate-in fade-in">
-              <div className="text-4xl">🚚</div>
-              <h3 className="font-bold text-base text-brand-black">Package Not Yet Arrived at Drop Hub</h3>
-              <p className="text-xs text-brand-text-secondary max-w-md mx-auto">
-                No record found for tracking number <span className="font-mono font-bold text-brand-black">&quot;{trackQuery}&quot;</span>. Your delivery rider may still be on the way to the condo.
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-3 shadow-md animate-in fade-in">
+              <h3 className="font-bold text-base text-gray-900">Package Not Yet Arrived at Drop Hub</h3>
+              <p className="text-xs text-gray-500 max-w-md mx-auto">
+                No record found for tracking number <span className="font-mono font-bold text-gray-900">&quot;{trackQuery}&quot;</span>. Your delivery rider may still be on the way to the condo lobby.
               </p>
               <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="btn btn-outline btn-sm cursor-pointer"
+                  className="btn btn-outline btn-sm cursor-pointer font-bold uppercase"
                 >
-                  Return to Dashboard Overview
+                  Return to Dashboard
                 </button>
               </div>
             </div>
           ) : null}
         </div>
       ) : (
-        /* View 2: Dashboard Overview (Default) */
+        /* View 2: Dashboard Overview */
         <>
           {/* Welcome Hero Banner */}
-          <div className="bg-gradient-to-r from-brand-black via-brand-dark to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
             <div className="relative z-10 max-w-xl">
               <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Resident Portal • {unitInfo}
@@ -419,7 +425,7 @@ function DashboardContent() {
               <p className="text-white/80 text-sm leading-relaxed mb-6">
                 {totalActive > 0 ? (
                   <>
-                    You currently have <strong className="text-white">{totalActive} parcel{totalActive > 1 ? "s" : ""} ready for pickup</strong> at the Ground Floor Hub.
+                    You currently have <strong className="text-white">{totalActive} parcel{totalActive > 1 ? "s" : ""} ready for pickup</strong> at Station 1 Front Desk.
                     {overdueParcels.length > 0 && (
                       <span className="text-yellow-300 ml-1">
                         ({overdueParcels.length} parcel is past the free holding deadline).
@@ -428,29 +434,22 @@ function DashboardContent() {
                   </>
                 ) : (
                   <>
-                    You have <strong className="text-white">0 parcels pending pickup</strong>. We will notify you by SMS as soon as couriers drop off your deliveries.
+                    You have <strong className="text-white">0 parcels pending pickup</strong>. We will notify you by SMS as soon as couriers check in your deliveries.
                   </>
                 )}
               </p>
               <div className="flex flex-wrap gap-3">
-                <Link href="/parcels" className="btn btn-primary btn-sm">
-                  VIEW READY PARCELS ({totalActive}) →
+                <Link href="/parcels" className="btn btn-primary btn-sm font-bold uppercase">
+                  View All Parcels ({totalActive})
                 </Link>
                 <button
                   type="button"
                   onClick={() => setActiveTab("track")}
-                  className="btn btn-outline btn-sm !text-white !border-white/40 hover:!bg-white/10 cursor-pointer"
+                  className="btn btn-outline btn-sm !text-white !border-white/40 hover:!bg-white/10 cursor-pointer font-bold uppercase"
                 >
-                  TRACK PARCEL 🔍
+                  Track Parcel
                 </button>
               </div>
-            </div>
-
-            {/* Decorative Badge Background */}
-            <div className="absolute right-4 -bottom-10 opacity-10 pointer-events-none hidden md:block">
-              <span className="font-[family-name:var(--font-heading)] text-[180px] font-black leading-none">
-                HUB
-              </span>
             </div>
           </div>
 
@@ -458,161 +457,199 @@ function DashboardContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Link
               href="/parcels"
-              className="bg-white p-5 rounded-xl border border-brand-border shadow-sm flex items-center gap-4 hover:border-brand-red transition-all cursor-pointer group"
+              className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
             >
-              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center text-2xl font-bold group-hover:scale-105 transition-transform">
-                📦
+              <span className="text-xs text-gray-500 uppercase font-semibold">Ready for Pickup</span>
+              <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mt-2">
+                {totalActive} Parcel{totalActive === 1 ? "" : "s"}
               </div>
-              <div>
-                <span className="text-xs text-brand-text-secondary uppercase font-semibold">Ready for Pickup</span>
-                <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-black">
-                  {totalActive} Parcel{totalActive === 1 ? "" : "s"}
-                </div>
-              </div>
+              <span className="text-xs text-green-700 font-semibold mt-1">Station 1 Front Desk</span>
             </Link>
 
             <Link
               href="/membership"
-              className="bg-white p-5 rounded-xl border border-brand-border shadow-sm flex items-center gap-4 hover:border-brand-red transition-all cursor-pointer group"
+              className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl font-bold group-hover:scale-105 transition-transform">
-                🚚
+              <span className="text-xs text-gray-500 uppercase font-semibold">Door Delivery Credits</span>
+              <div className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-gray-900 mt-2">
+                {deliveryCreditsText}
               </div>
-              <div>
-                <span className="text-xs text-brand-text-secondary uppercase font-semibold">Door Delivery Credits</span>
-                <div className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-brand-black">
-                  {deliveryCreditsText}
-                </div>
-              </div>
+              <span className="text-xs text-blue-700 font-semibold mt-1">{user?.plan || "PREMIUM"} Tier</span>
             </Link>
 
             <Link
               href="/parcels"
-              className="bg-white p-5 rounded-xl border border-brand-border shadow-sm flex items-center gap-4 hover:border-brand-red transition-all cursor-pointer group"
+              className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
             >
-              <div className="w-12 h-12 bg-brand-red-bg text-brand-red rounded-xl flex items-center justify-center text-2xl font-bold group-hover:scale-105 transition-transform">
-                ⚠️
+              <span className="text-xs text-gray-500 uppercase font-semibold">Holding Alert</span>
+              <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-red mt-2">
+                {overdueParcels.length} Overdue
               </div>
-              <div>
-                <span className="text-xs text-brand-text-secondary uppercase font-semibold">Holding Alert</span>
-                <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-red">
-                  {overdueParcels.length} Overdue
-                </div>
-              </div>
+              <span className="text-xs text-gray-500 mt-1">₱10/day holding rate</span>
             </Link>
           </div>
 
-          {/* Quick Action Tiles & Recent Notices */}
+          {/* Main Resident Section: Ready Packages Direct Stream + Station 1 Info */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2 Cols: Quick Shortcuts */}
+            {/* Left 2 Cols: Packages Ready for Pickup (Direct instant access for resident) */}
             <div className="lg:col-span-2 space-y-4">
-              <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-brand-black">
-                FREQUENT ACTIONS
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-gray-900">
+                  PACKAGES READY FOR PICKUP
+                </h2>
                 <Link
                   href="/parcels"
-                  className="bg-white p-5 rounded-xl border border-brand-border shadow-sm hover:border-brand-red transition-all group"
+                  className="text-xs font-bold text-brand-red hover:underline uppercase"
                 >
-                  <div className="w-10 h-10 bg-brand-surface rounded-lg flex items-center justify-center text-xl mb-3 group-hover:bg-brand-red-bg transition-colors">
-                    📦
-                  </div>
-                  <h3 className="font-bold text-sm text-brand-black group-hover:text-brand-red">
-                    My Ready Packages
-                  </h3>
-                  <p className="text-xs text-brand-text-secondary mt-1">
-                    View claim barcodes, arrival timestamps, and shelf slot numbers.
-                  </p>
+                  Manage All Parcels →
                 </Link>
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("track")}
-                  className="bg-white p-5 rounded-xl border border-brand-border shadow-sm hover:border-brand-red transition-all group text-left cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-brand-surface rounded-lg flex items-center justify-center text-xl mb-3 group-hover:bg-brand-red-bg transition-colors">
-                    🔍
-                  </div>
-                  <h3 className="font-bold text-sm text-brand-black group-hover:text-brand-red">
-                    Track Tracking Number
-                  </h3>
-                  <p className="text-xs text-brand-text-secondary mt-1">
-                    Check whether your Shopee, Lazada, or courier parcel has checked in at the hub.
+              {readyParcels.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-2 shadow-sm">
+                  <h3 className="font-bold text-base text-gray-900">All Caught Up!</h3>
+                  <p className="text-xs text-gray-500 max-w-md mx-auto">
+                    You have no packages currently awaiting pickup at Station 1 Front Desk. We will send an SMS to {user?.phone || "your number"} the moment a courier registers a delivery.
                   </p>
-                </button>
-
-                <Link
-                  href="/account"
-                  className="bg-white p-5 rounded-xl border border-brand-border shadow-sm hover:border-brand-red transition-all group"
-                >
-                  <div className="w-10 h-10 bg-brand-surface rounded-lg flex items-center justify-center text-xl mb-3 group-hover:bg-brand-red-bg transition-colors">
-                    👤
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("track")}
+                      className="btn btn-outline btn-sm font-bold uppercase cursor-pointer"
+                    >
+                      Track Incoming Tracking Number
+                    </button>
                   </div>
-                  <h3 className="font-bold text-sm text-brand-black group-hover:text-brand-red">
-                    Authorized Claimants
-                  </h3>
-                  <p className="text-xs text-brand-text-secondary mt-1">
-                    Authorize family or helpers to retrieve packages using their ID.
-                  </p>
-                </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {readyParcels.map((parcel) => (
+                    <div
+                      key={parcel.id}
+                      className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-300 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-block w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: parcel.courierColor }}
+                          />
+                          <span className="font-bold text-xs text-gray-900">{parcel.courier}</span>
+                          <span className="text-[10px] bg-gray-100 text-gray-600 font-mono px-2 py-0.5 rounded border border-gray-200">
+                            {parcel.shelf}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              parcel.status === "OVERDUE"
+                                ? "bg-red-50 text-brand-red border border-red-200"
+                                : "bg-green-50 text-green-700 border border-green-200"
+                            }`}
+                          >
+                            {parcel.status === "OVERDUE" ? "Overdue" : "Ready"}
+                          </span>
+                        </div>
 
-                <div className="bg-brand-surface p-5 rounded-xl border border-brand-border flex flex-col justify-between">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-brand-text-muted">
-                      HUB SERVICE DESK
-                    </span>
-                    <h4 className="font-bold text-sm text-brand-black mt-1">Operating Schedule</h4>
-                    <p className="text-xs text-brand-text-secondary mt-1">
-                      Daily: 8:00 AM – 9:00 PM (Including Public Holidays)
-                    </p>
+                        <div className="font-mono font-bold text-base text-gray-900">
+                          {parcel.trackingNumber}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-1">
+                          <span>Arrived: <strong className="text-gray-700">{parcel.dateArrived}</strong></span>
+                          <span>Deadline: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-gray-700"}>{parcel.deadline}</strong></span>
+                          <span>Holding Fee: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-green-700"}>{parcel.holdingFee}</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] text-gray-400 uppercase font-semibold block">
+                            Claim Passcode
+                          </span>
+                          <span className="font-mono font-black text-xl text-brand-red tracking-wider">
+                            {parcel.claimCode}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedClaimParcel(parcel)}
+                          className="btn btn-primary btn-sm font-bold uppercase whitespace-nowrap cursor-pointer"
+                        >
+                          View Claim QR
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right 1 Col: Station 1 Front Desk Info & Announcements */}
+            <div className="space-y-6">
+              {/* Station 1 Service Desk Card */}
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
+                  PICKUP LOCATION
+                </span>
+                <h3 className="font-[family-name:var(--font-heading)] text-lg text-gray-900 uppercase">
+                  Station 1 Front Desk
+                </h3>
+                <div className="text-xs space-y-2 text-gray-600">
+                  <div className="flex justify-between border-b border-gray-100 pb-1.5">
+                    <span className="text-gray-500">Location:</span>
+                    <span className="font-semibold text-gray-900">Ground Floor Main Lobby</span>
                   </div>
-                  <div className="pt-3 flex items-center justify-between">
-                    <a href="tel:09171234567" className="text-xs font-bold text-brand-red hover:underline">
-                      📞 0917 123 4567
+                  <div className="flex justify-between border-b border-gray-100 pb-1.5">
+                    <span className="text-gray-500">Operating Hours:</span>
+                    <span className="font-semibold text-gray-900">8:00 AM – 9:00 PM Daily</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-1.5">
+                    <span className="text-gray-500">Hotline:</span>
+                    <a href="tel:09171234567" className="font-bold text-brand-red hover:underline">
+                      0917 123 4567
                     </a>
-                    <Link href="/help" className="text-xs text-brand-text-secondary hover:text-brand-black underline">
-                      Help Center →
+                  </div>
+                  <div className="flex justify-between pt-0.5">
+                    <span className="text-gray-500">Door Delivery:</span>
+                    <Link href="/parcels" className="font-semibold text-brand-red hover:underline">
+                      Request Runner
                     </Link>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right 1 Col: Community Announcements */}
-            <div className="bg-white p-5 rounded-xl border border-brand-border shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📢</span>
-                <h3 className="font-[family-name:var(--font-heading)] text-lg text-brand-black uppercase">
+              {/* Hub Announcements */}
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                <h3 className="font-[family-name:var(--font-heading)] text-lg text-gray-900 uppercase">
                   HUB ANNOUNCEMENTS
                 </h3>
-              </div>
 
-              <div className="space-y-3 divide-y divide-brand-border text-xs">
-                <div className="pt-2 first:pt-0">
-                  <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
-                  <h4 className="font-bold text-brand-black mt-0.5">Flash Express Direct Sorting Added</h4>
-                  <p className="text-brand-text-secondary mt-1 leading-relaxed">
-                    Flash Express riders now drop packages directly into dedicated shelf bins at Station 1.
-                  </p>
-                </div>
+                <div className="space-y-3 divide-y divide-gray-100 text-xs">
+                  <div className="pt-2 first:pt-0">
+                    <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
+                    <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
+                    <p className="text-gray-600 mt-1 leading-relaxed">
+                      Flash Express riders now drop packages directly into dedicated shelf bins at Station 1.
+                    </p>
+                  </div>
 
-                <div className="pt-3">
-                  <span className="text-[10px] text-brand-text-muted font-bold uppercase">Sept 25, 2026</span>
-                  <h4 className="font-bold text-brand-black mt-0.5">Holiday Schedule Advisory</h4>
-                  <p className="text-brand-text-secondary mt-1 leading-relaxed">
-                    Hub will remain open for normal hours (8AM-9PM) during upcoming holidays.
-                  </p>
-                </div>
+                  <div className="pt-3">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
+                    <h4 className="font-bold text-gray-900 mt-0.5">Holiday Schedule Advisory</h4>
+                    <p className="text-gray-600 mt-1 leading-relaxed">
+                      Hub remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
+                    </p>
+                  </div>
 
-                <div className="pt-3">
-                  <span className="text-[10px] text-brand-text-muted font-bold uppercase">Need Assistance?</span>
-                  <p className="text-brand-text-secondary mt-1 leading-relaxed">
-                    Visit our{" "}
-                    <Link href="/help" className="text-brand-red font-semibold hover:underline">
-                      Resident Help Center
-                    </Link>{" "}
-                    for proxy rules and the holding fee calculator.
-                  </p>
+                  <div className="pt-3">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase">Need Assistance?</span>
+                    <p className="text-gray-600 mt-1 leading-relaxed">
+                      Visit our{" "}
+                      <Link href="/help" className="text-brand-red font-semibold hover:underline">
+                        Resident Help Center
+                      </Link>{" "}
+                      for proxy claimant rules and the holding fee calculator.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -620,19 +657,96 @@ function DashboardContent() {
         </>
       )}
 
-      {/* Payment Activation Modal (For Pending Payment status) */}
+      {/* Claim Code & QR Modal Popup (Accessible directly from Dashboard) */}
+      {selectedClaimParcel && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl animate-in fade-in zoom-in duration-150">
+            <div>
+              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase">
+                PARCEL CLAIM PASS
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Show this verification code to the receptionist at Station 1
+              </p>
+            </div>
+
+            {/* Code Box */}
+            <div className="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-brand-red/40">
+              <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                YOUR UNIQUE PASSCODE
+              </div>
+              <div className="font-mono text-3xl font-black text-brand-red tracking-widest my-1">
+                {selectedClaimParcel.claimCode}
+              </div>
+              <div className="text-[11px] text-gray-500 font-mono">
+                Tracking: {selectedClaimParcel.trackingNumber}
+              </div>
+            </div>
+
+            {/* Synthetic QR Code graphic */}
+            <div className="p-3 bg-white border border-gray-200 rounded-xl inline-block shadow-inner">
+              <div className="w-36 h-36 bg-gray-50 flex flex-col items-center justify-center rounded border border-gray-200">
+                <svg className="w-28 h-28 text-gray-900" viewBox="0 0 100 100" fill="currentColor">
+                  <rect x="10" y="10" width="24" height="24" rx="2" />
+                  <rect x="14" y="14" width="16" height="16" fill="white" />
+                  <rect x="18" y="18" width="8" height="8" />
+                  <rect x="66" y="10" width="24" height="24" rx="2" />
+                  <rect x="70" y="14" width="16" height="16" fill="white" />
+                  <rect x="74" y="18" width="8" height="8" />
+                  <rect x="10" y="66" width="24" height="24" rx="2" />
+                  <rect x="14" y="70" width="16" height="16" fill="white" />
+                  <rect x="18" y="74" width="8" height="8" />
+                  <rect x="42" y="10" width="12" height="12" />
+                  <rect x="42" y="30" width="12" height="12" />
+                  <rect x="42" y="50" width="12" height="12" />
+                  <rect x="66" y="42" width="12" height="12" />
+                  <rect x="66" y="66" width="12" height="12" />
+                  <rect x="80" y="80" width="10" height="10" />
+                  <rect x="50" y="76" width="10" height="14" />
+                </svg>
+                <span className="text-[9px] text-gray-400 mt-1 uppercase font-semibold">
+                  SCAN STATION 1
+                </span>
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-600">
+              Shelf Location: <strong>{selectedClaimParcel.shelf}</strong>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn btn-outline btn-sm flex-1 font-bold uppercase text-xs cursor-pointer"
+              >
+                Print Pass
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedClaimParcel(null)}
+                className="btn btn-primary btn-sm flex-1 font-bold uppercase text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Activation Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-brand-border space-y-5 text-left animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between">
               <div>
                 <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
                   Subscription Activation
                 </span>
-                <h3 className="font-[family-name:var(--font-heading)] text-2xl text-brand-black uppercase mt-1">
+                <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase mt-1">
                   SETTLE {user?.plan} PLAN
                 </h3>
-                <p className="text-xs text-brand-text-secondary mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Amount Due: <strong className="text-green-700 text-sm">{planPrice}</strong>
                 </p>
               </div>
@@ -647,7 +761,7 @@ function DashboardContent() {
 
             {paymentNotice && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
-                ⚠️ {paymentNotice}
+                {paymentNotice}
               </div>
             )}
 
@@ -658,42 +772,40 @@ function DashboardContent() {
                 onClick={() => setPaymentMethod("GCASH")}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   paymentMethod === "GCASH"
-                    ? "bg-[#005CEE]/10 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
-                    : "bg-brand-surface border-brand-border text-brand-text-secondary"
+                    ? "bg-blue-50 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
                 }`}
               >
-                <span>📱</span>
-                <span>GCash QR Code</span>
+                GCash QR Code
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("CASH_COUNTER")}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   paymentMethod === "CASH_COUNTER"
-                    ? "bg-amber-100 border-amber-600 text-amber-900 ring-1 ring-amber-600"
-                    : "bg-brand-surface border-brand-border text-brand-text-secondary"
+                    ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-600"
+                    : "bg-gray-50 border-gray-200 text-gray-600"
                 }`}
               >
-                <span>🏢</span>
-                <span>Cash at Desk</span>
+                Cash at Desk
               </button>
             </div>
 
             {/* GCash Form */}
             {paymentMethod === "GCASH" ? (
               <div className="space-y-4">
-                <div className="bg-brand-surface p-4 rounded-xl border border-brand-border text-center space-y-2">
-                  <div className="flex justify-between text-xs border-b border-brand-border pb-1">
-                    <span className="text-brand-text-muted">Account:</span>
-                    <span className="font-bold text-brand-black">CK CONDO DROP HUB</span>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2">
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
+                    <span className="text-gray-500">Account:</span>
+                    <span className="font-bold text-gray-900">CK CONDO DROP HUB</span>
                   </div>
-                  <div className="flex justify-between text-xs border-b border-brand-border pb-1">
-                    <span className="text-brand-text-muted">GCash Number:</span>
-                    <span className="font-mono font-bold text-brand-black">0917 123 4567</span>
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
+                    <span className="text-gray-500">GCash Number:</span>
+                    <span className="font-mono font-bold text-gray-900">0917 123 4567</span>
                   </div>
 
-                  <div className="bg-white p-3 rounded-xl border border-brand-border inline-block shadow-inner mx-auto my-1">
-                    <div className="w-32 h-32 bg-[#005CEE]/5 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
+                  <div className="bg-white p-3 rounded-xl border border-gray-200 inline-block shadow-inner mx-auto my-1">
+                    <div className="w-32 h-32 bg-blue-50/50 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
                       <svg className="w-24 h-24" viewBox="0 0 100 100" fill="currentColor">
                         <rect x="10" y="10" width="24" height="24" rx="2" />
                         <rect x="14" y="14" width="16" height="16" fill="white" />
@@ -715,13 +827,13 @@ function DashboardContent() {
                       <span className="text-[8px] font-black uppercase text-[#005CEE]">SCAN GCASH QR</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-brand-text-secondary">
+                  <p className="text-[11px] text-gray-500">
                     Scan via GCash App and enter the reference number below.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-brand-text mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     GCash Reference Number
                   </label>
                   <input
@@ -753,18 +865,18 @@ function DashboardContent() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-brand-surface p-4 rounded-xl border border-brand-border space-y-2 text-xs text-brand-text">
-                  <div className="font-bold text-sm text-brand-black">Station 1 Front Desk Instructions:</div>
-                  <p className="text-brand-text-secondary">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
+                  <div className="font-bold text-sm text-gray-900">Station 1 Front Desk Instructions:</div>
+                  <p className="text-gray-600">
                     Please visit Station 1 Front Desk in the Ground Floor Main Lobby during daily operational hours (8:00 AM – 9:00 PM).
                   </p>
-                  <div className="p-2.5 bg-white rounded-lg border border-brand-border space-y-1">
+                  <div className="p-2.5 bg-white rounded-lg border border-gray-200 space-y-1">
                     <div>• State your resident passcode: <strong className="font-mono text-brand-red">{user?.residentCode}</strong></div>
                     <div>• Inform receptionist you are paying for: <strong>{user?.plan} Membership</strong></div>
                     <div>• Amount: <strong className="text-green-700">{planPrice}</strong></div>
                   </div>
-                  <p className="text-brand-text-muted text-[11px]">
-                    Once desk staff issues your official receipt, your plan will be confirmed as Active.
+                  <p className="text-gray-500 text-[11px]">
+                    Once desk staff confirms your payment, your plan will be activated immediately.
                   </p>
                 </div>
 
@@ -786,7 +898,7 @@ function DashboardContent() {
 
 export default function CustomerDashboardPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading dashboard...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-gray-500">Loading dashboard...</div>}>
       <DashboardContent />
     </Suspense>
   );
