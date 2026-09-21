@@ -460,7 +460,9 @@ export default function MyAccountPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-brand-text-secondary">Account Status:</span>
-                <span className="font-semibold text-green-700">● Active</span>
+                <span className={`font-semibold ${user?.planStatus === "PENDING_PAYMENT" ? "text-amber-600" : "text-green-700"}`}>
+                  ● {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
+                </span>
               </div>
             </div>
           </div>
@@ -471,8 +473,14 @@ export default function MyAccountPage() {
               <span className="text-xs font-black uppercase text-amber-800 tracking-wide">
                 MEMBERSHIP
               </span>
-              <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                Active
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  user?.planStatus === "PENDING_PAYMENT"
+                    ? "bg-amber-200 text-amber-900 animate-pulse"
+                    : "bg-green-100 text-green-800"
+                }`}
+              >
+                {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
               </span>
             </div>
             <p className="text-sm font-bold text-brand-black">{user?.plan || "PREMIUM"} Plan</p>

@@ -365,6 +365,9 @@ class LocalDatabaseService implements IDatabaseService {
         unit: residentMatch.unit,
         tower: residentMatch.tower,
         plan: residentMatch.plan,
+        planStatus: residentMatch.planStatus,
+        paymentMethod: residentMatch.paymentMethod,
+        paymentReference: residentMatch.paymentReference,
         residentCode: residentMatch.residentCode,
         createdAt: residentMatch.createdAt,
       };

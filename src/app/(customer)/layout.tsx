@@ -9,7 +9,7 @@ import { useAuth } from "@/context";
 const navItems = [
   { icon: "🏠", label: "Dashboard", href: "/dashboard" },
   { icon: "📦", label: "My Parcels", href: "/parcels" },
-  { icon: "🔍", label: "Track Parcel", href: "/track" },
+  { icon: "🔍", label: "Track Parcel", href: "/dashboard?tab=track" },
   { icon: "👤", label: "My Account", href: "/account" },
   { icon: "⭐", label: "Membership", href: "/membership" },
   { icon: "❓", label: "Help Center", href: "/help" },
@@ -74,7 +74,7 @@ export default function CustomerLayout({
             {[
               { label: "DASHBOARD", href: "/dashboard" },
               { label: "MY PARCELS", href: "/parcels", icon: "📦" },
-              { label: "TRACK PARCEL", href: "/track", icon: "🔍" },
+              { label: "TRACK PARCEL", href: "/dashboard?tab=track", icon: "🔍" },
               { label: "MY ACCOUNT", href: "/account", icon: "👤" },
               { label: "STAFF TERMINAL", href: "/admin", icon: "🛡️" },
             ].map((item) => (
@@ -82,7 +82,7 @@ export default function CustomerLayout({
                 key={item.href}
                 href={item.href}
                 className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                  pathname === item.href
+                  pathname === item.href || (item.href.startsWith("/dashboard") && pathname === "/dashboard")
                     ? "text-brand-red font-bold"
                     : "text-brand-text-secondary hover:text-brand-text"
                 }`}
@@ -145,9 +145,15 @@ export default function CustomerLayout({
                 {initials}
               </div>
               <p className="font-bold text-sm">{displayName}</p>
-              <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
-                {displayPlan.replace("_", " ")}
-              </span>
+              {user?.planStatus === "PENDING_PAYMENT" ? (
+                <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
+                  {displayPlan.replace("_", " ")} (PENDING)
+                </span>
+              ) : (
+                <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
+                  {displayPlan.replace("_", " ")}
+                </span>
+              )}
               <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
             </div>
             <div className="bg-brand-dark rounded-b-xl p-3 text-white text-center -mt-1">
@@ -207,9 +213,15 @@ export default function CustomerLayout({
               <div className="p-4">
                 <div className="bg-brand-red rounded-xl p-4 text-white text-center mb-2">
                   <p className="font-bold text-sm">{displayName}</p>
-                  <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
-                    {displayPlan.replace("_", " ")}
-                  </span>
+                  {user?.planStatus === "PENDING_PAYMENT" ? (
+                    <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
+                      {displayPlan.replace("_", " ")} (PENDING)
+                    </span>
+                  ) : (
+                    <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
+                      {displayPlan.replace("_", " ")}
+                    </span>
+                  )}
                   <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
                 </div>
               </div>

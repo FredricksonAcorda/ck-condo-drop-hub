@@ -21,6 +21,11 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"GCASH" | "CASH_COUNTER">("GCASH");
+  const [gcashRef, setGcashRef] = useState("");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -40,7 +45,23 @@ export default function RegisterPage() {
       return;
     }
 
+    // If paid plan, prompt payment selection first
+    if (plan === "REGULAR" || plan === "PREMIUM") {
+      setShowPaymentModal(true);
+      return;
+    }
+
+    // Free Per Parcel plan
+    await executeRegistration("ACTIVE", "CASH_COUNTER", undefined);
+  };
+
+  const executeRegistration = async (
+    planStatus: "ACTIVE" | "PENDING_PAYMENT",
+    method: "GCASH" | "CASH_COUNTER",
+    reference?: string
+  ) => {
     setIsLoading(true);
+    setPaymentError(null);
 
     try {
       await register({
@@ -50,16 +71,36 @@ export default function RegisterPage() {
         unit: unit.trim(),
         tower,
         plan,
+        planStatus,
+        paymentMethod: method,
+        paymentReference: reference,
         password,
       });
 
-      router.push("/parcels");
+      setShowPaymentModal(false);
+      router.push("/dashboard");
     } catch (err: unknown) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to register account. Please try again."
-      );
+      const msg = err instanceof Error ? err.message : "Failed to register account. Please try again.";
+      if (showPaymentModal) {
+        setPaymentError(msg);
+      } else {
+        setErrorMessage(msg);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (paymentMethod === "GCASH") {
+      if (!gcashRef.trim() || gcashRef.trim().length < 8) {
+        setPaymentError("Please enter a valid GCash reference number (at least 8 digits).");
+        return;
+      }
+      await executeRegistration("ACTIVE", "GCASH", gcashRef.trim());
+    } else {
+      // Cash at counter -> plan status is PENDING_PAYMENT
+      await executeRegistration("PENDING_PAYMENT", "CASH_COUNTER", undefined);
     }
   };
 
@@ -370,6 +411,224 @@ export default function RegisterPage() {
         </Link>
         .
       </p>
+
+      {/* Payment Selection Modal for Paid Tiers (Regular / Premium) */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="relative w-full max-w-[460px] bg-[#141416] border border-zinc-700/80 rounded-3xl p-6 sm:p-7 shadow-2xl text-left my-8 animate-in fade-in zoom-in-95 duration-150">
+            {/* Top Red Glow Accent */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[2px] bg-gradient-to-r from-transparent via-brand-red to-transparent" />
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-2 mb-4">
+              <div>
+                <span className="inline-block bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-1.5">
+                  Payment Activation Required
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  {plan === "PREMIUM" ? "Premium Plan (₱299/mo)" : "Regular Plan (₱149/mo)"}
+                </h2>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  Choose your payment method to activate your condominium parcel benefits.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Payment Error */}
+            {paymentError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{paymentError}</span>
+              </div>
+            )}
+
+            {/* Method Tabs */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentMethod("GCASH");
+                  setPaymentError(null);
+                }}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  paymentMethod === "GCASH"
+                    ? "bg-[#005CEE]/20 border-[#005CEE] text-white ring-1 ring-[#005CEE]"
+                    : "bg-[#1c1c21] border-zinc-800 text-zinc-400 hover:text-white hover:bg-[#222228]"
+                }`}
+              >
+                <span>📱</span>
+                <span>GCash QR (Instant)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentMethod("CASH_COUNTER");
+                  setPaymentError(null);
+                }}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  paymentMethod === "CASH_COUNTER"
+                    ? "bg-amber-500/20 border-amber-500 text-white ring-1 ring-amber-500"
+                    : "bg-[#1c1c21] border-zinc-800 text-zinc-400 hover:text-white hover:bg-[#222228]"
+                }`}
+              >
+                <span>🏢</span>
+                <span>Cash at Counter</span>
+              </button>
+            </div>
+
+            {/* GCash Option */}
+            {paymentMethod === "GCASH" && (
+              <div className="space-y-4">
+                <div className="bg-[#1c1c21] border border-zinc-800 rounded-2xl p-4 text-center">
+                  <div className="flex items-center justify-between text-xs pb-2 mb-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">Merchant:</span>
+                    <span className="font-bold text-white">CK CONDO DROP HUB</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pb-2 mb-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">GCash Mobile:</span>
+                    <span className="font-mono font-bold text-white">0917 123 4567</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pb-3 mb-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Total Due:</span>
+                    <span className="font-bold text-lg text-emerald-400">
+                      ₱{plan === "PREMIUM" ? "299.00" : "149.00"}
+                    </span>
+                  </div>
+
+                  {/* Synthetic GCash QR graphic */}
+                  <div className="bg-white p-3 rounded-xl inline-block shadow-inner mx-auto mb-2">
+                    <div className="w-36 h-36 bg-[#005CEE]/5 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
+                      <svg className="w-28 h-28" viewBox="0 0 100 100" fill="currentColor">
+                        <rect x="10" y="10" width="24" height="24" rx="2" />
+                        <rect x="14" y="14" width="16" height="16" fill="white" />
+                        <rect x="18" y="18" width="8" height="8" />
+                        <rect x="66" y="10" width="24" height="24" rx="2" />
+                        <rect x="70" y="14" width="16" height="16" fill="white" />
+                        <rect x="74" y="18" width="8" height="8" />
+                        <rect x="10" y="66" width="24" height="24" rx="2" />
+                        <rect x="14" y="70" width="16" height="16" fill="white" />
+                        <rect x="18" y="74" width="8" height="8" />
+                        <rect x="42" y="10" width="12" height="12" />
+                        <rect x="42" y="30" width="12" height="12" />
+                        <rect x="42" y="50" width="12" height="12" />
+                        <rect x="66" y="42" width="12" height="12" />
+                        <rect x="66" y="66" width="12" height="12" />
+                        <rect x="80" y="80" width="10" height="10" />
+                        <rect x="50" y="76" width="10" height="14" />
+                      </svg>
+                      <span className="text-[9px] font-black tracking-wider text-[#005CEE] uppercase">
+                        SCAN GCASH QR
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-zinc-400">
+                    Scan via GCash App, send payment, and enter the reference number below.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    GCash Reference Number (13 Digits)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 9023 8841 2910"
+                    value={gcashRef}
+                    onChange={(e) => {
+                      setGcashRef(e.target.value);
+                      if (paymentError) setPaymentError(null);
+                    }}
+                    className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-zinc-600 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40"
+                    disabled={isLoading}
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-1">
+                    <span>Instant activation upon verification</span>
+                    <button
+                      type="button"
+                      onClick={() => setGcashRef("902388412910")}
+                      className="text-brand-red hover:underline font-medium"
+                    >
+                      Fill Sample Ref
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmPayment}
+                  disabled={isLoading}
+                  className="w-full py-3.5 rounded-xl bg-brand-red hover:bg-[#b30000] text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                >
+                  {isLoading ? "Verifying & Registering..." : "Verify Payment & Activate Account"}
+                </button>
+              </div>
+            )}
+
+            {/* Cash at Counter Option */}
+            {paymentMethod === "CASH_COUNTER" && (
+              <div className="space-y-4">
+                <div className="bg-[#1c1c21] border border-amber-800/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                    <span>🏢</span>
+                    <span>Station 1 Front Desk Cashier</span>
+                  </div>
+
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    You can pay in cash at the Ground Floor Front Desk reception lobby during operational hours.
+                  </p>
+
+                  <div className="bg-[#141416] p-3 rounded-xl border border-zinc-800 text-xs space-y-1 text-zinc-300">
+                    <div>📍 <strong>Location:</strong> Ground Floor Main Lobby Desk</div>
+                    <div>🕒 <strong>Hours:</strong> Daily 8:00 AM – 9:00 PM</div>
+                    <div>
+                      💵 <strong>Amount Due:</strong>{" "}
+                      <span className="text-emerald-400 font-bold">
+                        ₱{plan === "PREMIUM" ? "299.00" : "149.00"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-950/40 border border-amber-800/50 rounded-xl text-[11px] text-amber-200/90 leading-relaxed">
+                    ℹ️ <strong>Please note:</strong> Your account will be created immediately, but your {plan === "PREMIUM" ? "Premium" : "Regular"} tier status will be set to <strong>Pending Payment</strong>. Once desk staff receives your cash payment, your tier benefits (extended free days & door credits) will be fully unlocked.
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmPayment}
+                  disabled={isLoading}
+                  className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-amber-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                >
+                  {isLoading ? "Creating Account..." : "Register Account (Pay Cash at Counter)"}
+                </button>
+              </div>
+            )}
+
+            {/* Switch to Free Per Parcel Link */}
+            <div className="pt-4 mt-4 border-t border-zinc-800 text-center">
+              <button
+                type="button"
+                onClick={async () => {
+                  setPlan("PER_PARCEL");
+                  await executeRegistration("ACTIVE", "CASH_COUNTER", undefined);
+                }}
+                disabled={isLoading}
+                className="text-xs text-zinc-400 hover:text-white underline cursor-pointer"
+              >
+                Prefer free pay-per-parcel? Switch to Per Parcel Plan (₱15/claim, ₱0 initial)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

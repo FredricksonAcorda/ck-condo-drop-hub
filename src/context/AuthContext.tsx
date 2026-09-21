@@ -95,6 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         unit: resident.unit,
         tower: resident.tower,
         plan: resident.plan,
+        planStatus: resident.planStatus || "ACTIVE",
+        paymentMethod: resident.paymentMethod || "GCASH",
+        paymentReference: resident.paymentReference,
         residentCode: resident.residentCode,
         createdAt: resident.createdAt,
       };

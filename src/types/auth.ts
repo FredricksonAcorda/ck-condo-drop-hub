@@ -1,4 +1,6 @@
 export type UserRole = "resident" | "admin";
+export type PlanStatus = "ACTIVE" | "PENDING_PAYMENT";
+export type PaymentMethod = "GCASH" | "CASH_COUNTER";
 
 export interface AuthUser {
   id: string;
@@ -9,6 +11,9 @@ export interface AuthUser {
   unit?: string;
   tower?: string;
   plan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
+  planStatus?: PlanStatus;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
   residentCode?: string;
   createdAt: string;
 }
@@ -22,6 +27,9 @@ export interface ResidentProfile {
   tower: string;
   building: string;
   plan: "PER_PARCEL" | "REGULAR" | "PREMIUM";
+  planStatus?: PlanStatus;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
   residentCode: string;
   authorizedClaimant?: string;
   claimantPhone?: string;
@@ -51,5 +59,8 @@ export interface RegisterData {
   unit: string;
   tower: string;
   plan: "PER_PARCEL" | "REGULAR" | "PREMIUM";
+  planStatus?: PlanStatus;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
   password: string;
 }

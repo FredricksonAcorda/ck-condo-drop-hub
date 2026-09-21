@@ -84,6 +84,10 @@ class AuthService {
 
     // Generate resident code: CK-000XXX
     const randomCode = `CK-${Math.floor(100000 + Math.random() * 900000).toString().slice(0, 6)}`;
+    const plan = data.plan || "REGULAR";
+    const isPaid = plan === "REGULAR" || plan === "PREMIUM";
+    const planStatus = !isPaid ? "ACTIVE" : (data.planStatus || (data.paymentReference ? "ACTIVE" : "PENDING_PAYMENT"));
+    const paymentMethod = data.paymentMethod || (data.paymentReference ? "GCASH" : "CASH_COUNTER");
 
     const newResident = await db.createResident({
       name: data.fullName.trim(),
@@ -92,7 +96,10 @@ class AuthService {
       unit: data.unit.trim(),
       tower: data.tower || "Tower A",
       building: "CK Buildersville Condominium",
-      plan: data.plan || "REGULAR",
+      plan,
+      planStatus,
+      paymentMethod,
+      paymentReference: data.paymentReference,
       residentCode: randomCode,
       status: "ACTIVE",
       notifications: {
@@ -112,6 +119,9 @@ class AuthService {
       unit: newResident.unit,
       tower: newResident.tower,
       plan: newResident.plan,
+      planStatus: newResident.planStatus,
+      paymentMethod: newResident.paymentMethod,
+      paymentReference: newResident.paymentReference,
       residentCode: newResident.residentCode,
       createdAt: newResident.createdAt,
     };
@@ -135,6 +145,9 @@ class AuthService {
       unit: updatedResident.unit,
       tower: updatedResident.tower,
       plan: updatedResident.plan,
+      planStatus: updatedResident.planStatus,
+      paymentMethod: updatedResident.paymentMethod,
+      paymentReference: updatedResident.paymentReference,
       residentCode: updatedResident.residentCode,
       createdAt: updatedResident.createdAt,
     };

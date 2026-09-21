@@ -10,6 +10,11 @@ export default function MyParcelsPage() {
   const { parcels, loading } = useParcels();
   const [selectedClaimParcel, setSelectedClaimParcel] = useState<Parcel | null>(null);
   const [filter, setFilter] = useState<"ALL" | "READY" | "HISTORY">("ALL");
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [deliveryWindow, setDeliveryWindow] = useState("Evening (6:00 PM - 8:30 PM)");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [deliverySuccess, setDeliverySuccess] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   // Filter parcels for the current user
   const userParcels = parcels.filter(
@@ -20,6 +25,17 @@ export default function MyParcelsPage() {
   const historyParcels = userParcels.filter((p) => p.status === "PICKED_UP");
 
   const freeHoldingDays = user?.plan === "PREMIUM" ? 7 : 3;
+
+  const handleScheduleDelivery = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsScheduling(true);
+    setTimeout(() => {
+      setIsScheduling(false);
+      setShowDeliveryModal(false);
+      setDeliverySuccess(`Door delivery scheduled for ${user?.unit || "your unit"} during ${deliveryWindow}!`);
+      setTimeout(() => setDeliverySuccess(null), 5000);
+    }, 600);
+  };
 
   return (
     <div className="space-y-6">
@@ -38,19 +54,28 @@ export default function MyParcelsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/track" className="btn btn-outline btn-sm">
+          <Link href="/dashboard?tab=track" className="btn btn-outline btn-sm">
             🔍 Track by Number
           </Link>
           {readyParcels.length > 0 && (
             <button
               onClick={() => setSelectedClaimParcel(readyParcels[0])}
-              className="btn btn-primary btn-sm font-bold uppercase"
+              className="btn btn-primary btn-sm font-bold uppercase cursor-pointer"
             >
               Show Pickup QR
             </button>
           )}
         </div>
       </div>
+
+      {deliverySuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
+          <span>✅ {deliverySuccess}</span>
+          <button onClick={() => setDeliverySuccess(null)} className="text-green-600 hover:text-green-800">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex gap-2 bg-white p-1.5 rounded-xl border border-brand-border w-fit shadow-sm text-xs font-bold uppercase">
@@ -382,7 +407,11 @@ export default function MyParcelsPage() {
             <p className="text-xs text-brand-text-secondary">
               Busy or not at home? Have the reception team deliver your ready parcels directly to {user?.unit || "your unit"}.
             </p>
-            <button className="btn btn-primary btn-sm w-full font-bold uppercase">
+            <button
+              type="button"
+              onClick={() => setShowDeliveryModal(true)}
+              className="btn btn-primary btn-sm w-full font-bold uppercase cursor-pointer"
+            >
               SCHEDULE DOOR DELIVERY
             </button>
           </div>
@@ -506,6 +535,100 @@ export default function MyParcelsPage() {
                 CLOSE
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Door Delivery Modal */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🚪</span>
+                <div>
+                  <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+                    SCHEDULE DOOR DELIVERY
+                  </h3>
+                  <p className="text-xs text-brand-text-secondary">
+                    Deliver ready parcels directly to {user?.unit || "your unit"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeliveryModal(false)}
+                className="text-gray-400 hover:text-black p-1 rounded-lg hover:bg-gray-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleScheduleDelivery} className="space-y-4">
+              <div className="bg-brand-surface p-3 rounded-xl border border-brand-border text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-brand-text-secondary">Target Destination:</span>
+                  <span className="font-bold text-brand-black">{user?.unit || "Unit 101"}, {user?.tower || "Tower A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brand-text-secondary">Ready Parcels:</span>
+                  <span className="font-bold text-brand-red">{readyParcels.length} Package{readyParcels.length === 1 ? "" : "s"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brand-text-secondary">Plan Allowance:</span>
+                  <span className="font-bold text-green-700">
+                    {user?.plan === "PREMIUM" ? "Free (Included in VIP)" : "₱35.00 Standard Delivery Fee"}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-brand-text mb-1">
+                  Preferred Delivery Window
+                </label>
+                <select
+                  value={deliveryWindow}
+                  onChange={(e) => setDeliveryWindow(e.target.value)}
+                  className="input w-full text-xs cursor-pointer"
+                  disabled={isScheduling}
+                >
+                  <option>Morning (10:00 AM - 12:00 PM)</option>
+                  <option>Afternoon (2:00 PM - 5:00 PM)</option>
+                  <option>Evening (6:00 PM - 8:30 PM)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-brand-text mb-1">
+                  Delivery Notes / Special Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  value={deliveryNotes}
+                  onChange={(e) => setDeliveryNotes(e.target.value)}
+                  placeholder="e.g. Please ring doorbell twice, or leave with lobby security..."
+                  className="input w-full text-xs"
+                  disabled={isScheduling}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="btn btn-outline btn-sm flex-1 font-bold uppercase text-xs cursor-pointer"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={isScheduling}
+                  className="btn btn-primary btn-sm flex-1 font-bold uppercase text-xs cursor-pointer"
+                >
+                  {isScheduling ? "CONFIRMING..." : "CONFIRM SCHEDULE"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
