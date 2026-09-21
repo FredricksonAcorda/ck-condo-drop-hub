@@ -230,6 +230,41 @@ input, select, textarea {
   font-size: var(--font-size-md);
 }
 
+/* Form Inputs & Selects */
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #D1D5DB;
+  border-radius: var(--radius-md);
+  color: var(--color-brand-text);
+  font-size: var(--font-size-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+.input:hover {
+  border-color: #9CA3AF;
+}
+.input:focus {
+  border-color: var(--color-brand-red);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.12);
+}
+.input:disabled {
+  background-color: var(--color-brand-surface);
+  color: var(--color-brand-text-muted);
+  cursor: not-allowed;
+}
+
+select.input {
+  background-color: #FFFFFF;
+  cursor: pointer;
+}
+
+textarea.input {
+  background-color: #FFFFFF;
+}
+
 /* Status Badges */
 .badge {
   display: inline-flex;

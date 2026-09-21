@@ -60,12 +60,9 @@ export default function AdminCustomersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-brand-border">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">👥</span>
-            <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-              RESIDENTS & <span className="text-brand-red">CUSTOMERS</span>
-            </h1>
-          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
+            RESIDENTS & <span className="text-brand-red">CUSTOMERS</span>
+          </h1>
           <p className="text-xs sm:text-sm text-brand-text-secondary mt-0.5">
             Directory of registered condominium residents, unit numbers, and active parcel counts.
           </p>
@@ -84,13 +81,17 @@ export default function AdminCustomersPage() {
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
         <div className="w-full md:w-96 relative">
-          <span className="absolute left-3 top-2.5 text-brand-text-muted">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
           <input
             type="text"
             placeholder="Search by name, unit number, or CK-code..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input pl-9 text-xs w-full"
+            className="input pl-8 text-xs w-full border border-gray-300 bg-white"
           />
         </div>
 
@@ -101,7 +102,7 @@ export default function AdminCustomersPage() {
           <select
             value={towerFilter}
             onChange={(e) => setTowerFilter(e.target.value)}
-            className="input text-xs py-1.5 cursor-pointer"
+            className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
           >
             <option value="ALL">All Towers</option>
             <option value="Tower A">Tower A</option>

@@ -46,17 +46,12 @@ export default function HubSettingsPage() {
       {/* Top Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-3xl">⚙️</span>
-            <div>
-              <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-                HUB POLICIES & <span className="text-brand-red">SETTINGS</span>
-              </h1>
-              <p className="text-xs text-brand-text-secondary mt-0.5">
-                Configure holding duration allowances, daily overdue rates, thermal printer options, and hardware chimes.
-              </p>
-            </div>
-          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
+            HUB POLICIES & <span className="text-brand-red">SETTINGS</span>
+          </h1>
+          <p className="text-xs text-brand-text-secondary mt-0.5">
+            Configure holding duration allowances, daily overdue rates, thermal printer options, and hardware chimes.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -83,19 +78,16 @@ export default function HubSettingsPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Holding Days & Fees */}
         <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-            <span className="text-xl">⏳</span>
-            <div>
-              <h2 className="text-base font-bold text-brand-black">Holding Duration & Overdue Fee Policies</h2>
-              <p className="text-xs text-brand-text-secondary">
-                Determines how long packages are stored before daily holding penalties begin accruing.
-              </p>
-            </div>
+          <div className="border-b border-brand-border pb-3">
+            <h2 className="text-base font-bold text-brand-black">Holding Duration & Overdue Fee Policies</h2>
+            <p className="text-xs text-brand-text-secondary">
+              Determines how long packages are stored before daily holding penalties begin accruing.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Regular Plan Free Days
               </label>
               <div className="relative">
@@ -107,10 +99,10 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, freeDaysRegular: parseInt(e.target.value) || 3 })
                   }
-                  className="input font-bold"
+                  className="input font-bold pr-14 border border-gray-300 bg-white"
                   required
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none">
                   days
                 </span>
               </div>
@@ -120,7 +112,7 @@ export default function HubSettingsPage() {
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Premium Plan Free Days
               </label>
               <div className="relative">
@@ -132,10 +124,10 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, freeDaysPremium: parseInt(e.target.value) || 7 })
                   }
-                  className="input font-bold"
+                  className="input font-bold pr-14 border border-gray-300 bg-white"
                   required
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none">
                   days
                 </span>
               </div>
@@ -145,11 +137,11 @@ export default function HubSettingsPage() {
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Overdue Rate Per Day
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text font-bold">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-text font-bold text-sm pointer-events-none">
                   ₱
                 </span>
                 <input
@@ -161,10 +153,10 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, overdueFeePerDay: parseInt(e.target.value) || 10 })
                   }
-                  className="input pl-8 font-bold text-brand-red"
+                  className="input pl-8 pr-14 font-bold text-brand-red border border-gray-300 bg-white"
                   required
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none">
                   /day
                 </span>
               </div>
@@ -177,58 +169,55 @@ export default function HubSettingsPage() {
 
         {/* Section 2: Hub Station & Identity */}
         <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-            <span className="text-xl">🏢</span>
-            <div>
-              <h2 className="text-base font-bold text-brand-black">Station & Building Information</h2>
-              <p className="text-xs text-brand-text-secondary">
-                Printed on thermal shelf labels, release slips, and public tracking receipts.
-              </p>
-            </div>
+          <div className="border-b border-brand-border pb-3">
+            <h2 className="text-base font-bold text-brand-black">Station & Building Information</h2>
+            <p className="text-xs text-brand-text-secondary">
+              Printed on thermal shelf labels, release slips, and public tracking receipts.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Hub Platform Name
               </label>
               <input
                 type="text"
                 value={formData.hubName}
                 onChange={(e) => setFormData({ ...formData, hubName: e.target.value })}
-                className="input font-semibold"
+                className="input font-semibold border border-gray-300 bg-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Building / Condominium Property
               </label>
               <input
                 type="text"
                 value={formData.buildingName}
                 onChange={(e) => setFormData({ ...formData, buildingName: e.target.value })}
-                className="input font-semibold"
+                className="input font-semibold border border-gray-300 bg-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Active Station Name
               </label>
               <input
                 type="text"
                 value={formData.stationName}
                 onChange={(e) => setFormData({ ...formData, stationName: e.target.value })}
-                className="input font-semibold"
+                className="input font-semibold border border-gray-300 bg-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Max Shelf Capacity Slots
               </label>
               <input
@@ -239,23 +228,20 @@ export default function HubSettingsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, maxShelfSlots: parseInt(e.target.value) || 60 })
                 }
-                className="input font-semibold"
+                className="input font-semibold border border-gray-300 bg-white"
                 required
               />
             </div>
           </div>
         </div>
 
-        {/* Section 3: Hardware & Terminal Toggles */}
+        {/* Section 3: Hardware & Terminal Preferences */}
         <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-            <span className="text-xl">🖨️</span>
-            <div>
-              <h2 className="text-base font-bold text-brand-black">Hardware & Gateway Preferences</h2>
-              <p className="text-xs text-brand-text-secondary">
-                Control scanner audio feedback, printer auto-trigger, and SMS sender branding.
-              </p>
-            </div>
+          <div className="border-b border-brand-border pb-3">
+            <h2 className="text-base font-bold text-brand-black">Hardware & Gateway Preferences</h2>
+            <p className="text-xs text-brand-text-secondary">
+              Control scanner audio feedback, printer auto-trigger, and SMS sender branding.
+            </p>
           </div>
 
           <div className="space-y-4 text-xs">
@@ -290,7 +276,7 @@ export default function HubSettingsPage() {
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-brand-text mb-1">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
                 SMS Masking Sender ID
               </label>
               <input
@@ -298,7 +284,7 @@ export default function HubSettingsPage() {
                 maxLength={11}
                 value={formData.smsSenderId}
                 onChange={(e) => setFormData({ ...formData, smsSenderId: e.target.value.toUpperCase() })}
-                className="input font-mono uppercase font-bold max-w-xs"
+                className="input font-mono uppercase font-bold max-w-xs border border-gray-300 bg-white"
                 required
               />
               <span className="text-[10px] text-brand-text-muted mt-1 block">
@@ -323,7 +309,7 @@ export default function HubSettingsPage() {
             disabled={saving}
             className="btn btn-primary px-8 py-3 text-sm font-bold uppercase tracking-wider w-full sm:w-auto shadow-md"
           >
-            {saving ? "SAVING..." : "SAVE SETTINGS & POLICIES ✓"}
+            {saving ? "SAVING..." : "SAVE SETTINGS & POLICIES"}
           </button>
         </div>
       </form>

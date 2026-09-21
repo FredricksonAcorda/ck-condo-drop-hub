@@ -222,10 +222,9 @@ function AdminDashboardContent() {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/scanner"
-            className="btn btn-outline btn-sm font-bold uppercase flex items-center gap-1.5 cursor-pointer"
+            className="btn btn-outline btn-sm font-bold uppercase cursor-pointer"
           >
-            <span>📷</span>
-            <span>Camera Scanner</span>
+            Camera Scanner
           </Link>
           <button
             type="button"
@@ -303,7 +302,7 @@ function AdminDashboardContent() {
                 }
                 className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold cursor-pointer"
               >
-                🏷️ Print Shelf Label
+                Print Shelf Label
               </button>
             )}
             <button onClick={() => setReceiveSuccess(null)} className="text-green-700 font-bold ml-1 cursor-pointer">
@@ -315,7 +314,7 @@ function AdminDashboardContent() {
 
       {receiveError && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between text-xs sm:text-sm animate-in fade-in">
-          <span className="font-medium">⚠️ {receiveError}</span>
+          <span className="font-medium">{receiveError}</span>
           <button onClick={() => setReceiveError(null)} className="text-red-700 font-bold ml-2 cursor-pointer">
             ✕
           </button>
@@ -338,7 +337,7 @@ function AdminDashboardContent() {
                 }
                 className="btn btn-sm bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold cursor-pointer"
               >
-                🧾 Print Release Slip
+                Print Release Slip
               </button>
             )}
             <button onClick={() => setReleaseSuccess(null)} className="text-blue-700 font-bold ml-1 cursor-pointer">
@@ -348,19 +347,16 @@ function AdminDashboardContent() {
         </div>
       )}
 
-      {/* WORKFLOW 1: QUICK INTAKE SCANNER BAR */}
+      {/* WORKFLOW 1: QUICK INBOUND PARCEL SCANNER BAR */}
       <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm">
         <div className="bg-brand-red text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl">⚡</span>
-            <div>
-              <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
-                QUICK INBOUND PARCEL SCANNER
-              </h2>
-              <p className="text-xs text-white/80">
-                Scan courier barcode with USB gun or type tracking. Dispatches instant SMS to resident.
-              </p>
-            </div>
+          <div>
+            <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
+              QUICK INBOUND PARCEL SCANNER
+            </h2>
+            <p className="text-xs text-white/80">
+              Scan courier barcode with USB gun or type tracking. Dispatches instant SMS to resident.
+            </p>
           </div>
           <span className="hidden sm:inline-block bg-white/20 text-xs px-3 py-1 rounded-full font-bold uppercase">
             Step 1: Courier Drop
@@ -380,7 +376,7 @@ function AdminDashboardContent() {
                   placeholder="Scan barcode with scanner gun or type..."
                   value={trackingInput}
                   onChange={(e) => handleTrackingChange(e.target.value)}
-                  className="input font-mono uppercase text-sm w-full font-bold"
+                  className="input font-mono uppercase text-sm w-full font-bold border border-gray-300 bg-white"
                   required
                   disabled={isSubmitting}
                   autoFocus
@@ -406,7 +402,7 @@ function AdminDashboardContent() {
               <select
                 value={courier}
                 onChange={(e) => setCourier(e.target.value)}
-                className="input text-xs w-full cursor-pointer"
+                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white"
                 disabled={isSubmitting}
               >
                 <option value="SPX Express">SPX Express</option>
@@ -428,7 +424,7 @@ function AdminDashboardContent() {
               <select
                 value={selectedResidentId}
                 onChange={(e) => setSelectedResidentId(e.target.value)}
-                className="input text-xs w-full cursor-pointer"
+                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white"
                 disabled={isSubmitting}
               >
                 {residents.map((r) => (
@@ -447,7 +443,7 @@ function AdminDashboardContent() {
               <select
                 value={shelf}
                 onChange={(e) => setShelf(e.target.value)}
-                className="input text-xs w-full cursor-pointer"
+                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white"
                 disabled={isSubmitting}
               >
                 <option value="Shelf A-01">Shelf A-01 (Small)</option>
@@ -479,7 +475,7 @@ function AdminDashboardContent() {
               {isSubmitting ? (
                 <span>Logging Inbound Parcel...</span>
               ) : (
-                <span>LOG PARCEL & SEND SMS NOTIFICATION 📲</span>
+                <span>LOG PARCEL & SEND SMS NOTIFICATION</span>
               )}
             </button>
           </div>
@@ -491,12 +487,9 @@ function AdminDashboardContent() {
         {/* Table Header & Search Tools */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-brand-border pb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📋</span>
-              <h2 className="font-[family-name:var(--font-heading)] text-2xl uppercase tracking-wider text-brand-black">
-                LIVE PARCEL ACTIVITY STREAM
-              </h2>
-            </div>
+            <h2 className="font-[family-name:var(--font-heading)] text-2xl uppercase tracking-wider text-brand-black">
+              LIVE PARCEL ACTIVITY STREAM
+            </h2>
             <p className="text-xs text-brand-text-secondary mt-0.5">
               Real-time inventory stream. You can release parcels directly or update statuses in one click.
             </p>
@@ -505,24 +498,27 @@ function AdminDashboardContent() {
           {/* Quick Passcode Search Box */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
             <div className="relative w-full sm:w-64">
-              <span className="absolute left-3 top-2.5 text-brand-text-muted text-xs">🔑</span>
               <input
                 type="text"
-                placeholder="Scan / Type Claim Code (e.g. CK-8921)..."
+                placeholder="Claim Passcode (e.g. CK-8921)..."
                 value={quickPasscodeSearch}
                 onChange={(e) => setQuickPasscodeSearch(e.target.value)}
-                className="input pl-8 text-xs font-mono uppercase w-full bg-brand-surface border-brand-red/30 focus:border-brand-red"
+                className="input px-3 text-xs font-mono uppercase w-full bg-white border border-gray-300 focus:border-brand-red"
               />
             </div>
 
             <div className="relative w-full sm:w-60">
-              <span className="absolute left-3 top-2.5 text-brand-text-muted text-xs">🔍</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
               <input
                 type="text"
                 placeholder="Search tracking, resident, unit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-8 text-xs w-full"
+                className="input pl-8 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
           </div>
@@ -692,7 +688,7 @@ function AdminDashboardContent() {
 
                       {/* Tools & Print */}
                       <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() =>
@@ -702,18 +698,17 @@ function AdminDashboardContent() {
                                 station: hubSettings.stationName,
                               })
                             }
-                            className="p-1.5 rounded hover:bg-brand-surface text-brand-text-secondary hover:text-black cursor-pointer"
-                            title="Print Thermal Shelf Label"
+                            className="text-xs font-semibold text-brand-text-secondary hover:text-brand-black hover:underline cursor-pointer"
                           >
-                            🏷️
+                            Print Label
                           </button>
+                          <span className="text-brand-border">|</span>
                           <button
                             type="button"
                             onClick={() => handleDeleteParcel(parcel)}
-                            className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-brand-red cursor-pointer"
-                            title="Delete Record"
+                            className="text-xs font-semibold text-brand-red hover:text-brand-red-dark hover:underline cursor-pointer"
                           >
-                            🗑️
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -731,16 +726,13 @@ function AdminDashboardContent() {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-brand-border text-left animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between border-b border-brand-border pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🤝</span>
-                <div>
-                  <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
-                    CONFIRM PARCEL RELEASE
-                  </h3>
-                  <p className="text-xs text-brand-text-secondary">
-                    Handoff package to resident / authorized claimant
-                  </p>
-                </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+                  CONFIRM PARCEL RELEASE
+                </h3>
+                <p className="text-xs text-brand-text-secondary">
+                  Handoff package to resident / authorized claimant
+                </p>
               </div>
               <button
                 type="button"
@@ -784,7 +776,7 @@ function AdminDashboardContent() {
                   value={recipientNameInput}
                   onChange={(e) => setRecipientNameInput(e.target.value)}
                   placeholder="e.g. Juan Dela Cruz (Self) or Maria (Spouse)"
-                  className="input w-full text-xs font-semibold"
+                  className="input w-full text-xs font-semibold border border-gray-300 bg-white"
                   required
                   disabled={isReleasing}
                 />
@@ -803,7 +795,7 @@ function AdminDashboardContent() {
                   disabled={isReleasing}
                   className="btn btn-primary btn-sm flex-1 font-bold uppercase bg-green-700 hover:bg-green-800 cursor-pointer"
                 >
-                  {isReleasing ? "Releasing..." : "Confirm & Release ✓"}
+                  {isReleasing ? "Releasing..." : "Confirm & Release"}
                 </button>
               </div>
             </form>

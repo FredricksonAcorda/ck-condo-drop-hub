@@ -95,22 +95,17 @@ export default function ParcelsInventoryPage() {
       {/* Top Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-3xl">📦</span>
-            <div>
-              <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-                HUB PARCEL <span className="text-brand-red">INVENTORY</span>
-              </h1>
-              <p className="text-xs text-brand-text-secondary mt-0.5">
-                Complete package registry, shelf slot occupancy, thermal label printing, and release audits.
-              </p>
-            </div>
-          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
+            HUB PARCEL <span className="text-brand-red">INVENTORY</span>
+          </h1>
+          <p className="text-xs text-brand-text-secondary mt-0.5">
+            Complete package registry, shelf slot occupancy, thermal label printing, and release audits.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link href="/admin/scanner" className="btn btn-primary btn-sm flex items-center gap-1.5">
-            <span>📷</span> Open Scanner
+          <Link href="/admin/scanner" className="btn btn-primary btn-sm">
+            Open Scanner
           </Link>
           <Link href="/admin" className="btn btn-outline btn-sm">
             ← Front Desk
@@ -171,16 +166,18 @@ export default function ParcelsInventoryPage() {
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="flex-1 relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tracking, resident, unit, shelf, or claim passcode..."
-              className="input pl-9 text-xs sm:text-sm font-medium w-full"
+              className="input pl-9 text-xs sm:text-sm font-medium w-full border border-gray-300 bg-white"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted">
-              🔍
-            </span>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
@@ -195,7 +192,7 @@ export default function ParcelsInventoryPage() {
           <select
             value={courierFilter}
             onChange={(e) => setCourierFilter(e.target.value)}
-            className="input text-xs font-semibold py-2 px-3 md:w-48"
+            className="input text-xs font-semibold py-2 px-3 md:w-48 border border-gray-300 bg-white"
           >
             <option value="ALL">All Couriers</option>
             <option value="SPX Express">SPX Express</option>
@@ -209,7 +206,7 @@ export default function ParcelsInventoryPage() {
           <select
             value={shelfZoneFilter}
             onChange={(e) => setShelfZoneFilter(e.target.value)}
-            className="input text-xs font-semibold py-2 px-3 md:w-44"
+            className="input text-xs font-semibold py-2 px-3 md:w-44 border border-gray-300 bg-white"
           >
             <option value="ALL">All Shelf Zones</option>
             <option value="A">Zone A (Shelf A-xx)</option>
@@ -302,8 +299,8 @@ export default function ParcelsInventoryPage() {
                             {p.size || "Medium"}
                           </span>
                           {p.notes && (
-                            <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-sans">
-                              ⚠️ {p.notes}
+                            <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-sans font-medium">
+                              {p.notes}
                             </span>
                           )}
                         </div>
@@ -358,7 +355,7 @@ export default function ParcelsInventoryPage() {
                         {isPickedUp ? (
                           <div>
                             <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                              ✓ Claimed
+                              Claimed
                             </span>
                             <div className="text-[10px] text-brand-text-muted mt-0.5">
                               by {p.claimedBy || "Resident"}
@@ -367,7 +364,7 @@ export default function ParcelsInventoryPage() {
                         ) : isOverdue ? (
                           <div>
                             <span className="inline-block bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-                              ⚠️ Overdue
+                              Overdue
                             </span>
                             <div className="text-[10px] text-brand-red font-bold mt-0.5">
                               {p.holdingFee}
@@ -398,10 +395,10 @@ export default function ParcelsInventoryPage() {
                                 station: hubSettings.stationName,
                               })
                             }
-                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs"
+                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs font-semibold"
                             title="Print Thermal Shelf Sticker (58mm x 40mm)"
                           >
-                            🏷️ Label
+                            Label
                           </button>
 
                           {/* Print Slip */}
@@ -414,10 +411,10 @@ export default function ParcelsInventoryPage() {
                                 hubName: hubSettings.hubName,
                               })
                             }
-                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs"
+                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs font-semibold"
                             title="Print Paper Release Receipt"
                           >
-                            🧾 Slip
+                            Slip
                           </button>
 
                           {/* Release Button */}
@@ -428,9 +425,9 @@ export default function ParcelsInventoryPage() {
                                 setReleaseModalParcel(p);
                                 setRecipientNameInput(p.residentName);
                               }}
-                              className="btn btn-primary btn-sm text-[11px] py-1 px-2.5"
+                              className="btn btn-primary btn-sm text-[11px] py-1 px-2.5 font-bold uppercase"
                             >
-                              ✓ Release
+                              Release
                             </button>
                           )}
 
@@ -438,20 +435,20 @@ export default function ParcelsInventoryPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedParcel(p)}
-                            className="p-1.5 hover:bg-gray-100 text-gray-500 rounded"
+                            className="p-1.5 hover:bg-gray-100 text-brand-text-secondary rounded text-xs font-semibold"
                             title="Inspect Details"
                           >
-                            ℹ️
+                            View
                           </button>
 
                           {/* Delete */}
                           <button
                             type="button"
                             onClick={() => handleDelete(p)}
-                            className="p-1.5 hover:bg-red-50 text-red-500 rounded"
+                            className="p-1.5 hover:bg-red-50 text-red-600 rounded text-xs font-semibold"
                             title="Delete Record"
                           >
-                            🗑️
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -605,7 +602,7 @@ export default function ParcelsInventoryPage() {
                 }}
                 className="btn btn-outline flex-1 text-xs"
               >
-                🏷️ Print Thermal Sticker
+                Print Thermal Sticker
               </button>
               <button
                 type="button"
@@ -618,7 +615,7 @@ export default function ParcelsInventoryPage() {
                 }}
                 className="btn btn-primary flex-1 text-xs"
               >
-                🧾 Print Release Slip
+                Print Release Slip
               </button>
             </div>
           </div>

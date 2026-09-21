@@ -168,33 +168,28 @@ export default function ScannerStationPage() {
       {/* Top Header Card */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-3xl">📷</span>
-            <div>
-              <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-                STATION <span className="text-brand-red">SCANNER</span> TERMINAL
-              </h1>
-              <p className="text-xs text-brand-text-secondary mt-0.5">
-                Hardware-accelerated barcode and QR capture for Inbound Parcel Intake & Instant Resident Release.
-              </p>
-            </div>
-          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
+            STATION <span className="text-brand-red">SCANNER</span> TERMINAL
+          </h1>
+          <p className="text-xs text-brand-text-secondary mt-0.5">
+            Hardware-accelerated barcode and QR capture for Inbound Parcel Intake & Instant Resident Release.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setSoundMuted(!soundMuted)}
-            className={`btn btn-sm text-xs flex items-center gap-1.5 ${
+            className={`btn btn-sm text-xs ${
               !soundMuted
                 ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
                 : "bg-gray-100 text-gray-600 border-gray-300"
             }`}
           >
-            {!soundMuted ? "🔔 Audio Beep: ON" : "🔕 Audio: MUTED"}
+            {!soundMuted ? "Audio Beep: ON" : "Audio: MUTED"}
           </button>
           <Link href="/admin/parcels" className="btn btn-outline btn-sm">
-            📦 Inventory View
+            Inventory View
           </Link>
           <Link href="/admin" className="btn btn-primary btn-sm">
             ← Station Admin
@@ -217,7 +212,6 @@ export default function ScannerStationPage() {
               : "text-brand-text-secondary hover:text-brand-black hover:bg-brand-surface"
           }`}
         >
-          <span className="text-xl">🚚</span>
           <span>1. Inbound Courier Shipping Label</span>
         </button>
 
@@ -234,7 +228,6 @@ export default function ScannerStationPage() {
               : "text-brand-text-secondary hover:text-brand-black hover:bg-brand-surface"
           }`}
         >
-          <span className="text-xl">📱</span>
           <span>2. Resident Claim QR & Passcode</span>
         </button>
       </div>
@@ -596,7 +589,7 @@ export default function ScannerStationPage() {
                                 className="btn btn-outline btn-sm px-2.5"
                                 title="Print Paper Slip"
                               >
-                                🧾 Slip
+                                Slip
                               </button>
                             </div>
                           </div>
@@ -604,7 +597,6 @@ export default function ScannerStationPage() {
                       </div>
                     ) : scanStatus === "NOT_FOUND" ? (
                       <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-center space-y-2">
-                        <span className="text-2xl">⚠️</span>
                         <div className="text-xs font-bold text-red-800">
                           No active package found for passcode &quot;{lastScannedCode}&quot;.
                         </div>
@@ -618,7 +610,6 @@ export default function ScannerStationPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-brand-text-muted space-y-2">
-                <span className="text-3xl block">⏳</span>
                 <p className="text-xs">
                   Awaiting scan. Use the camera, pull the trigger on a USB barcode gun, or click a simulation trigger.
                 </p>

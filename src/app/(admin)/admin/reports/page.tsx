@@ -70,26 +70,21 @@ export default function ReportsAndLogsPage() {
       {/* Top Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-3xl">📜</span>
-            <div>
-              <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-                AUDIT LOGS & <span className="text-brand-red">SMS QUEUE</span>
-              </h1>
-              <p className="text-xs text-brand-text-secondary mt-0.5">
-                Front desk station event trail and simulated carrier SMS gateway delivery dispatch.
-              </p>
-            </div>
-          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
+            AUDIT LOGS & <span className="text-brand-red">SMS QUEUE</span>
+          </h1>
+          <p className="text-xs text-brand-text-secondary mt-0.5">
+            Front desk station event trail and simulated carrier SMS gateway delivery dispatch.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setShowSmsModal(true)}
-            className="btn btn-primary btn-sm flex items-center gap-1.5"
+            className="btn btn-primary btn-sm"
           >
-            <span>📲</span> Send Manual SMS
+            Send Manual SMS
           </button>
           <Link href="/admin" className="btn btn-outline btn-sm">
             ← Station Admin
@@ -150,7 +145,7 @@ export default function ReportsAndLogsPage() {
               : "text-brand-text-secondary hover:text-brand-black hover:bg-brand-surface"
           }`}
         >
-          <span>📋</span> Station Activity Trail ({activityLogs.length})
+          Station Activity Trail ({activityLogs.length})
         </button>
 
         <button
@@ -162,7 +157,7 @@ export default function ReportsAndLogsPage() {
               : "text-brand-text-secondary hover:text-brand-black hover:bg-brand-surface"
           }`}
         >
-          <span>📲</span> Outbound SMS Gateway Queue ({smsLogs.length})
+          Outbound SMS Gateway Queue ({smsLogs.length})
         </button>
       </div>
 
@@ -363,7 +358,7 @@ export default function ReportsAndLogsPage() {
                     type="text"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    className="input text-xs"
+                    className="input text-xs border border-gray-300 bg-white"
                     required
                   />
                 </div>
@@ -375,7 +370,7 @@ export default function ReportsAndLogsPage() {
                     type="text"
                     value={recipientPhone}
                     onChange={(e) => setRecipientPhone(e.target.value)}
-                    className="input text-xs font-mono"
+                    className="input text-xs font-mono border border-gray-300 bg-white"
                     required
                   />
                 </div>
@@ -389,7 +384,7 @@ export default function ReportsAndLogsPage() {
                   rows={4}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  className="input text-xs leading-relaxed"
+                  className="input text-xs leading-relaxed border border-gray-300 bg-white"
                   required
                 />
                 <span className="text-[10px] text-brand-text-muted mt-1 block">
@@ -406,7 +401,7 @@ export default function ReportsAndLogsPage() {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary flex-1">
-                  DISPATCH SMS NOW 📲
+                  DISPATCH SMS NOW
                 </button>
               </div>
             </form>

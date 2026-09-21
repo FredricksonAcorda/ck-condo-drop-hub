@@ -7,13 +7,13 @@ import { useState } from "react";
 import { useAuth } from "@/context";
 
 const adminNav = [
-  { label: "DASHBOARD", href: "/admin", icon: "📊" },
-  { label: "SCANNER STATION", href: "/admin/scanner", icon: "📷" },
-  { label: "HUB INVENTORY", href: "/admin/parcels", icon: "📦" },
-  { label: "CUSTOMERS & UNITS", href: "/admin/customers", icon: "👥" },
-  { label: "ACTIVITY & SMS LOGS", href: "/admin/reports", icon: "📜" },
-  { label: "HUB SETTINGS", href: "/admin/settings", icon: "⚙️" },
-  { label: "TRACKING LOOKUP", href: "/track", icon: "🔍" },
+  { label: "DASHBOARD", href: "/admin" },
+  { label: "SCANNER STATION", href: "/admin/scanner" },
+  { label: "HUB INVENTORY", href: "/admin/parcels" },
+  { label: "CUSTOMERS & UNITS", href: "/admin/customers" },
+  { label: "ACTIVITY & SMS LOGS", href: "/admin/reports" },
+  { label: "HUB SETTINGS", href: "/admin/settings" },
+  { label: "TRACKING LOOKUP", href: "/track" },
 ];
 
 export default function AdminLayout({
@@ -79,23 +79,22 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                className={`block px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                   isActive
                     ? "bg-brand-red text-white shadow-md font-black"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Decorative Diagonal Stripes Pattern Block */}
+        {/* Information Pattern Block */}
         <div className="p-4 mx-4 mb-4 rounded-xl bg-gradient-to-r from-white/5 to-white/10 border border-white/10 text-xs">
-          <div className="flex items-center gap-2 text-white/80 font-bold mb-1">
-            <span>⚡</span> Scanner Hardware
+          <div className="text-white/90 font-bold mb-1">
+            Scanner Hardware
           </div>
           <p className="text-[11px] text-white/60">
             USB Barcode Scanner & Camera QR ready for inbound drops.
@@ -174,11 +173,10 @@ export default function AdminLayout({
                     key={item.href}
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                      pathname === item.href ? "bg-brand-red text-white" : "text-white/70"
+                    className={`block px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                      pathname === item.href ? "bg-brand-red text-white" : "text-white/70 hover:text-white"
                     }`}
                   >
-                    <span>{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
@@ -190,9 +188,9 @@ export default function AdminLayout({
                   setDrawerOpen(false);
                   handleLogout();
                 }}
-                className="text-xs text-brand-red font-bold cursor-pointer"
+                className="text-xs text-brand-red font-bold cursor-pointer hover:underline"
               >
-                🚪 LOG OUT OF PORTAL
+                LOG OUT OF PORTAL
               </button>
             </div>
           </aside>
@@ -219,8 +217,8 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/admin/scanner" className="btn btn-primary btn-sm flex items-center gap-1.5">
-              <span>📷</span> Quick Scanner
+            <Link href="/admin/scanner" className="btn btn-primary btn-sm">
+              Quick Scanner
             </Link>
             <Link href="/" className="btn btn-outline btn-sm">
               Public Site ↗
