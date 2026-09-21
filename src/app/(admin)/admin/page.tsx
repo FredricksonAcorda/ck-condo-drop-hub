@@ -1,26 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
-import { useParcels } from "@/context";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useParcels, useAuth } from "@/context";
 import { db } from "@/lib/db/local-store";
-import { ResidentProfile, Parcel } from "@/types";
+import { ResidentProfile, Parcel, ParcelStatus } from "@/types";
+import { detectCourierFromBarcode } from "@/lib/scanner/courier-detector";
 import { printThermalShelfLabel, printClaimReleaseSlip } from "@/lib/print/label-generator";
 
 function AdminDashboardContent() {
-  const searchParams = useSearchParams();
-  const { parcels, logParcel, verifyClaimCode, releaseParcel, getParcelByTracking, hubSettings } = useParcels();
+  const { user } = useAuth();
+  const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel, hubSettings } = useParcels();
 
-  // Residents list for intake recipient selector
+  // Resident directory for intake selector
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
 
-  // Receive workflow state
-  const initialTracking = searchParams.get("tracking") || "";
-  const initialCourier = searchParams.get("courier") || "SPX Express";
-
-  const [trackingInput, setTrackingInput] = useState(initialTracking);
-  const [courier, setCourier] = useState(initialCourier);
+  // Workflow 1: Quick Intake Scanner state
+  const [trackingInput, setTrackingInput] = useState("");
+  const [courier, setCourier] = useState("SPX Express");
   const [selectedResidentId, setSelectedResidentId] = useState("");
   const [shelf, setShelf] = useState("Shelf A-04");
   const [parcelSize, setParcelSize] = useState<"Small" | "Medium" | "Large" | "Oversize">("Small");
@@ -30,15 +27,19 @@ function AdminDashboardContent() {
   const [lastCreatedParcel, setLastCreatedParcel] = useState<Parcel | null>(null);
   const [receiveError, setReceiveError] = useState<string | null>(null);
 
-  // Pickup workflow state
-  const [pickupCodeInput, setPickupCodeInput] = useState("CK-8921");
-  const [verifiedParcel, setVerifiedParcel] = useState<Parcel | null>(null);
-  const [verifyError, setVerifyError] = useState<string | null>(null);
+  // Workflow 2: Quick Release Modal state
+  const [releaseModalParcel, setReleaseModalParcel] = useState<Parcel | null>(null);
+  const [recipientNameInput, setRecipientNameInput] = useState("");
   const [isReleasing, setIsReleasing] = useState(false);
-  const [pickupSuccess, setPickupSuccess] = useState<string | null>(null);
+  const [releaseSuccess, setReleaseSuccess] = useState<string | null>(null);
   const [lastReleasedParcel, setLastReleasedParcel] = useState<Parcel | null>(null);
 
-  // Fetch residents on mount
+  // Table Filters & Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | ParcelStatus>("ALL");
+  const [quickPasscodeSearch, setQuickPasscodeSearch] = useState("");
+
+  // Load residents on mount
   useEffect(() => {
     async function loadResidents() {
       const res = await db.getAllResidents();
@@ -50,41 +51,74 @@ function AdminDashboardContent() {
     loadResidents();
   }, [selectedResidentId]);
 
-  // Update tracking/courier if query params change (e.g. from scanner)
-  useEffect(() => {
-    const t = searchParams.get("tracking");
-    const c = searchParams.get("courier");
-    if (t) setTrackingInput(t);
-    if (c) setCourier(c);
-  }, [searchParams]);
+  // Auto-detect courier when staff scans or types tracking number
+  const handleTrackingChange = (value: string) => {
+    setTrackingInput(value);
+    if (receiveError) setReceiveError(null);
+
+    if (value.trim().length >= 3) {
+      const detected = detectCourierFromBarcode(value.trim());
+      if (detected.confidence !== "UNKNOWN") {
+        setCourier(detected.name);
+      }
+    }
+  };
 
   // Compute live KPIs
   const readyCount = parcels.filter((p) => p.status === "READY").length;
   const overdueCount = parcels.filter((p) => p.status === "OVERDUE").length;
   const activeInHub = readyCount + overdueCount;
   const pickedUpCount = parcels.filter((p) => p.status === "PICKED_UP").length;
-  const registeredResidentsCount = residents.length;
 
-  const handleReceiveSubmit = async (e: React.FormEvent) => {
+  // Filtered Parcels for the Live Activity Table
+  const filteredParcels = useMemo(() => {
+    return parcels.filter((p) => {
+      const q = searchQuery.trim().toLowerCase();
+      const codeQ = quickPasscodeSearch.trim().toLowerCase();
+
+      // Quick Passcode Search takes priority if entered
+      if (codeQ) {
+        return (
+          p.claimCode.toLowerCase().includes(codeQ) ||
+          p.trackingNumber.toLowerCase().includes(codeQ)
+        );
+      }
+
+      const matchesSearch =
+        !q ||
+        p.trackingNumber.toLowerCase().includes(q) ||
+        p.residentName.toLowerCase().includes(q) ||
+        p.unit.toLowerCase().includes(q) ||
+        p.shelf.toLowerCase().includes(q) ||
+        p.courier.toLowerCase().includes(q) ||
+        p.claimCode.toLowerCase().includes(q);
+
+      const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [parcels, searchQuery, statusFilter, quickPasscodeSearch]);
+
+  // Handle Quick Intake Form Submit
+  const handleIntakeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setReceiveError(null);
     setReceiveSuccess(null);
 
     if (!trackingInput.trim()) {
-      setReceiveError("Please provide a tracking number or scan barcode.");
+      setReceiveError("Please scan or type a courier tracking number.");
       return;
     }
 
     const resident = residents.find((r) => r.id === selectedResidentId);
     if (!resident) {
-      setReceiveError("Please select a valid condo resident.");
+      setReceiveError("Please select a registered condo resident.");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const newParcel = await logParcel({
-        trackingNumber: trackingInput.trim(),
+        trackingNumber: trackingInput.trim().toUpperCase(),
         courier,
         residentId: resident.id,
         residentName: resident.name,
@@ -96,8 +130,14 @@ function AdminDashboardContent() {
 
       setLastCreatedParcel(newParcel);
       setReceiveSuccess(
-        `Parcel ${newParcel.trackingNumber} successfully logged to ${newParcel.shelf}! Passcode [${newParcel.claimCode}] generated & SMS notification dispatched to ${resident.name}.`
+        `✓ Parcel ${newParcel.trackingNumber} logged into ${newParcel.shelf}! Passcode [${newParcel.claimCode}] generated & SMS alert sent to ${resident.name} (${resident.phone}).`
       );
+
+      // Reset input for next scan immediately
+      setTrackingInput("");
+      setNotes("");
+
+      // Automatically print thermal shelf label if setting enabled
       if (hubSettings.autoPrintIntakeLabel) {
         printThermalShelfLabel({
           parcel: newParcel,
@@ -105,8 +145,6 @@ function AdminDashboardContent() {
           station: hubSettings.stationName,
         });
       }
-      setTrackingInput("");
-      setNotes("");
     } catch (err: unknown) {
       setReceiveError(err instanceof Error ? err.message : "Failed to log parcel");
     } finally {
@@ -114,160 +152,145 @@ function AdminDashboardContent() {
     }
   };
 
-  const handleVerifyPickup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setVerifyError(null);
-    setVerifiedParcel(null);
-
-    const cleanInput = pickupCodeInput.trim();
-    if (!cleanInput) {
-      setVerifyError("Please enter a claim code or tracking number.");
-      return;
-    }
-
-    // Try claim code first
-    let found = await verifyClaimCode(cleanInput);
-    // If not found, try tracking number
-    if (!found) {
-      found = await getParcelByTracking(cleanInput);
-    }
-
-    if (found) {
-      if (found.status === "PICKED_UP") {
-        setVerifyError(`Parcel ${found.trackingNumber} was already released to ${found.claimedBy || "resident"} at ${found.claimedAt || "earlier"}.`);
-      } else {
-        setVerifiedParcel(found);
-      }
-    } else {
-      setVerifyError(`No active parcel found matching code "${cleanInput}". Please verify code with resident.`);
-    }
+  // Open Release Dialog for a specific parcel
+  const handleOpenReleaseModal = (parcel: Parcel) => {
+    setReleaseModalParcel(parcel);
+    setRecipientNameInput(parcel.residentName);
   };
 
-  const handleConfirmRelease = async () => {
-    if (!verifiedParcel) return;
+  // Confirm Release of Parcel
+  const handleConfirmRelease = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!releaseModalParcel) return;
+
     setIsReleasing(true);
     try {
-      const released = await releaseParcel(verifiedParcel.id, verifiedParcel.residentName);
+      const recipient = recipientNameInput.trim() || releaseModalParcel.residentName;
+      const released = await releaseParcel(releaseModalParcel.id, recipient);
       setLastReleasedParcel(released);
-      setPickupSuccess(`Parcel ${released.trackingNumber} successfully released to ${released.residentName}!`);
-      setVerifiedParcel(null);
-      setPickupCodeInput("");
-    } catch (err: unknown) {
-      setVerifyError(err instanceof Error ? err.message : "Failed to release parcel");
+      setReleaseSuccess(`✓ Parcel ${released.trackingNumber} successfully released to ${recipient}!`);
+      setReleaseModalParcel(null);
+      setRecipientNameInput("");
+      setQuickPasscodeSearch("");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to release parcel.");
     } finally {
       setIsReleasing(false);
     }
   };
 
+  // Direct 1-Click Status Revert (if marked by mistake)
+  const handleRevertStatus = async (parcel: Parcel) => {
+    if (confirm(`Revert package ${parcel.trackingNumber} back to READY FOR PICKUP?`)) {
+      await updateParcel(parcel.id, {
+        status: "READY",
+        shelf: "Shelf A-01",
+        claimedAt: undefined,
+        claimedBy: undefined,
+      });
+    }
+  };
+
+  // Delete parcel from records
+  const handleDeleteParcel = async (parcel: Parcel) => {
+    if (confirm(`Remove package ${parcel.trackingNumber} from inventory records?`)) {
+      await deleteParcel(parcel.id);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Title & Station Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Top Header & Station Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-            ADMIN <span className="text-brand-red">DASHBOARD</span>
+          <div className="flex items-center gap-2.5">
+            <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-wider text-green-700">
+              STATION 1 FRONT DESK • ONLINE
+            </span>
+          </div>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide mt-1">
+            FRONT DESK <span className="text-brand-red">OPERATIONS</span>
           </h1>
           <p className="text-xs sm:text-sm text-brand-text-secondary mt-0.5">
-            Real-time hub operations, inbound parcel intake, and resident release verification.
+            Buildersville Condominium • Fast Inbound Barcode Scanning & Instant Resident Release
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href="/admin/parcels" className="btn btn-outline btn-sm">
-            📦 Inventory ({parcels.length})
-          </Link>
-          <Link href="/admin/scanner" className="btn btn-outline btn-sm">
-            📷 Scanner Terminal
-          </Link>
-          <Link href="/admin/reports" className="btn btn-outline btn-sm">
-            📜 SMS Logs
-          </Link>
-          <Link href="/admin/settings" className="btn btn-outline btn-sm">
-            ⚙️ Hub Settings
+        {/* Top Quick Actions */}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/scanner"
+            className="btn btn-outline btn-sm font-bold uppercase flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>📷</span>
+            <span>Camera Scanner</span>
           </Link>
           <button
+            type="button"
             onClick={() => {
-              setTrackingInput("SPX-PH-" + Math.floor(100000 + Math.random() * 900000));
+              const sampleNumber = "SPX-PH-" + Math.floor(100000 + Math.random() * 900000);
+              handleTrackingChange(sampleNumber);
             }}
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm font-bold uppercase cursor-pointer"
+            title="Generate sample tracking number for testing"
           >
-            + Quick Barcode Test
+            + Sample Scan
           </button>
         </div>
       </div>
 
-      {/* 4 Colored KPI Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Ready for Pickup */}
-        <div className="bg-white border-l-4 border-l-[#107C41] border border-brand-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              ACTIVE IN HUB
-            </span>
-            <span className="text-xl">📦</span>
-          </div>
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            {activeInHub}
-          </div>
-          <span className="text-[11px] text-[#107C41] font-semibold">
-            ● {readyCount} Ready • {overdueCount} Overdue
+      {/* 4 Summary KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white border-l-4 border-l-green-600 border border-brand-border rounded-xl p-4 shadow-sm">
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary block">
+            READY FOR PICKUP
           </span>
+          <div className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black mt-1">
+            {readyCount}
+          </div>
+          <span className="text-[11px] text-green-700 font-semibold">Active packages on shelves</span>
         </div>
 
-        {/* Card 2: Picked Up */}
-        <div className="bg-white border-l-4 border-l-blue-600 border border-brand-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              TOTAL RELEASED
-            </span>
-            <span className="text-xl">✅</span>
-          </div>
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            {pickedUpCount}
-          </div>
-          <span className="text-[11px] text-blue-600 font-semibold">
-            Successfully claimed
+        <div className="bg-white border-l-4 border-l-brand-red border border-brand-border rounded-xl p-4 shadow-sm">
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary block">
+            OVERDUE STORAGE
           </span>
-        </div>
-
-        {/* Card 3: Overdue Parcels */}
-        <div className="bg-white border-l-4 border-l-brand-red border border-brand-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              OVERDUE PARCELS
-            </span>
-            <span className="text-xl">⚠️</span>
-          </div>
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-red mt-2">
+          <div className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-red mt-1">
             {overdueCount}
           </div>
           <span className="text-[11px] text-brand-red font-semibold">
-            {overdueCount > 0 ? "Subject to ₱10/day holding fee" : "All within grace period"}
+            {overdueCount > 0 ? "Subject to ₱10/day holding fee" : "None past holding limit"}
           </span>
         </div>
 
-        {/* Card 4: Registered Residents */}
-        <div className="bg-white border-l-4 border-l-brand-dark border border-brand-border rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">
-              REGISTERED RESIDENTS
-            </span>
-            <span className="text-xl">👥</span>
-          </div>
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-brand-black mt-2">
-            {registeredResidentsCount}
-          </div>
-          <span className="text-[11px] text-brand-text-secondary font-semibold">
-            Condo Units in Database
+        <div className="bg-white border-l-4 border-l-blue-600 border border-brand-border rounded-xl p-4 shadow-sm">
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary block">
+            RELEASED / CLAIMED
           </span>
+          <div className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black mt-1">
+            {pickedUpCount}
+          </div>
+          <span className="text-[11px] text-blue-600 font-semibold">Handed to residents</span>
+        </div>
+
+        <div className="bg-white border-l-4 border-l-brand-dark border border-brand-border rounded-xl p-4 shadow-sm">
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary block">
+            REGISTERED UNITS
+          </span>
+          <div className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black mt-1">
+            {residents.length}
+          </div>
+          <span className="text-[11px] text-brand-text-secondary font-semibold">Active resident accounts</span>
         </div>
       </div>
 
       {/* Notifications / Feedback */}
       {receiveSuccess && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in">
-          <span className="font-medium">✅ {receiveSuccess}</span>
-          <div className="flex items-center gap-2">
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in shadow-sm">
+          <span className="font-medium">{receiveSuccess}</span>
+          <div className="flex items-center gap-2 shrink-0">
             {lastCreatedParcel && (
               <button
                 type="button"
@@ -278,444 +301,522 @@ function AdminDashboardContent() {
                     station: hubSettings.stationName,
                   })
                 }
-                className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold"
+                className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold cursor-pointer"
               >
                 🏷️ Print Shelf Label
               </button>
             )}
-            <button onClick={() => setReceiveSuccess(null)} className="text-green-600 font-bold ml-2">✕</button>
+            <button onClick={() => setReceiveSuccess(null)} className="text-green-700 font-bold ml-1 cursor-pointer">
+              ✕
+            </button>
           </div>
         </div>
       )}
 
       {receiveError && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in">
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between text-xs sm:text-sm animate-in fade-in">
           <span className="font-medium">⚠️ {receiveError}</span>
-          <button onClick={() => setReceiveError(null)} className="text-red-600 font-bold ml-3">✕</button>
+          <button onClick={() => setReceiveError(null)} className="text-red-700 font-bold ml-2 cursor-pointer">
+            ✕
+          </button>
         </div>
       )}
 
-      {pickupSuccess && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in">
-          <span className="font-medium">🎉 {pickupSuccess}</span>
-          <div className="flex items-center gap-2">
+      {releaseSuccess && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in shadow-sm">
+          <span className="font-medium">{releaseSuccess}</span>
+          <div className="flex items-center gap-2 shrink-0">
             {lastReleasedParcel && (
               <button
                 type="button"
                 onClick={() =>
                   printClaimReleaseSlip({
                     parcel: lastReleasedParcel,
-                    releasedByStaff: hubSettings.stationName,
+                    releasedByStaff: user?.name || "Station 1 Staff",
                     hubName: hubSettings.hubName,
                   })
                 }
-                className="btn btn-sm bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold"
+                className="btn btn-sm bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold cursor-pointer"
               >
                 🧾 Print Release Slip
               </button>
             )}
-            <button onClick={() => setPickupSuccess(null)} className="text-blue-600 font-bold ml-2">✕</button>
+            <button onClick={() => setReleaseSuccess(null)} className="text-blue-700 font-bold ml-1 cursor-pointer">
+              ✕
+            </button>
           </div>
         </div>
       )}
 
-      {/* Two Core Workflows: Side by Side on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* WORKFLOW 1: Receive / Add Parcel (RED HEADER) */}
-        <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm flex flex-col">
-          <div className="bg-brand-red text-white px-5 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">📥</span>
-              <h2 className="font-[family-name:var(--font-heading)] text-xl uppercase tracking-wider">
-                RECEIVE / ADD NEW PARCEL
+      {/* WORKFLOW 1: QUICK INTAKE SCANNER BAR */}
+      <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm">
+        <div className="bg-brand-red text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">⚡</span>
+            <div>
+              <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
+                QUICK INBOUND PARCEL SCANNER
               </h2>
+              <p className="text-xs text-white/80">
+                Scan courier barcode with USB gun or type tracking. Dispatches instant SMS to resident.
+              </p>
             </div>
-            <span className="bg-white/20 text-xs px-2.5 py-0.5 rounded font-bold uppercase">
-              Intake Step 1
-            </span>
           </div>
-
-          <form onSubmit={handleReceiveSubmit} className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                  Tracking Number / Barcode <span className="text-brand-red">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Scan courier label or type number..."
-                    value={trackingInput}
-                    onChange={(e) => setTrackingInput(e.target.value)}
-                    className="input font-mono uppercase w-full"
-                    required
-                    disabled={isSubmitting}
-                  />
-                  <Link
-                    href="/admin/scanner"
-                    className="btn btn-outline btn-sm shrink-0 flex items-center gap-1"
-                    title="Open Camera Scanner"
-                  >
-                    📷 Scan
-                  </Link>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                    Courier Partner
-                  </label>
-                  <select
-                    value={courier}
-                    onChange={(e) => setCourier(e.target.value)}
-                    className="input text-xs w-full cursor-pointer"
-                    disabled={isSubmitting}
-                  >
-                    <option value="SPX Express">SPX Express</option>
-                    <option value="J&T Express">J&T Express</option>
-                    <option value="Flash Express">Flash Express</option>
-                    <option value="LBC Express">LBC Express</option>
-                    <option value="Ninja Van">Ninja Van</option>
-                    <option value="Lalamove">Lalamove</option>
-                    <option value="GrabExpress">GrabExpress</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                    Package Size
-                  </label>
-                  <select
-                    value={parcelSize}
-                    onChange={(e) => setParcelSize(e.target.value as typeof parcelSize)}
-                    className="input text-xs w-full cursor-pointer"
-                    disabled={isSubmitting}
-                  >
-                    <option value="Small">Small (Pouch / Envelopes)</option>
-                    <option value="Medium">Medium (Shoebox size)</option>
-                    <option value="Large">Large (Heavy Box)</option>
-                    <option value="Oversize">Oversize / Bulky</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                    Resident Recipient <span className="text-brand-red">*</span>
-                  </label>
-                  <select
-                    value={selectedResidentId}
-                    onChange={(e) => setSelectedResidentId(e.target.value)}
-                    className="input text-xs w-full cursor-pointer"
-                    disabled={isSubmitting}
-                  >
-                    {residents.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name} ({r.unit} - {r.tower})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-brand-text mb-1">
-                    Assign Shelf Slot
-                  </label>
-                  <select
-                    value={shelf}
-                    onChange={(e) => setShelf(e.target.value)}
-                    className="input text-xs w-full cursor-pointer"
-                    disabled={isSubmitting}
-                  >
-                    <option value="Shelf A-01">Shelf A-01</option>
-                    <option value="Shelf A-04">Shelf A-04</option>
-                    <option value="Shelf B-02">Shelf B-02</option>
-                    <option value="Shelf B-12">Shelf B-12</option>
-                    <option value="Shelf C-01">Shelf C-01</option>
-                    <option value="Oversize Area (Floor)">Oversize Area (Floor)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-brand-border">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn btn-primary w-full py-3 font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <span>Logging to Inventory...</span>
-                ) : (
-                  <span>LOG PARCEL & SEND SMS NOTIFICATION 📲</span>
-                )}
-              </button>
-            </div>
-          </form>
+          <span className="hidden sm:inline-block bg-white/20 text-xs px-3 py-1 rounded-full font-bold uppercase">
+            Step 1: Courier Drop
+          </span>
         </div>
 
-        {/* WORKFLOW 2: Process Pickup & Verification (BLACK HEADER) */}
-        <div className="bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm flex flex-col">
-          <div className="bg-brand-black text-white px-5 py-4 flex items-center justify-between">
+        <form onSubmit={handleIntakeSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* 1. Barcode / Tracking input */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Tracking Number / Barcode <span className="text-brand-red">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Scan barcode with scanner gun or type..."
+                  value={trackingInput}
+                  onChange={(e) => handleTrackingChange(e.target.value)}
+                  className="input font-mono uppercase text-sm w-full font-bold"
+                  required
+                  disabled={isSubmitting}
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1 text-[11px] text-brand-text-secondary">
+                <span>Detected: <strong className="text-brand-red">{courier}</strong></span>
+                <button
+                  type="button"
+                  onClick={() => handleTrackingChange("SPX-PH-2026-" + Math.floor(1000 + Math.random() * 9000))}
+                  className="text-brand-red hover:underline font-semibold cursor-pointer"
+                >
+                  Quick Fill Test
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Courier Dropdown */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Courier Partner
+              </label>
+              <select
+                value={courier}
+                onChange={(e) => setCourier(e.target.value)}
+                className="input text-xs w-full cursor-pointer"
+                disabled={isSubmitting}
+              >
+                <option value="SPX Express">SPX Express</option>
+                <option value="J&T Express">J&T Express</option>
+                <option value="Flash Express">Flash Express</option>
+                <option value="LBC Express">LBC Express</option>
+                <option value="Ninja Van">Ninja Van</option>
+                <option value="DHL Express">DHL Express</option>
+                <option value="GrabExpress">GrabExpress</option>
+                <option value="Lalamove">Lalamove</option>
+              </select>
+            </div>
+
+            {/* 3. Resident Recipient & Unit */}
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Recipient & Unit <span className="text-brand-red">*</span>
+              </label>
+              <select
+                value={selectedResidentId}
+                onChange={(e) => setSelectedResidentId(e.target.value)}
+                className="input text-xs w-full cursor-pointer"
+                disabled={isSubmitting}
+              >
+                {residents.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.unit} – {r.name} ({r.tower})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 4. Shelf Slot */}
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Assign Shelf Bin
+              </label>
+              <select
+                value={shelf}
+                onChange={(e) => setShelf(e.target.value)}
+                className="input text-xs w-full cursor-pointer"
+                disabled={isSubmitting}
+              >
+                <option value="Shelf A-01">Shelf A-01 (Small)</option>
+                <option value="Shelf A-04">Shelf A-04 (Shopee/Lazada)</option>
+                <option value="Shelf B-02">Shelf B-02 (Medium)</option>
+                <option value="Shelf B-12">Shelf B-12 (J&T Bins)</option>
+                <option value="Shelf C-01">Shelf C-01 (Large Boxes)</option>
+                <option value="Oversize Area (Floor)">Oversize Area (Floor)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-brand-border">
+            <div className="flex items-center gap-3 text-xs text-brand-text-secondary">
+              <span className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">✓</span> Auto-generates unique 4-digit claim code
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">✓</span> Auto-sends SMS arrival alert
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn btn-primary w-full sm:w-auto px-6 py-3 font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              {isSubmitting ? (
+                <span>Logging Inbound Parcel...</span>
+              ) : (
+                <span>LOG PARCEL & SEND SMS NOTIFICATION 📲</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* WORKFLOW 2: LIVE PARCEL ACTIVITY STREAM WITH INLINE EDITABLE STATUS */}
+      <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm space-y-4 p-6">
+        {/* Table Header & Search Tools */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-brand-border pb-4">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="text-xl">📤</span>
-              <h2 className="font-[family-name:var(--font-heading)] text-xl uppercase tracking-wider">
-                PARCEL PICKUP & VERIFICATION
+              <span className="text-2xl">📋</span>
+              <h2 className="font-[family-name:var(--font-heading)] text-2xl uppercase tracking-wider text-brand-black">
+                LIVE PARCEL ACTIVITY STREAM
               </h2>
             </div>
-            <span className="bg-white/20 text-xs px-2.5 py-0.5 rounded font-bold uppercase">
-              Release Step 2
-            </span>
+            <p className="text-xs text-brand-text-secondary mt-0.5">
+              Real-time inventory stream. You can release parcels directly or update statuses in one click.
+            </p>
           </div>
 
-          <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-            <div>
-              <form onSubmit={handleVerifyPickup} className="space-y-3">
-                <label className="block text-xs font-bold uppercase text-brand-text">
-                  Enter Resident Claim Code or Tracking ID
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. CK-8921 or tracking #..."
-                    value={pickupCodeInput}
-                    onChange={(e) => {
-                      setPickupCodeInput(e.target.value);
-                      if (verifyError) setVerifyError(null);
-                    }}
-                    className="input font-mono uppercase w-full"
-                    required
-                  />
-                  <button type="submit" className="btn btn-primary btn-sm shrink-0 font-bold uppercase">
-                    VERIFY CODE
-                  </button>
-                </div>
-              </form>
+          {/* Quick Passcode Search Box */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
+            <div className="relative w-full sm:w-64">
+              <span className="absolute left-3 top-2.5 text-brand-text-muted text-xs">🔑</span>
+              <input
+                type="text"
+                placeholder="Scan / Type Claim Code (e.g. CK-8921)..."
+                value={quickPasscodeSearch}
+                onChange={(e) => setQuickPasscodeSearch(e.target.value)}
+                className="input pl-8 text-xs font-mono uppercase w-full bg-brand-surface border-brand-red/30 focus:border-brand-red"
+              />
+            </div>
 
-              {verifyError && (
-                <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
-                  {verifyError}
-                </div>
-              )}
+            <div className="relative w-full sm:w-60">
+              <span className="absolute left-3 top-2.5 text-brand-text-muted text-xs">🔍</span>
+              <input
+                type="text"
+                placeholder="Search tracking, resident, unit..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input pl-8 text-xs w-full"
+              />
+            </div>
+          </div>
+        </div>
 
-              {/* Verification Result Box */}
-              {verifiedParcel ? (
-                <div className="mt-4 p-4 rounded-xl border-2 border-green-500 bg-green-50/50 space-y-3 animate-in fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded uppercase">
-                      ✓ AUTHORIZED FOR RELEASE
-                    </span>
-                    <span className="text-xs font-mono font-bold text-brand-black">
-                      Code: {verifiedParcel.claimCode}
-                    </span>
-                  </div>
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex gap-1.5 bg-brand-surface p-1 rounded-xl text-xs font-bold uppercase">
+            {[
+              { id: "ALL", label: `All (${parcels.length})` },
+              { id: "READY", label: `Ready for Pickup (${readyCount})` },
+              { id: "OVERDUE", label: `Overdue (${overdueCount})` },
+              { id: "PICKED_UP", label: `Released (${pickedUpCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  statusFilter === tab.id
+                    ? "bg-brand-red text-white shadow-sm"
+                    : "text-brand-text-secondary hover:text-brand-black"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-brand-text-secondary block">Resident Name:</span>
-                      <strong className="text-brand-black text-sm">{verifiedParcel.residentName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-secondary block">Condo Unit:</span>
-                      <strong className="text-brand-black text-sm">{verifiedParcel.unit}</strong>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-secondary block">Package Matched:</span>
-                      <span className="font-mono text-brand-black">{verifiedParcel.trackingNumber}</span>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-secondary block">Holding Status:</span>
-                      <span className="font-bold text-green-700">{verifiedParcel.holdingFee}</span>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-secondary block">Assigned Shelf:</span>
-                      <strong className="text-brand-black">{verifiedParcel.shelf}</strong>
-                    </div>
-                    <div>
-                      <span className="text-brand-text-secondary block">Courier:</span>
-                      <span className="text-brand-text font-semibold">{verifiedParcel.courier}</span>
-                    </div>
-                  </div>
+          {quickPasscodeSearch && (
+            <button
+              type="button"
+              onClick={() => setQuickPasscodeSearch("")}
+              className="text-xs text-brand-red font-semibold hover:underline cursor-pointer"
+            >
+              Clear Passcode Filter ✕
+            </button>
+          )}
+        </div>
 
-                  <div className="pt-2 border-t border-green-200">
-                    <button
-                      onClick={handleConfirmRelease}
-                      disabled={isReleasing}
-                      className="btn btn-primary btn-sm w-full !bg-green-700 hover:!bg-green-800 font-bold uppercase tracking-wider"
-                    >
-                      {isReleasing ? "Releasing..." : "CONFIRM RELEASE TO RESIDENT ✓"}
-                    </button>
-                  </div>
-                </div>
+        {/* Parcels Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-brand-surface text-brand-text-secondary uppercase border-b border-brand-border">
+              <tr>
+                <th className="px-4 py-3">Tracking & Courier</th>
+                <th className="px-4 py-3">Resident & Unit</th>
+                <th className="px-4 py-3">Shelf Slot</th>
+                <th className="px-4 py-3">Arrival / Scan Time</th>
+                <th className="px-4 py-3">Claim Code</th>
+                <th className="px-4 py-3">Status Action</th>
+                <th className="px-4 py-3 text-right">Tools</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-brand-border">
+              {filteredParcels.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-brand-text-secondary">
+                    No parcels found matching your search.
+                  </td>
+                </tr>
               ) : (
-                <div className="mt-4 p-6 rounded-xl border border-dashed border-brand-border text-center bg-brand-surface/40">
-                  <div className="text-3xl mb-1">🔍</div>
-                  <p className="text-xs font-semibold text-brand-text">
-                    Awaiting Claim Code Input
-                  </p>
-                  <p className="text-[11px] text-brand-text-secondary mt-0.5">
-                    Ask resident for their 6-character claim code or scan their QR badge.
-                  </p>
-                </div>
-              )}
-            </div>
+                filteredParcels.map((parcel) => {
+                  const isReady = parcel.status === "READY";
+                  const isOverdue = parcel.status === "OVERDUE";
+                  const isPickedUp = parcel.status === "PICKED_UP";
 
-            <div className="pt-4 border-t border-brand-border flex items-center justify-between text-xs text-brand-text-secondary">
-              <span>Security Rule: Require Government or Condo ID if code is unverified.</span>
-            </div>
-          </div>
+                  return (
+                    <tr
+                      key={parcel.id}
+                      className={`hover:bg-brand-surface/60 transition-colors ${
+                        quickPasscodeSearch &&
+                        parcel.claimCode.toLowerCase().includes(quickPasscodeSearch.toLowerCase())
+                          ? "bg-yellow-50"
+                          : ""
+                      }`}
+                    >
+                      {/* Tracking & Courier */}
+                      <td className="px-4 py-3.5">
+                        <div className="font-mono font-bold text-sm text-brand-black">
+                          {parcel.trackingNumber}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full"
+                            style={{ backgroundColor: parcel.courierColor }}
+                          />
+                          <span className="text-[11px] font-semibold text-brand-text-secondary">
+                            {parcel.courier}
+                          </span>
+                          <span className="text-[10px] text-brand-text-muted">({parcel.size || "Standard"})</span>
+                        </div>
+                      </td>
+
+                      {/* Resident & Unit */}
+                      <td className="px-4 py-3.5">
+                        <div className="font-bold text-sm text-brand-black">{parcel.residentName}</div>
+                        <div className="text-[11px] text-brand-text-secondary font-medium">
+                          {parcel.unit}
+                        </div>
+                      </td>
+
+                      {/* Shelf Slot */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-block font-mono font-bold bg-brand-surface px-2.5 py-1 rounded border border-brand-border text-brand-black text-xs">
+                          {parcel.shelf}
+                        </span>
+                      </td>
+
+                      {/* Arrival / Scanned Time */}
+                      <td className="px-4 py-3.5 text-brand-text-secondary">
+                        <div>{parcel.dateArrived}</div>
+                        {isPickedUp ? (
+                          <div className="text-[10px] text-blue-600 font-medium mt-0.5">
+                            Claimed: {parcel.claimedAt || "Earlier"}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-brand-text-muted mt-0.5">
+                            Holding Deadline: {parcel.deadline}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Claim Code */}
+                      <td className="px-4 py-3.5 font-mono text-sm font-black text-brand-red">
+                        {parcel.claimCode}
+                      </td>
+
+                      {/* Status Action (INLINE EDITABLE) */}
+                      <td className="px-4 py-3.5">
+                        {isPickedUp ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                              <span>✓</span>
+                              <span>Released</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRevertStatus(parcel)}
+                              className="text-[10px] text-brand-text-muted hover:text-brand-red underline cursor-pointer"
+                              title="Revert back to Ready for Pickup"
+                            >
+                              Revert
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                                isOverdue
+                                  ? "bg-brand-red-light text-brand-red"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {isOverdue ? `Overdue (${parcel.holdingFee})` : "Ready"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReleaseModal(parcel)}
+                              className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1 px-3 uppercase cursor-pointer"
+                            >
+                              Release ➔
+                            </button>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Tools & Print */}
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              printThermalShelfLabel({
+                                parcel,
+                                hubName: hubSettings.hubName,
+                                station: hubSettings.stationName,
+                              })
+                            }
+                            className="p-1.5 rounded hover:bg-brand-surface text-brand-text-secondary hover:text-black cursor-pointer"
+                            title="Print Thermal Shelf Label"
+                          >
+                            🏷️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteParcel(parcel)}
+                            className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-brand-red cursor-pointer"
+                            title="Delete Record"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Bottom Row: Recent Parcels Activity Table & Station Diagnostics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Parcels Activity Table (2 Cols) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-brand-border overflow-hidden shadow-sm">
-          <div className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📋</span>
-              <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase tracking-wider text-brand-black">
-                RECENT PARCELS ACTIVITY
-              </h3>
-            </div>
-            <span className="text-xs text-brand-text-secondary font-medium">
-              Live database stream ({parcels.length} total)
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-brand-surface text-brand-text-secondary uppercase border-b border-brand-border">
-                <tr>
-                  <th className="px-4 py-3">Tracking</th>
-                  <th className="px-4 py-3">Recipient & Unit</th>
-                  <th className="px-4 py-3">Courier</th>
-                  <th className="px-4 py-3">Shelf</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Claim Code</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-border">
-                {parcels.slice(0, 10).map((parcel) => (
-                  <tr key={parcel.id} className="hover:bg-brand-surface/60 transition-colors">
-                    <td className="px-4 py-3 font-mono font-semibold text-brand-black">
-                      {parcel.trackingNumber}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-brand-text">{parcel.residentName}</div>
-                      <div className="text-[10px] text-brand-text-secondary">{parcel.unit}</div>
-                    </td>
-                    <td className="px-4 py-3">{parcel.courier}</td>
-                    <td className="px-4 py-3 font-mono text-[11px]">{parcel.shelf}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                          parcel.status === "READY"
-                            ? "bg-green-100 text-green-800"
-                            : parcel.status === "OVERDUE"
-                            ? "bg-brand-red-light text-brand-red"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {parcel.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-brand-red">
-                      {parcel.claimCode}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Quick Shortcuts & Hub Health (1 Col) */}
-        <div className="space-y-4">
-          <div className="bg-white p-5 rounded-xl border border-brand-border shadow-sm space-y-4">
-            <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase tracking-wider text-brand-black">
-              STATION DIAGNOSTICS
-            </h3>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-brand-text-secondary">Hub Storage Capacity:</span>
-                <span className="font-bold text-brand-black">
-                  {Math.round((activeInHub / 200) * 100)}% ({activeInHub}/200 Slots)
-                </span>
+      {/* QUICK RELEASE CONFIRMATION MODAL */}
+      {releaseModalParcel && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-brand-border text-left animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between border-b border-brand-border pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🤝</span>
+                <div>
+                  <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
+                    CONFIRM PARCEL RELEASE
+                  </h3>
+                  <p className="text-xs text-brand-text-secondary">
+                    Handoff package to resident / authorized claimant
+                  </p>
+                </div>
               </div>
-              <div className="w-full bg-brand-surface rounded-full h-2">
-                <div
-                  className="bg-brand-red h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, Math.round((activeInHub / 200) * 100))}%` }}
+              <button
+                type="button"
+                onClick={() => setReleaseModalParcel(null)}
+                className="text-gray-400 hover:text-black p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-brand-surface p-3.5 rounded-xl border border-brand-border space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-brand-text-muted">Tracking Number:</span>
+                <span className="font-mono font-bold text-brand-black">{releaseModalParcel.trackingNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-brand-text-muted">Courier:</span>
+                <span className="font-semibold text-brand-black">{releaseModalParcel.courier}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-brand-text-muted">Condo Unit:</span>
+                <span className="font-bold text-brand-black">{releaseModalParcel.unit}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-brand-text-muted">Assigned Shelf:</span>
+                <span className="font-bold text-brand-red">{releaseModalParcel.shelf}</span>
+              </div>
+              <div className="flex justify-between border-t border-brand-border pt-1.5">
+                <span className="text-brand-text-muted">Holding Status:</span>
+                <span className="font-bold text-green-700">{releaseModalParcel.holdingFee}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmRelease} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Claimed By (Resident or Proxy Name):
+                </label>
+                <input
+                  type="text"
+                  value={recipientNameInput}
+                  onChange={(e) => setRecipientNameInput(e.target.value)}
+                  placeholder="e.g. Juan Dela Cruz (Self) or Maria (Spouse)"
+                  className="input w-full text-xs font-semibold"
+                  required
+                  disabled={isReleasing}
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-brand-border">
-                <span className="text-brand-text-secondary">USB Barcode Scanner:</span>
-                <span className="font-bold text-green-600 flex items-center gap-1">
-                  ● Connected
-                </span>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReleaseModalParcel(null)}
+                  className="btn btn-outline btn-sm flex-1 font-bold uppercase cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isReleasing}
+                  className="btn btn-primary btn-sm flex-1 font-bold uppercase bg-green-700 hover:bg-green-800 cursor-pointer"
+                >
+                  {isReleasing ? "Releasing..." : "Confirm & Release ✓"}
+                </button>
               </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-brand-text-secondary">Storage Engine:</span>
-                <span className="font-bold text-green-600 flex items-center gap-1">
-                  ● Live Browser Store (Reactive)
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-brand-text-secondary">Printer (Receipt / Label):</span>
-                <span className="font-bold text-green-600 flex items-center gap-1">
-                  ● Ready
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-brand-black text-white p-5 rounded-xl space-y-3">
-            <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase tracking-wider">
-              QUICK SHORTCUTS
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/admin/scanner"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
-              >
-                📷 Scanner
-              </Link>
-              <Link
-                href="/admin/customers"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
-              >
-                👥 Customers
-              </Link>
-              <Link
-                href="/track"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
-              >
-                🔍 Tracking
-              </Link>
-              <Link
-                href="/parcels"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg text-center text-xs font-bold transition-colors"
-              >
-                📦 Resident View
-              </Link>
-            </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 export default function AdminDashboardPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading hub station...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading front desk terminal...</div>}>
       <AdminDashboardContent />
     </Suspense>
   );
