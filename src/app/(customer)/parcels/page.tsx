@@ -51,7 +51,7 @@ export default function MyParcelsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/dashboard?tab=track" className="btn btn-outline btn-sm font-bold uppercase">
+          <Link href="/track" className="btn btn-outline btn-sm font-bold uppercase">
             Track by Number
           </Link>
           {readyParcels.length > 0 && (

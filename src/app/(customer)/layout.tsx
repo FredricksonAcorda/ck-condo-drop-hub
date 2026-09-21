@@ -9,7 +9,7 @@ import { useAuth } from "@/context";
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "My Parcels", href: "/parcels" },
-  { label: "Track Parcel", href: "/dashboard?tab=track" },
+  { label: "Track Parcel", href: "/track" },
   { label: "My Account", href: "/account" },
   { label: "Membership", href: "/membership" },
   { label: "Help Center", href: "/help" },
@@ -45,7 +45,7 @@ export default function CustomerLayout({
 
   return (
     <div className="min-h-screen bg-brand-surface">
-      {/* Top Header */}
+      {/* Top Header (Clean: Logo & User Status Only, No Duplicate Nav) */}
       <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center justify-between h-[64px]">
           {/* Mobile menu button */}
@@ -68,30 +68,6 @@ export default function CustomerLayout({
               priority
             />
           </Link>
-
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Customer navigation">
-            {[
-              { label: "DASHBOARD", href: "/dashboard" },
-              { label: "MY PARCELS", href: "/parcels" },
-              { label: "TRACK PARCEL", href: "/dashboard?tab=track" },
-              { label: "MY ACCOUNT", href: "/account" },
-              { label: "MEMBERSHIP", href: "/membership" },
-              { label: "HELP CENTER", href: "/help" },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                  pathname === item.href || (item.href.startsWith("/dashboard") && pathname === "/dashboard" && !item.href.includes("tab=track"))
-                    ? "text-brand-red font-bold"
-                    : "text-brand-text-secondary hover:text-brand-text"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
 
           {/* User area */}
           <div className="flex items-center gap-3">
@@ -178,12 +154,6 @@ export default function CustomerLayout({
                 {item.label}
               </Link>
             ))}
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:bg-brand-surface hover:text-brand-red cursor-pointer transition-colors"
-            >
-              Log Out
-            </button>
           </nav>
 
           {/* Delivery CTA */}
@@ -196,59 +166,94 @@ export default function CustomerLayout({
               </Link>
             </div>
           </div>
+
+          {/* Resident Identity Block & Logout pinned at bottom */}
+          <div className="p-4 border-t border-brand-border bg-brand-surface flex items-center justify-between mt-auto">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center text-xs font-bold">
+                {initials}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-brand-black leading-tight">{displayName}</p>
+                <p className="text-[10px] text-brand-text-secondary font-mono">{displayCode}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-brand-text-secondary hover:text-brand-red transition-colors text-xs font-bold uppercase cursor-pointer"
+              title="Log Out"
+            >
+              LOGOUT
+            </button>
+          </div>
         </aside>
 
         {/* Mobile drawer overlay */}
         {drawerOpen && (
           <>
             <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setDrawerOpen(false)} />
-            <aside className="fixed left-0 top-0 bottom-0 w-[280px] bg-white z-50 lg:hidden overflow-y-auto shadow-lg">
-              <div className="flex items-center justify-between p-4 border-b border-brand-border">
-                <span className="font-bold text-sm">Menu</span>
-                <button onClick={() => setDrawerOpen(false)} className="p-1" aria-label="Close menu">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-              <div className="p-4">
-                <div className="bg-brand-red rounded-xl p-4 text-white text-center mb-2">
-                  <p className="font-bold text-sm">{displayName}</p>
-                  {user?.planStatus === "PENDING_PAYMENT" ? (
-                    <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
-                      {displayPlan.replace("_", " ")} (PENDING)
-                    </span>
-                  ) : (
-                    <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
-                      {displayPlan.replace("_", " ")}
-                    </span>
-                  )}
-                  <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
+            <aside className="fixed left-0 top-0 bottom-0 w-[280px] bg-white z-50 lg:hidden overflow-y-auto shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between p-4 border-b border-brand-border">
+                  <span className="font-bold text-sm">Menu</span>
+                  <button onClick={() => setDrawerOpen(false)} className="p-1" aria-label="Close menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
                 </div>
+                <div className="p-4">
+                  <div className="bg-brand-red rounded-xl p-4 text-white text-center mb-2">
+                    <p className="font-bold text-sm">{displayName}</p>
+                    {user?.planStatus === "PENDING_PAYMENT" ? (
+                      <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
+                        {displayPlan.replace("_", " ")} (PENDING)
+                      </span>
+                    ) : (
+                      <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
+                        {displayPlan.replace("_", " ")}
+                      </span>
+                    )}
+                    <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
+                  </div>
+                </div>
+                <nav className="px-3 space-y-0.5">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setDrawerOpen(false)}
+                      className={`flex items-center px-4 py-3 rounded-lg text-sm ${
+                        pathname === item.href
+                          ? "bg-brand-red-light text-brand-red font-semibold"
+                          : "text-brand-text-secondary"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
               </div>
-              <nav className="px-3 space-y-0.5">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setDrawerOpen(false)}
-                    className={`flex items-center px-4 py-3 rounded-lg text-sm ${
-                      pathname === item.href
-                        ? "bg-brand-red-light text-brand-red font-semibold"
-                        : "text-brand-text-secondary"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+
+              {/* Mobile Logout pinned at bottom */}
+              <div className="p-4 border-t border-brand-border bg-brand-surface flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center text-xs font-bold">
+                    {initials}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-brand-black leading-tight">{displayName}</p>
+                    <p className="text-[10px] text-brand-text-secondary font-mono">{displayCode}</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     setDrawerOpen(false);
                     handleLogout();
                   }}
-                  className="w-full flex items-center px-4 py-3 rounded-lg text-sm text-brand-text-secondary hover:text-brand-red"
+                  className="text-brand-text-secondary hover:text-brand-red transition-colors text-xs font-bold uppercase cursor-pointer"
                 >
-                  Log Out
+                  LOGOUT
                 </button>
-              </nav>
+              </div>
             </aside>
           </>
         )}
