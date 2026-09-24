@@ -26,10 +26,7 @@ export default function CustomerLayout({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const displayName = user?.name || "Juan Dela Cruz";
-  const displayPlan = user?.plan || "PREMIUM";
   const displayCode = user?.residentCode || "CK-000123";
-  const displayUnit = user?.unit ? `${user.unit} – ${user.tower || "Tower A"}` : "Unit 101 – Tower A";
-  const building = "CK BUILDERSVILLE CONDOMINIUM";
 
   const initials = displayName
     .split(" ")
@@ -113,59 +110,24 @@ export default function CustomerLayout({
       </header>
 
       <div className="max-w-[1440px] mx-auto flex">
-        {/* Sidebar (desktop) */}
+        {/* Sidebar (desktop): All tabs/buttons only, with logout pinned to bottom */}
         <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-white border-r border-brand-border min-h-[calc(100vh-64px)] sticky top-[64px]">
-          {/* User card */}
-          <div className="p-4">
-            <div className="bg-brand-red rounded-xl p-4 text-white text-center">
-              <div className="w-14 h-14 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-2 font-black text-lg">
-                {initials}
-              </div>
-              <p className="font-bold text-sm">{displayName}</p>
-              {user?.planStatus === "PENDING_PAYMENT" ? (
-                <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
-                  {displayPlan.replace("_", " ")} (PENDING)
-                </span>
-              ) : (
-                <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
-                  {displayPlan.replace("_", " ")}
-                </span>
-              )}
-              <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
-            </div>
-            <div className="bg-brand-dark rounded-b-xl p-3 text-white text-center -mt-1">
-              <p className="text-xs font-medium">{displayUnit}</p>
-              <p className="text-[10px] text-white/60 uppercase">{building}</p>
-            </div>
-          </div>
-
-          {/* Nav items */}
-          <nav className="flex-1 px-3 py-2 space-y-0.5" aria-label="Customer sidebar">
+          {/* Nav items only */}
+          <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Customer sidebar">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center px-4 py-3 rounded-lg text-sm transition-colors ${
+                className={`flex items-center px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
                   pathname === item.href
-                    ? "bg-brand-red-light text-brand-red font-semibold"
-                    : "text-brand-text-secondary hover:bg-brand-surface"
+                    ? "bg-brand-red-light text-brand-red font-bold"
+                    : "text-brand-text-secondary hover:bg-brand-surface hover:text-brand-black"
                 }`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-
-          {/* Delivery CTA */}
-          <div className="p-4">
-            <div className="bg-brand-red-bg rounded-xl p-4 text-center">
-              <p className="text-brand-red font-bold text-sm mb-1">NEED DOOR-TO-DOOR DELIVERY?</p>
-              <p className="text-xs text-brand-text-secondary mb-3">We can deliver your parcel right to your unit!</p>
-              <Link href="/parcels" className="btn btn-primary btn-sm w-full block text-center">
-                REQUEST DELIVERY
-              </Link>
-            </div>
-          </div>
 
           {/* Resident Identity Block & Logout pinned at bottom */}
           <div className="p-4 border-t border-brand-border bg-brand-surface flex items-center justify-between mt-auto">
@@ -195,35 +157,20 @@ export default function CustomerLayout({
             <aside className="fixed left-0 top-0 bottom-0 w-[280px] bg-white z-50 lg:hidden overflow-y-auto shadow-lg flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between p-4 border-b border-brand-border">
-                  <span className="font-bold text-sm">Menu</span>
+                  <span className="font-bold text-sm">Navigation Menu</span>
                   <button onClick={() => setDrawerOpen(false)} className="p-1" aria-label="Close menu">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
-                <div className="p-4">
-                  <div className="bg-brand-red rounded-xl p-4 text-white text-center mb-2">
-                    <p className="font-bold text-sm">{displayName}</p>
-                    {user?.planStatus === "PENDING_PAYMENT" ? (
-                      <span className="inline-block bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full mt-1 uppercase animate-pulse">
-                        {displayPlan.replace("_", " ")} (PENDING)
-                      </span>
-                    ) : (
-                      <span className="inline-block bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 uppercase">
-                        {displayPlan.replace("_", " ")}
-                      </span>
-                    )}
-                    <p className="text-white/90 font-mono text-xs mt-1">{displayCode}</p>
-                  </div>
-                </div>
-                <nav className="px-3 space-y-0.5">
+                <nav className="p-3 space-y-1">
                   {navItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setDrawerOpen(false)}
-                      className={`flex items-center px-4 py-3 rounded-lg text-sm ${
+                      className={`flex items-center px-4 py-3 rounded-lg text-sm font-semibold ${
                         pathname === item.href
-                          ? "bg-brand-red-light text-brand-red font-semibold"
+                          ? "bg-brand-red-light text-brand-red font-bold"
                           : "text-brand-text-secondary"
                       }`}
                     >

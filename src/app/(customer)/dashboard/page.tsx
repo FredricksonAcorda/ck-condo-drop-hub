@@ -143,81 +143,71 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      {/* 3 Overview KPI Cards */}
+      {/* 3 Overview KPI Cards (Display Only, Not Clickable) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <Link
-          href="/parcels"
-          className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
-        >
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <span className="text-xs text-gray-500 uppercase font-semibold">Ready for Pickup</span>
           <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mt-2">
             {totalActive} Parcel{totalActive === 1 ? "" : "s"}
           </div>
           <span className="text-xs text-green-700 font-semibold mt-1">Station 1 Front Desk</span>
-        </Link>
+        </div>
 
-        <Link
-          href="/membership"
-          className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
-        >
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <span className="text-xs text-gray-500 uppercase font-semibold">Door Delivery Credits</span>
           <div className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-gray-900 mt-2">
             {deliveryCreditsText}
           </div>
           <span className="text-xs text-blue-700 font-semibold mt-1">{user?.plan || "PREMIUM"} Tier</span>
-        </Link>
+        </div>
 
-        <Link
-          href="/parcels"
-          className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:border-brand-red transition-all cursor-pointer group"
-        >
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <span className="text-xs text-gray-500 uppercase font-semibold">Holding Alert</span>
           <div className="font-[family-name:var(--font-heading)] text-3xl text-brand-red mt-2">
             {overdueParcels.length} Overdue
           </div>
           <span className="text-xs text-gray-500 mt-1">₱10/day holding rate</span>
-        </Link>
+        </div>
       </div>
 
-      {/* Main Resident Section: Ready Packages Direct Stream + Station 1 Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Packages Ready for Pickup */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-gray-900">
-              PACKAGES READY FOR PICKUP
-            </h2>
+      {/* Section 1: Packages Ready for Pickup (Adaptive layout based on content) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase text-gray-900">
+            PACKAGES READY FOR PICKUP
+          </h2>
+          <Link
+            href="/parcels"
+            className="text-xs font-bold text-brand-red hover:underline uppercase"
+          >
+            Manage All Parcels →
+          </Link>
+        </div>
+
+        {readyParcels.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div>
+              <h3 className="font-bold text-base text-gray-900">All Caught Up!</h3>
+              <p className="text-xs text-gray-500 mt-0.5 max-w-xl">
+                You have 0 packages currently awaiting pickup at Station 1 Front Desk. We will send an SMS to {user?.phone || "your number"} the moment a courier registers a delivery.
+              </p>
+            </div>
             <Link
-              href="/parcels"
-              className="text-xs font-bold text-brand-red hover:underline uppercase"
+              href="/track"
+              className="btn btn-outline btn-sm font-bold uppercase shrink-0"
             >
-              Manage All Parcels →
+              Track Incoming Parcel
             </Link>
           </div>
-
-          {readyParcels.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-2 shadow-sm">
-              <h3 className="font-bold text-base text-gray-900">All Caught Up!</h3>
-              <p className="text-xs text-gray-500 max-w-md mx-auto">
-                You have no packages currently awaiting pickup at Station 1 Front Desk. We will send an SMS to {user?.phone || "your number"} the moment a courier registers a delivery.
-              </p>
-              <div className="pt-2">
-                <Link
-                  href="/track"
-                  className="btn btn-outline btn-sm font-bold uppercase inline-block"
-                >
-                  Track Incoming Tracking Number
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {readyParcels.map((parcel) => (
-                <div
-                  key={parcel.id}
-                  className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-300 transition-all"
-                >
-                  <div className="space-y-1">
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {readyParcels.map((parcel) => (
+              <div
+                key={parcel.id}
+                className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between gap-3 hover:border-gray-300 transition-all"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span
                         className="inline-block w-2.5 h-2.5 rounded-full"
@@ -227,118 +217,132 @@ export default function CustomerDashboardPage() {
                       <span className="text-[10px] bg-gray-100 text-gray-600 font-mono px-2 py-0.5 rounded border border-gray-200">
                         {parcel.shelf}
                       </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          parcel.status === "OVERDUE"
-                            ? "bg-red-50 text-brand-red border border-red-200"
-                            : "bg-green-50 text-green-700 border border-green-200"
-                        }`}
-                      >
-                        {parcel.status === "OVERDUE" ? "Overdue" : "Ready"}
-                      </span>
                     </div>
-
-                    <div className="font-mono font-bold text-base text-gray-900">
-                      {parcel.trackingNumber}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-1">
-                      <span>Arrived: <strong className="text-gray-700">{parcel.dateArrived}</strong></span>
-                      <span>Deadline: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-gray-700"}>{parcel.deadline}</strong></span>
-                      <span>Holding Fee: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-green-700"}>{parcel.holdingFee}</strong></span>
-                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        parcel.status === "OVERDUE"
+                          ? "bg-red-50 text-brand-red border border-red-200"
+                          : "bg-green-50 text-green-700 border border-green-200"
+                      }`}
+                    >
+                      {parcel.status === "OVERDUE" ? "Overdue" : "Ready"}
+                    </span>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                    <div className="text-left sm:text-right">
-                      <span className="text-[10px] text-gray-400 uppercase font-semibold block">
-                        Claim Passcode
-                      </span>
-                      <span className="font-mono font-black text-xl text-brand-red tracking-wider">
-                        {parcel.claimCode}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedClaimParcel(parcel)}
-                      className="btn btn-primary btn-sm font-bold uppercase whitespace-nowrap cursor-pointer"
-                    >
-                      View Claim QR
-                    </button>
+                  <div className="font-mono font-bold text-base text-gray-900">
+                    {parcel.trackingNumber}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-1">
+                    <span>Arrived: <strong className="text-gray-700">{parcel.dateArrived}</strong></span>
+                    <span>Deadline: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-gray-700"}>{parcel.deadline}</strong></span>
+                    <span>Fee: <strong className={parcel.status === "OVERDUE" ? "text-brand-red" : "text-green-700"}>{parcel.holdingFee}</strong></span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Right 1 Col: Station 1 Front Desk Info & Announcements */}
-        <div className="space-y-6">
-          {/* Station 1 Service Desk Card */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
-              PICKUP LOCATION
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase font-semibold block">
+                      Claim Passcode
+                    </span>
+                    <span className="font-mono font-black text-xl text-brand-red tracking-wider">
+                      {parcel.claimCode}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClaimParcel(parcel)}
+                    className="btn btn-primary btn-sm font-bold uppercase whitespace-nowrap cursor-pointer"
+                  >
+                    View Claim QR
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Balanced 2-Column Grid for Station 1 Info & Hub Announcements (No Empty Whitespace) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Box 1: Station 1 Pickup Location & Schedule */}
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1">
+              PICKUP LOCATION & HOURS
             </span>
-            <h3 className="font-[family-name:var(--font-heading)] text-lg text-gray-900 uppercase">
+            <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
               Station 1 Front Desk
             </h3>
-            <div className="text-xs space-y-2 text-gray-600">
-              <div className="flex justify-between border-b border-gray-100 pb-1.5">
-                <span className="text-gray-500">Location:</span>
-                <span className="font-semibold text-gray-900">Ground Floor Main Lobby</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-1.5">
-                <span className="text-gray-500">Operating Hours:</span>
-                <span className="font-semibold text-gray-900">8:00 AM – 9:00 PM Daily</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-1.5">
-                <span className="text-gray-500">Hotline:</span>
-                <a href="tel:09171234567" className="font-bold text-brand-red hover:underline">
-                  0917 123 4567
-                </a>
-              </div>
-              <div className="flex justify-between pt-0.5">
-                <span className="text-gray-500">Door Delivery:</span>
-                <Link href="/parcels" className="font-semibold text-brand-red hover:underline">
-                  Request Runner
-                </Link>
-              </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Ground Floor Main Lobby • Concierge Service Counter
+            </p>
+          </div>
+
+          <div className="text-xs space-y-2.5 text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div className="flex justify-between border-b border-gray-200 pb-2">
+              <span className="text-gray-500">Location:</span>
+              <span className="font-semibold text-gray-900">Ground Floor Main Lobby</span>
+            </div>
+            <div className="flex justify-between border-b border-gray-200 pb-2">
+              <span className="text-gray-500">Operating Schedule:</span>
+              <span className="font-semibold text-gray-900">8:00 AM – 9:00 PM Daily</span>
+            </div>
+            <div className="flex justify-between border-b border-gray-200 pb-2">
+              <span className="text-gray-500">Hotline Number:</span>
+              <span className="font-semibold text-gray-900">0917 123 4567</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Door Delivery:</span>
+              <span className="font-semibold text-gray-900">Available at Station 1 Desk</span>
             </div>
           </div>
 
-          {/* Hub Announcements */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
-            <h3 className="font-[family-name:var(--font-heading)] text-lg text-gray-900 uppercase">
+          <p className="text-[11px] text-gray-400">
+            Present your 4-digit claim code or show your QR pass to the front desk receptionist upon parcel collection.
+          </p>
+        </div>
+
+        {/* Box 2: Hub Announcements & Advisories */}
+        <div className="bg-white p-5 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1">
+              COMMUNITY UPDATES
+            </span>
+            <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
               HUB ANNOUNCEMENTS
             </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Latest parcel hub advisories and operations updates
+            </p>
+          </div>
 
-            <div className="space-y-3 divide-y divide-gray-100 text-xs">
-              <div className="pt-2 first:pt-0">
-                <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
-                <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
-                <p className="text-gray-600 mt-1 leading-relaxed">
-                  Flash Express riders now drop packages directly into dedicated shelf bins at Station 1.
-                </p>
-              </div>
+          <div className="space-y-3 divide-y divide-gray-100 text-xs">
+            <div className="pt-2 first:pt-0">
+              <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
+              <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
+              <p className="text-gray-600 mt-1 leading-relaxed">
+                Flash Express riders now drop packages directly into dedicated shelf bins at Station 1.
+              </p>
+            </div>
 
-              <div className="pt-3">
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
-                <h4 className="font-bold text-gray-900 mt-0.5">Holiday Schedule Advisory</h4>
-                <p className="text-gray-600 mt-1 leading-relaxed">
-                  Hub remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
-                </p>
-              </div>
+            <div className="pt-3">
+              <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
+              <h4 className="font-bold text-gray-900 mt-0.5">Holiday Schedule Advisory</h4>
+              <p className="text-gray-600 mt-1 leading-relaxed">
+                Hub remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
+              </p>
+            </div>
 
-              <div className="pt-3">
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Need Assistance?</span>
-                <p className="text-gray-600 mt-1 leading-relaxed">
-                  Visit our{" "}
-                  <Link href="/help" className="text-brand-red font-semibold hover:underline">
-                    Resident Help Center
-                  </Link>{" "}
-                  for proxy claimant rules and the holding fee calculator.
-                </p>
-              </div>
+            <div className="pt-3">
+              <span className="text-[10px] text-gray-400 font-bold uppercase">Need Assistance?</span>
+              <p className="text-gray-600 mt-1 leading-relaxed">
+                Visit our{" "}
+                <Link href="/help" className="text-brand-red font-semibold hover:underline">
+                  Resident Help Center
+                </Link>{" "}
+                for proxy claimant authorization rules and the holding fee calculator.
+              </p>
             </div>
           </div>
         </div>
