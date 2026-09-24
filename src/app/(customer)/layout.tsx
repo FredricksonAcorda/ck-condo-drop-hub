@@ -41,10 +41,10 @@ export default function CustomerLayout({
   };
 
   return (
-    <div className="min-h-screen bg-brand-surface">
+    <div className="min-h-screen bg-brand-surface flex flex-col">
       {/* Top Header (Clean: Logo & User Status Only, No Duplicate Nav) */}
       <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center justify-between h-[64px]">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-[64px]">
           {/* Mobile menu button */}
           <button
             className="lg:hidden p-2 rounded-md hover:bg-brand-surface"
@@ -109,7 +109,7 @@ export default function CustomerLayout({
         </div>
       </header>
 
-      <div className="max-w-[1440px] mx-auto flex">
+      <div className="w-full flex-1 flex">
         {/* Sidebar (desktop): All tabs/buttons only, with logout pinned to bottom */}
         <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-white border-r border-brand-border min-h-[calc(100vh-64px)] sticky top-[64px]">
           {/* Nav items only */}
@@ -206,7 +206,7 @@ export default function CustomerLayout({
         )}
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 p-4 lg:p-6">{children}</main>
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
