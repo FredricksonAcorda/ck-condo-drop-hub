@@ -219,20 +219,14 @@ export default function MyParcelsPage() {
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           {/* Card Header (Clean & Minimal) */}
           <div className="bg-[#107C41] text-white px-5 sm:px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-300 animate-pulse" />
-              <h2 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl tracking-wider uppercase">
-                READY FOR PICKUP ({readyParcels.length} {readyParcels.length === 1 ? "PARCEL" : "PARCELS"})
-              </h2>
-            </div>
+            <h2 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl tracking-wider uppercase">
+              READY FOR PICKUP ({readyParcels.length} {readyParcels.length === 1 ? "PARCEL" : "PARCELS"})
+            </h2>
           </div>
 
           {/* Lobby Pickup Guideline (Concise) */}
-          <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 flex items-center gap-2 text-xs text-emerald-950 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-            <span>
-              Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
-            </span>
+          <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium">
+            Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
           </div>
 
           {loading ? (
@@ -568,8 +562,8 @@ export default function MyParcelsPage() {
                         <th className="px-5 py-3 font-bold">Date Claimed</th>
                         <th className="px-5 py-3 font-bold">Claimed By</th>
                         <th className="px-5 py-3 font-bold">Status</th>
-                        <th className="px-5 py-3 font-bold text-right" title="Physical handover verified and logged by Station 1 Front Desk receptionist">
-                          Desk Verification ⓘ
+                        <th className="px-5 py-3 font-bold text-right">
+                          Desk Verification
                         </th>
                       </tr>
                     </thead>
@@ -606,11 +600,8 @@ export default function MyParcelsPage() {
                             )}
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <span
-                              className="text-green-700 text-xs font-bold inline-flex items-center gap-1"
-                              title="Handover confirmed and logged by Station 1 staff"
-                            >
-                              ✓ Verified
+                            <span className="text-[11px] bg-green-100 text-green-800 font-bold px-2.5 py-0.5 rounded-full inline-block">
+                              ✓ VERIFIED
                             </span>
                           </td>
                         </tr>
@@ -653,8 +644,11 @@ export default function MyParcelsPage() {
                           <span className="text-gray-400">Claimed By: </span>
                           <span className="font-bold text-gray-900">{item.claimedBy || "Resident"}</span>
                         </div>
-                        <div className="text-[11px] text-green-700 font-semibold pt-0.5">
-                          ✓ Verified at Front Desk
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-200/60">
+                          <span className="text-gray-400 text-[11px]">Desk Handover:</span>
+                          <span className="text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full inline-block">
+                            ✓ VERIFIED
+                          </span>
                         </div>
                       </div>
                     </div>
