@@ -127,15 +127,9 @@ export default function CustomerDashboardPage() {
               </>
             )}
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div>
             <Link href="/parcels" className="btn btn-primary btn-sm font-bold uppercase">
-              View All Parcels ({totalActive})
-            </Link>
-            <Link
-              href="/track"
-              className="btn btn-outline btn-sm !text-white !border-white/40 hover:!bg-white/10 font-bold uppercase"
-            >
-              Track Incoming Parcel
+              View My Parcels ({totalActive})
             </Link>
           </div>
         </div>

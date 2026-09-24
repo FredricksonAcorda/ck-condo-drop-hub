@@ -184,12 +184,6 @@ export default function MyParcelsPage() {
             Real-time pickup status and complete delivery history for {user?.name || "your account"}.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Link href="/track" className="btn btn-outline btn-sm font-bold uppercase whitespace-nowrap">
-            Track Inbound Parcel ↗
-          </Link>
-        </div>
       </div>
 
       {/* Top Filter Tabs: All, Ready for Pickup, Past History */}

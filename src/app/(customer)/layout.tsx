@@ -9,7 +9,6 @@ import { useAuth } from "@/context";
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "My Parcels", href: "/parcels" },
-  { label: "Track Parcel", href: "/track" },
   { label: "My Account", href: "/account" },
   { label: "Membership", href: "/membership" },
   { label: "Help Center", href: "/help" },
