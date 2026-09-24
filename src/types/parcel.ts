@@ -1,4 +1,4 @@
-export type ParcelStatus = "READY" | "PICKED_UP" | "OVERDUE";
+export type ParcelStatus = "READY" | "PICKED_UP" | "OVERDUE" | "DELIVERED_DOOR" | "RETURNED";
 
 export interface Parcel {
   id: string;

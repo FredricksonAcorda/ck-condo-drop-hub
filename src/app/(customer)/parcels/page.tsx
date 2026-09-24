@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useAuth, useParcels } from "@/context";
+import { Parcel } from "@/types";
 
 export default function MyParcelsPage() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function MyParcelsPage() {
   // Filter states for Parcel History & Logs
   const [historyTracking, setHistoryTracking] = useState("");
   const [historyCourier, setHistoryCourier] = useState("ALL");
-  const [historyDate, setHistoryDate] = useState("");
+  const [historyDate, setHistoryDate] = useState(""); // YYYY-MM-DD from calendar
   const [historyClaimedBy, setHistoryClaimedBy] = useState("");
   const [historyStatus, setHistoryStatus] = useState("ALL");
 
@@ -57,7 +58,9 @@ export default function MyParcelsPage() {
   }, [userParcels]);
 
   const historyParcels = useMemo(() => {
-    return userParcels.filter((p) => p.status === "PICKED_UP");
+    return userParcels.filter(
+      (p) => p.status === "PICKED_UP" || p.status === "DELIVERED_DOOR" || p.status === "RETURNED"
+    );
   }, [userParcels]);
 
   // Unique couriers present in history
@@ -66,10 +69,65 @@ export default function MyParcelsPage() {
     historyParcels.forEach((p) => {
       if (p.courier) set.add(p.courier);
     });
-    // Add common couriers as fallbacks if set is small
-    ["SPX Express", "J&T Express", "Flash Express", "LBC Express", "2GO Express"].forEach((c) => set.add(c));
+    ["SPX Express", "J&T Express", "Flash Express", "LBC Express", "2GO Express"].forEach((c) =>
+      set.add(c)
+    );
     return Array.from(set).sort();
   }, [historyParcels]);
+
+  // Helper to match YYYY-MM-DD from calendar against parcel dates (e.g. "Sept 18, 2026")
+  const matchesCalendarDate = (dateStr?: string, calendarYmd?: string): boolean => {
+    if (!dateStr || !calendarYmd) return false;
+    const parts = calendarYmd.split("-");
+    if (parts.length !== 3) return false;
+
+    const year = parts[0];
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+
+    const monthNames = [
+      ["jan", "01", "1"],
+      ["feb", "02", "2"],
+      ["mar", "03", "3"],
+      ["apr", "04", "4"],
+      ["may", "05", "5"],
+      ["jun", "06", "6"],
+      ["jul", "07", "7"],
+      ["aug", "08", "8"],
+      ["sep", "sept", "09", "9"],
+      ["oct", "10"],
+      ["nov", "11"],
+      ["dec", "12"],
+    ];
+
+    const lower = dateStr.toLowerCase();
+    if (!lower.includes(year)) return false;
+
+    const mMatches = monthNames[monthIdx] || [];
+    const hasMonth = mMatches.some((m) => lower.includes(m));
+    if (!hasMonth) return false;
+
+    const dayRegex = new RegExp(`(^|\\s|0)${day}(,|\\s|•|$)`, "i");
+    return dayRegex.test(lower);
+  };
+
+  // Helper to extract or display overdue duration
+  const getOverdueDaysLabel = (parcel: Parcel): string => {
+    if (parcel.status !== "OVERDUE") return "";
+    // Check holdingFee e.g. "₱20.00 (2 Days)" or "₱10.00 (1 Day)"
+    const match = parcel.holdingFee.match(/(\d+)\s*Day/i);
+    if (match) {
+      const days = parseInt(match[1], 10);
+      return `${days} ${days === 1 ? "Day" : "Days"} Overdue`;
+    }
+    // Check notes if contains days
+    const noteMatch = parcel.notes?.match(/(\d+)\s*Day/i);
+    if (noteMatch) {
+      const days = parseInt(noteMatch[1], 10);
+      return `${days} ${days === 1 ? "Day" : "Days"} Overdue`;
+    }
+    return "Overdue";
+  };
 
   // Filtered history parcels based on the 5 filter criteria
   const filteredHistory = useMemo(() => {
@@ -87,13 +145,11 @@ export default function MyParcelsPage() {
         return false;
       }
 
-      // 3. Date filter (checks claimedAt and dateArrived)
+      // 3. Date calendar filter (checks claimedAt and dateArrived)
       if (historyDate.trim()) {
-        const dTerm = historyDate.trim().toLowerCase();
-        const matchesDate =
-          (parcel.claimedAt && parcel.claimedAt.toLowerCase().includes(dTerm)) ||
-          (parcel.dateArrived && parcel.dateArrived.toLowerCase().includes(dTerm));
-        if (!matchesDate) return false;
+        const matchesClaimed = matchesCalendarDate(parcel.claimedAt, historyDate.trim());
+        const matchesArrived = matchesCalendarDate(parcel.dateArrived, historyDate.trim());
+        if (!matchesClaimed && !matchesArrived) return false;
       }
 
       // 4. Claimed By filter
@@ -161,29 +217,21 @@ export default function MyParcelsPage() {
       {/* SECTION 1: Ready for Pickup (Shown if tab is ALL or READY) */}
       {tabFilter !== "HISTORY" && (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-          {/* Card Header */}
-          <div className="bg-[#107C41] text-white px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-green-300 animate-pulse" />
-                <h2 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl tracking-wider uppercase">
-                  READY FOR PICKUP ({readyParcels.length} {readyParcels.length === 1 ? "PARCEL" : "PARCELS"})
-                </h2>
-              </div>
-              <p className="text-xs text-white/90 mt-0.5">
-                Station 1 Front Desk • Ground Floor Main Lobby (Open Daily 8:00 AM – 9:00 PM)
-              </p>
+          {/* Card Header (Clean & Minimal) */}
+          <div className="bg-[#107C41] text-white px-5 sm:px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-300 animate-pulse" />
+              <h2 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl tracking-wider uppercase">
+                READY FOR PICKUP ({readyParcels.length} {readyParcels.length === 1 ? "PARCEL" : "PARCELS"})
+              </h2>
             </div>
-            <span className="bg-white/20 text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto">
-              Show Tracking # at Desk
-            </span>
           </div>
 
-          {/* Lobby Pickup Guideline */}
+          {/* Lobby Pickup Guideline (Concise) */}
           <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 flex items-center gap-2 text-xs text-emerald-950 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
             <span>
-              To collect your package, simply show the <strong>Tracking Number</strong> from your SMS alert to the front desk receptionist. Free holding allowance: <strong>{freeHoldingDays} days</strong>.
+              Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
             </span>
           </div>
 
@@ -203,17 +251,16 @@ export default function MyParcelsPage() {
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
+              {/* Desktop Table (Lobby Verification column removed, Shelf removed) */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3.5 font-bold">Tracking Number</th>
-                      <th className="px-6 py-3.5 font-bold">Courier & Shelf</th>
-                      <th className="px-6 py-3.5 font-bold">Arrival Date</th>
+                      <th className="px-6 py-3.5 font-bold">Courier</th>
+                      <th className="px-6 py-3.5 font-bold">Arrival Date and Time</th>
                       <th className="px-6 py-3.5 font-bold">Pickup Deadline</th>
-                      <th className="px-6 py-3.5 font-bold">Holding Status</th>
-                      <th className="px-6 py-3.5 font-bold text-right">Lobby Verification</th>
+                      <th className="px-6 py-3.5 font-bold text-right">Holding Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -241,7 +288,7 @@ export default function MyParcelsPage() {
                           )}
                         </td>
 
-                        {/* Courier & Shelf */}
+                        {/* Courier (Shelf Removed) */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <span
@@ -250,46 +297,46 @@ export default function MyParcelsPage() {
                             />
                             <span className="font-semibold text-gray-900 text-xs">{parcel.courier}</span>
                           </div>
-                          <span className="inline-block text-[10px] bg-gray-100 text-gray-700 font-mono px-2 py-0.5 rounded border border-gray-200 mt-1">
-                            {parcel.shelf}
-                          </span>
                         </td>
 
-                        {/* Arrival Date */}
-                        <td className="px-6 py-4 text-xs text-gray-600">
+                        {/* Arrival Date and Time */}
+                        <td className="px-6 py-4 text-xs font-medium text-gray-700">
                           {parcel.dateArrived}
                         </td>
 
-                        {/* Pickup Deadline */}
+                        {/* Pickup Deadline (With Days Overdue Badge) */}
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-semibold ${
-                              parcel.status === "OVERDUE"
-                                ? "text-brand-red font-bold"
-                                : "text-gray-900"
-                            }`}
-                          >
-                            {parcel.deadline}
-                          </span>
+                          {parcel.status === "OVERDUE" ? (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-bold text-brand-red">
+                                {parcel.deadline.replace(/\s*\(overdue\)/i, "")}
+                              </span>
+                              <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider text-brand-red bg-red-100 border border-red-300 px-2 py-0.5 rounded shadow-2xs">
+                                {getOverdueDaysLabel(parcel)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-semibold text-gray-900">
+                                {parcel.deadline}
+                              </span>
+                              <span className="inline-flex items-center text-[10px] font-bold uppercase text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded">
+                                On Schedule
+                              </span>
+                            </div>
+                          )}
                         </td>
 
                         {/* Holding Status / Fee */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-right">
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                            className={`text-xs px-2.5 py-1 rounded-full font-bold inline-block ${
                               parcel.status === "OVERDUE"
                                 ? "bg-red-50 text-brand-red border border-red-200"
                                 : "bg-green-50 text-green-700 border border-green-200"
                             }`}
                           >
                             {parcel.holdingFee}
-                          </span>
-                        </td>
-
-                        {/* Lobby Verification Instruction */}
-                        <td className="px-6 py-4 text-right">
-                          <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 inline-block">
-                            Present Tracking #
                           </span>
                         </td>
                       </tr>
@@ -313,9 +360,6 @@ export default function MyParcelsPage() {
                             style={{ backgroundColor: parcel.courierColor }}
                           />
                           <span className="text-xs font-semibold text-gray-700">{parcel.courier}</span>
-                          <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded border border-gray-200 font-mono text-gray-600">
-                            {parcel.shelf}
-                          </span>
                         </div>
                       </div>
                       <span
@@ -331,18 +375,25 @@ export default function MyParcelsPage() {
 
                     <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-3 rounded-xl border border-gray-200">
                       <div>
-                        <span className="text-gray-500 block text-[11px]">Arrival Date:</span>
+                        <span className="text-gray-500 block text-[11px]">Arrival Date & Time:</span>
                         <span className="font-medium text-gray-900">{parcel.dateArrived}</span>
                       </div>
                       <div>
                         <span className="text-gray-500 block text-[11px]">Pickup Deadline:</span>
-                        <span
-                          className={`font-medium ${
-                            parcel.status === "OVERDUE" ? "text-brand-red font-bold" : "text-gray-900"
-                          }`}
-                        >
-                          {parcel.deadline}
-                        </span>
+                        {parcel.status === "OVERDUE" ? (
+                          <div className="space-y-0.5 mt-0.5">
+                            <span className="font-bold text-brand-red block">
+                              {parcel.deadline.replace(/\s*\(overdue\)/i, "")}
+                            </span>
+                            <span className="inline-block text-[10px] font-black uppercase text-brand-red bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
+                              {getOverdueDaysLabel(parcel)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-medium text-gray-900 block mt-0.5">
+                            {parcel.deadline}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -352,10 +403,10 @@ export default function MyParcelsPage() {
                         onClick={() => handleCopyTracking(parcel.trackingNumber)}
                         className="btn btn-outline btn-sm font-bold uppercase text-xs cursor-pointer"
                       >
-                        {copiedTracking === parcel.trackingNumber ? "Copied to Clipboard!" : "Copy Tracking #"}
+                        {copiedTracking === parcel.trackingNumber ? "Copied!" : "Copy Tracking #"}
                       </button>
-                      <span className="text-xs text-gray-500 font-medium">
-                        Show at Station 1 Desk
+                      <span className="text-xs text-gray-500">
+                        {parcel.status === "OVERDUE" ? "Overdue Holding" : "Free Holding Active"}
                       </span>
                     </div>
                   </div>
@@ -381,12 +432,12 @@ export default function MyParcelsPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-gray-100 text-gray-700 font-bold px-3 py-1.5 rounded-full border border-gray-200">
-                {filteredHistory.length} of {historyParcels.length} Picked Up
+                {filteredHistory.length} of {historyParcels.length} Records
               </span>
             </div>
           </div>
 
-          {/* 5 Filter Controls: Tracking Number, Courier, Date, Claimed By, Status */}
+          {/* 5 Filter Controls: Tracking Number, Courier, Date (Calendar), Claimed By, Status */}
           <div className="px-5 sm:px-6">
             <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3">
               <div className="flex items-center justify-between">
@@ -438,17 +489,16 @@ export default function MyParcelsPage() {
                   </select>
                 </div>
 
-                {/* 3. Filter by Date */}
+                {/* 3. Filter by Date (Calendar Selection) */}
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                    Date (Claimed / Arrived)
+                    Date (Calendar)
                   </label>
                   <input
-                    type="text"
-                    placeholder="e.g. Sept 18, 2026"
+                    type="date"
                     value={historyDate}
                     onChange={(e) => setHistoryDate(e.target.value)}
-                    className="input w-full text-xs"
+                    className="input w-full text-xs cursor-pointer bg-white"
                   />
                 </div>
 
@@ -477,7 +527,9 @@ export default function MyParcelsPage() {
                     className="input w-full text-xs cursor-pointer"
                   >
                     <option value="ALL">All Statuses</option>
-                    <option value="PICKED_UP">Picked Up</option>
+                    <option value="PICKED_UP">Picked Up (Counter)</option>
+                    <option value="DELIVERED_DOOR">Delivered to Unit</option>
+                    <option value="RETURNED">Returned to Courier</option>
                   </select>
                 </div>
               </div>
@@ -494,7 +546,7 @@ export default function MyParcelsPage() {
               <div className="p-8 text-center space-y-2 bg-gray-50 rounded-xl border border-gray-200">
                 <p className="text-sm font-bold text-gray-900">No past parcels match your filters</p>
                 <p className="text-xs text-gray-500">
-                  Try adjusting the tracking number, courier, date, or claimant search terms.
+                  Try adjusting the tracking number, courier, calendar date, or claimant search terms.
                 </p>
                 <button
                   type="button"
@@ -516,7 +568,9 @@ export default function MyParcelsPage() {
                         <th className="px-5 py-3 font-bold">Date Claimed</th>
                         <th className="px-5 py-3 font-bold">Claimed By</th>
                         <th className="px-5 py-3 font-bold">Status</th>
-                        <th className="px-5 py-3 font-bold text-right">Desk Verification</th>
+                        <th className="px-5 py-3 font-bold text-right" title="Physical handover verified and logged by Station 1 Front Desk receptionist">
+                          Desk Verification ⓘ
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -537,12 +591,25 @@ export default function MyParcelsPage() {
                             {item.claimedBy || "Resident"}
                           </td>
                           <td className="px-5 py-3.5">
-                            <span className="text-[11px] bg-green-100 text-green-800 font-bold px-2.5 py-0.5 rounded-full">
-                              PICKED UP
-                            </span>
+                            {item.status === "DELIVERED_DOOR" ? (
+                              <span className="text-[11px] bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full">
+                                DOOR DELIVERED
+                              </span>
+                            ) : item.status === "RETURNED" ? (
+                              <span className="text-[11px] bg-gray-100 text-gray-800 font-bold px-2.5 py-0.5 rounded-full">
+                                RETURNED
+                              </span>
+                            ) : (
+                              <span className="text-[11px] bg-green-100 text-green-800 font-bold px-2.5 py-0.5 rounded-full">
+                                PICKED UP
+                              </span>
+                            )}
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <span className="text-green-700 text-xs font-bold">
+                            <span
+                              className="text-green-700 text-xs font-bold inline-flex items-center gap-1"
+                              title="Handover confirmed and logged by Station 1 staff"
+                            >
                               ✓ Verified
                             </span>
                           </td>
@@ -563,9 +630,19 @@ export default function MyParcelsPage() {
                           </span>
                           <span className="text-xs text-gray-500 font-semibold">{item.courier}</span>
                         </div>
-                        <span className="text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full">
-                          PICKED UP
-                        </span>
+                        {item.status === "DELIVERED_DOOR" ? (
+                          <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">
+                            DOOR DELIVERED
+                          </span>
+                        ) : item.status === "RETURNED" ? (
+                          <span className="text-[10px] bg-gray-100 text-gray-800 font-bold px-2 py-0.5 rounded-full">
+                            RETURNED
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full">
+                            PICKED UP
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 space-y-1">
                         <div>
@@ -575,6 +652,9 @@ export default function MyParcelsPage() {
                         <div>
                           <span className="text-gray-400">Claimed By: </span>
                           <span className="font-bold text-gray-900">{item.claimedBy || "Resident"}</span>
+                        </div>
+                        <div className="text-[11px] text-green-700 font-semibold pt-0.5">
+                          ✓ Verified at Front Desk
                         </div>
                       </div>
                     </div>
