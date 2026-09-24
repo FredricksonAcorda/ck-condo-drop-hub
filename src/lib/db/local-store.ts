@@ -57,7 +57,15 @@ class LocalDatabaseService implements IDatabaseService {
   // --- Parcels ---
 
   async getAllParcels(): Promise<Parcel[]> {
-    return this.load<Parcel[]>(STORAGE_KEYS.PARCELS, this.inMemoryParcels);
+    const loaded = this.load<Parcel[]>(STORAGE_KEYS.PARCELS, this.inMemoryParcels);
+    const existingIds = new Set(loaded.map((p) => p.id));
+    const missingSeeds = SEED_PARCELS.filter((p) => !existingIds.has(p.id));
+    if (missingSeeds.length > 0) {
+      const merged = [...loaded, ...missingSeeds];
+      this.save(STORAGE_KEYS.PARCELS, merged);
+      return merged;
+    }
+    return loaded;
   }
 
   async getParcelsByResident(residentId: string): Promise<Parcel[]> {
