@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useAuth, useParcels } from "@/context";
 import { Parcel } from "@/types";
 
@@ -20,6 +20,21 @@ export default function MyParcelsPage() {
   const [historyStatus, setHistoryStatus] = useState("ALL");
   const [historyPage, setHistoryPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  const historyTableRef = useRef<HTMLDivElement>(null);
+
+  // Smoothly change page and keep all 5 parcel contents and pagination in view
+  const handlePageChange = (newPage: number) => {
+    setHistoryPage(newPage);
+    setTimeout(() => {
+      if (historyTableRef.current) {
+        historyTableRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 40);
+  };
 
   // Copy feedback state
   const [copiedTracking, setCopiedTracking] = useState<string | null>(null);
@@ -556,7 +571,7 @@ export default function MyParcelsPage() {
           </div>
 
           {/* Results Table or Empty State */}
-          <div className="p-5 sm:p-6 pt-0">
+          <div ref={historyTableRef} className="p-5 sm:p-6 pt-0">
             {historyParcels.length === 0 ? (
               <div className="p-8 text-center text-xs text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
                 No completed pick-ups recorded in your history yet.
@@ -577,8 +592,8 @@ export default function MyParcelsPage() {
               </div>
             ) : (
               <>
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Desktop Table (Consistent min-height prevents height jumps when pages have fewer items) */}
+                <div className="hidden md:block overflow-x-auto min-h-[295px]">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
                       <tr>
@@ -635,8 +650,8 @@ export default function MyParcelsPage() {
                   </table>
                 </div>
 
-                {/* Mobile History Stack */}
-                <div className="md:hidden divide-y divide-gray-200 border border-gray-200 rounded-xl overflow-hidden">
+                {/* Mobile History Stack (Consistent min-height prevents height jumps) */}
+                <div className="md:hidden divide-y divide-gray-200 border border-gray-200 rounded-xl overflow-hidden min-h-[350px]">
                   {paginatedHistory.map((item) => (
                     <div key={item.id} className="p-4 space-y-2 bg-white">
                       <div className="flex items-start justify-between">
@@ -704,7 +719,7 @@ export default function MyParcelsPage() {
                       {/* Previous Page Button */}
                       <button
                         type="button"
-                        onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                        onClick={() => handlePageChange(Math.max(1, currentHistoryPage - 1))}
                         disabled={currentHistoryPage <= 1}
                         className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
                           currentHistoryPage <= 1
@@ -721,7 +736,7 @@ export default function MyParcelsPage() {
                         <button
                           key={pageNum}
                           type="button"
-                          onClick={() => setHistoryPage(pageNum)}
+                          onClick={() => handlePageChange(pageNum)}
                           className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             currentHistoryPage === pageNum
                               ? "bg-brand-red text-white shadow-sm font-black"
@@ -735,7 +750,7 @@ export default function MyParcelsPage() {
                       {/* Next Page Button */}
                       <button
                         type="button"
-                        onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
+                        onClick={() => handlePageChange(Math.min(totalHistoryPages, currentHistoryPage + 1))}
                         disabled={currentHistoryPage >= totalHistoryPages}
                         className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
                           currentHistoryPage >= totalHistoryPages
