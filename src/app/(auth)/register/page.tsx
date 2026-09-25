@@ -503,29 +503,29 @@ export default function RegisterPage() {
                     </span>
                   </div>
 
-                  {/* Official GCash QR graphic */}
-                  <div className="bg-white p-2.5 rounded-xl inline-block shadow-sm mx-auto mb-2">
+                  {/* Official GCash QR graphic (Image itself is the card) */}
+                  <div className="flex justify-center mb-2">
                     <Image
                       src="/images/gcash-official-qr.jpg"
                       alt="Official GCash QR Code"
-                      width={220}
-                      height={440}
-                      className="w-48 sm:w-52 h-auto rounded-lg object-contain mx-auto"
+                      width={562}
+                      height={795}
+                      className="w-52 sm:w-56 h-auto rounded-xl border border-zinc-700 shadow-sm object-contain"
                       priority
                     />
                   </div>
                   <p className="text-[11px] text-zinc-400">
-                    Scan via GCash App, send payment, and enter the reference number below.
+                    Scan via GCash App, send payment, or enter your GCash mobile number below.
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    GCash Reference Number (13 Digits)
+                    GCash Number (if QR can&apos;t be scanned)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 9023 8841 2910"
+                    placeholder="Enter your GCash Mobile Number"
                     value={gcashRef}
                     onChange={(e) => {
                       setGcashRef(e.target.value);
@@ -538,10 +538,10 @@ export default function RegisterPage() {
                     <span>Instant activation upon verification</span>
                     <button
                       type="button"
-                      onClick={() => setGcashRef("902388412910")}
+                      onClick={() => setGcashRef("0917 123 4567")}
                       className="text-brand-red hover:underline font-medium"
                     >
-                      Fill Sample Ref
+                      Fill Sample Number
                     </button>
                   </div>
                 </div>

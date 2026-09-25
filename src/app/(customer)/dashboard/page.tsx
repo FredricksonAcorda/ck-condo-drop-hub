@@ -253,19 +253,11 @@ export default function CustomerDashboardPage() {
       {/* Payment Activation Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
-                  Subscription Activation
-                </span>
-                <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase mt-1">
-                  SETTLE {user?.plan} PLAN
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Amount Due: <strong className="text-green-700 text-sm">{planPrice}</strong>
-                </p>
-              </div>
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase">
+                SETTLE {user?.plan} PLAN
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowPaymentModal(false)}
@@ -303,80 +295,104 @@ export default function CustomerDashboardPage() {
                     : "bg-gray-50 border-gray-200 text-gray-600"
                 }`}
               >
-                Cash at Desk
+                Cash at Counter
               </button>
             </div>
 
-            {/* GCash Form */}
+            {/* GCash Form: Option B */}
             {paymentMethod === "GCASH" ? (
               <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2.5">
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-500">Account Name:</span>
-                    <span className="font-bold text-gray-900">DI**A P.</span>
-                  </div>
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-500">GCash Mobile:</span>
-                    <span className="font-mono font-bold text-gray-900">+63 993 267 ••••</span>
-                  </div>
-
-                  <div className="bg-white p-2 rounded-xl border border-gray-200 inline-block shadow-sm mx-auto my-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
+                  {/* Left: Full QR Code Card Image */}
+                  <div className="flex items-center justify-center">
                     <Image
                       src="/images/gcash-official-qr.jpg"
                       alt="Official GCash QR Code"
-                      width={220}
-                      height={440}
-                      className="w-48 sm:w-52 h-auto rounded-lg object-contain mx-auto"
+                      width={562}
+                      height={795}
+                      className="w-full h-auto rounded-2xl border border-gray-200 shadow-sm object-contain"
                       priority
                     />
                   </div>
-                  <p className="text-[11px] text-gray-600 font-medium">
-                    Scan via GCash App, send payment, and enter the reference number below.
-                  </p>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    GCash Reference Number
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 9023 8841 2910"
-                    value={gcashRef}
-                    onChange={(e) => setGcashRef(e.target.value)}
-                    className="input w-full font-mono text-sm"
-                  />
-                  <div className="flex justify-end mt-1">
+                  {/* Right: Plan Breakdown & GCash Number Input */}
+                  <div className="flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500">Plan:</span>
+                          <span className="font-bold text-gray-900">
+                            {user?.plan?.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500">Duration:</span>
+                          <span className="font-bold text-gray-900">
+                            {user?.plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2.5 border-t border-gray-200">
+                          <span className="font-bold text-gray-700">Total Due:</span>
+                          <span className="font-black text-xl text-emerald-600 font-[family-name:var(--font-heading)]">
+                            {planPrice}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          GCash Number (if QR can&apos;t be scanned)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter your GCash Mobile Number"
+                          value={gcashRef}
+                          onChange={(e) => setGcashRef(e.target.value)}
+                          className="input w-full font-mono text-sm"
+                        />
+                        <div className="flex justify-end mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setGcashRef("0917 123 4567")}
+                            className="text-[11px] text-brand-red hover:underline cursor-pointer"
+                          >
+                            Fill Sample Number
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => setGcashRef("902388412910")}
-                      className="text-[11px] text-brand-red hover:underline cursor-pointer"
+                      onClick={handleActivatePayment}
+                      disabled={isActivating}
+                      className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
                     >
-                      Fill Sample Reference
+                      {isActivating ? "Verifying..." : "Verify & Activate Now"}
                     </button>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleActivatePayment}
-                  disabled={isActivating}
-                  className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
-                >
-                  {isActivating ? "Verifying..." : "Verify & Activate Now"}
-                </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2.5 text-xs text-gray-700">
                   <div className="font-bold text-sm text-gray-900">Lobby Counter Instructions:</div>
                   <p className="text-gray-600">
                     Please visit the Lobby (Ground Floor Main Lobby) during daily operational hours (8:00 AM – 9:00 PM).
                   </p>
-                  <div className="p-2.5 bg-white rounded-lg border border-gray-200 space-y-1">
-                    <div>• State your resident passcode: <strong className="font-mono text-brand-red">{user?.residentCode}</strong></div>
-                    <div>• Inform Staff Admin you are paying for: <strong>{user?.plan} Membership</strong></div>
-                    <div>• Amount: <strong className="text-green-700">{planPrice}</strong></div>
+                  <div className="p-3 bg-white rounded-lg border border-gray-200 space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Resident Passcode:</span>
+                      <strong className="font-mono text-brand-red">{user?.residentCode}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Plan:</span>
+                      <strong>{user?.plan} Membership</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Amount Due:</span>
+                      <strong className="text-green-700">{planPrice}</strong>
+                    </div>
                   </div>
                   <p className="text-gray-500 text-[11px]">
                     Once Lobby Staff Admin confirms your payment, your plan will be activated immediately.
@@ -388,7 +404,7 @@ export default function CustomerDashboardPage() {
                   onClick={() => setShowPaymentModal(false)}
                   className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
                 >
-                  Understood (I Will Pay At Lobby)
+                  Understood (I Will Pay At Counter)
                 </button>
               </div>
             )}
