@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useParcels, useAuth } from "@/context";
 import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
 import { db } from "@/lib/db/local-store";
-import { detectCourierFromBarcode } from "@/lib/scanner/courier-detector";
+import { detectCourierFromBarcode, extractTrackingFromQrOrBarcode } from "@/lib/scanner/courier-detector";
 
 export default function ParcelsInventoryPage() {
   const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel } = useParcels();
@@ -53,13 +53,56 @@ export default function ParcelsInventoryPage() {
     loadResidents();
   }, [selectedResidentId]);
 
-  // Handle tracking input and auto-detect courier
+  // Global Hardware Barcode & QR Scanner Gun Listener
+  useEffect(() => {
+    let scanBuffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isTypingElsewhere =
+        target &&
+        target !== trackingInputRef.current &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT");
+
+      if (isTypingElsewhere) return;
+
+      const now = Date.now();
+      // Hardware barcode/QR guns type characters extremely fast (< 50ms)
+      if (now - lastKeyTime > 60) {
+        scanBuffer = "";
+      }
+      lastKeyTime = now;
+
+      if (e.key === "Enter") {
+        if (scanBuffer.length >= 4) {
+          e.preventDefault();
+          const clean = extractTrackingFromQrOrBarcode(scanBuffer);
+          setTrackingInput(clean);
+          const detected = detectCourierFromBarcode(clean);
+          if (detected.confidence !== "UNKNOWN") {
+            setCourier(detected.name);
+          }
+          scanBuffer = "";
+          trackingInputRef.current?.focus();
+        }
+      } else if (e.key.length === 1 && target !== trackingInputRef.current) {
+        scanBuffer += e.key;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Handle tracking input and auto-detect courier (sanitizes URLs & QR payloads)
   const handleTrackingChange = (value: string) => {
-    setTrackingInput(value);
+    const cleaned = extractTrackingFromQrOrBarcode(value);
+    setTrackingInput(cleaned);
     if (intakeError) setIntakeError(null);
 
-    if (value.trim().length >= 3) {
-      const detected = detectCourierFromBarcode(value.trim());
+    if (cleaned.trim().length >= 3) {
+      const detected = detectCourierFromBarcode(cleaned.trim());
       if (detected.confidence !== "UNKNOWN") {
         setCourier(detected.name);
       }

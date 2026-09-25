@@ -77,3 +77,63 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
     confidence: "UNKNOWN",
   };
 }
+
+/**
+ * Normalizes scanned data from 1D Barcodes and 2D QR Codes.
+ * If the QR code contains an HTTPS tracking URL or JSON payload,
+ * it extracts the pure courier tracking code.
+ */
+export function extractTrackingFromQrOrBarcode(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  // 1. If scanned as a URL (common in courier shipping label QR codes)
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const queryParams = [
+        "id",
+        "tracking",
+        "track",
+        "trackingNumber",
+        "billcode",
+        "bill",
+        "bills",
+        "code",
+        "no",
+        "awb",
+        "waybill",
+      ];
+      for (const param of queryParams) {
+        const val = url.searchParams.get(param);
+        if (val && val.length >= 4) return val.trim().toUpperCase();
+      }
+      const segments = url.pathname.split("/").filter(Boolean);
+      if (segments.length > 0) {
+        const last = segments[segments.length - 1];
+        if (last && last.length >= 4 && !/\.(html|php|aspx|jsp)$/i.test(last)) {
+          return last.trim().toUpperCase();
+        }
+      }
+    } catch {
+      // Fallback if URL constructor fails
+    }
+  }
+
+  // 2. If scanned as JSON
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const keys = ["tracking", "trackingNumber", "code", "awb", "billCode", "parcelId", "waybill"];
+      for (const k of keys) {
+        if (parsed[k] && typeof parsed[k] === "string") {
+          return (parsed[k] as string).trim().toUpperCase();
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  return trimmed.toUpperCase();
+}
