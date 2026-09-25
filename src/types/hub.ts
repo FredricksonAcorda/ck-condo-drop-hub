@@ -60,4 +60,7 @@ export interface HubSettings {
   autoPrintIntakeLabel: boolean;
   soundEnabled: boolean;
   maxShelfSlots: number;
+  lobbyAnnouncement?: string;
+  pickupLocation?: string;
+  operatingHours?: string;
 }

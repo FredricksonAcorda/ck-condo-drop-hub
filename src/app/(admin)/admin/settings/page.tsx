@@ -42,22 +42,16 @@ export default function HubSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
             HUB POLICIES & <span className="text-brand-red">SETTINGS</span>
           </h1>
           <p className="text-xs text-brand-text-secondary mt-0.5">
-            Configure holding duration allowances, daily overdue rates, thermal printer options, and hardware chimes.
+            Configure holding duration allowances, daily overdue rates, lobby announcements, counter hours, and hardware preferences.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link href="/admin" className="btn btn-outline btn-sm">
-            ← Station Admin
-          </Link>
         </div>
       </div>
 
@@ -172,7 +166,7 @@ export default function HubSettingsPage() {
           <div className="border-b border-brand-border pb-3">
             <h2 className="text-base font-bold text-brand-black">Station & Building Information</h2>
             <p className="text-xs text-brand-text-secondary">
-              Printed on thermal shelf labels, release slips, and public tracking receipts.
+              Printed on hub receipts, release slips, and public tracking receipts.
             </p>
           </div>
 
@@ -231,6 +225,66 @@ export default function HubSettingsPage() {
                 className="input font-semibold border border-gray-300 bg-white"
                 required
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Lobby Operations & Resident Notices */}
+        <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
+          <div className="border-b border-brand-border pb-3">
+            <h2 className="text-base font-bold text-brand-black">Lobby Operations & Resident Notices</h2>
+            <p className="text-xs text-brand-text-secondary">
+              Customize the pickup counter location, operational schedule, and real-time announcement messages shown to residents.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
+                Lobby Pickup Location
+              </label>
+              <input
+                type="text"
+                value={formData.pickupLocation || ""}
+                onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
+                placeholder="e.g. Lobby Counter, Ground Floor, Tower A"
+                className="input font-semibold border border-gray-300 bg-white"
+              />
+              <span className="text-[10px] text-brand-text-muted mt-1 block">
+                Displayed on tracking receipts and resident pickup reminders.
+              </span>
+            </div>
+
+            <div>
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
+                Lobby Operating & Pickup Hours
+              </label>
+              <input
+                type="text"
+                value={formData.operatingHours || ""}
+                onChange={(e) => setFormData({ ...formData, operatingHours: e.target.value })}
+                placeholder="e.g. Monday – Sunday: 7:00 AM – 10:00 PM Daily"
+                className="input font-semibold border border-gray-300 bg-white"
+              />
+              <span className="text-[10px] text-brand-text-muted mt-1 block">
+                Service window for counter claim handoffs and door delivery concierge.
+              </span>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block font-bold uppercase text-brand-text mb-1.5">
+                Live Lobby Broadcast Announcement
+              </label>
+              <textarea
+                rows={2}
+                value={formData.lobbyAnnouncement || ""}
+                onChange={(e) => setFormData({ ...formData, lobbyAnnouncement: e.target.value })}
+                placeholder="e.g. Lobby Counter is operating normally. Please present your 4-digit claim code upon pickup."
+                className="input font-medium border border-gray-300 bg-white w-full py-2"
+              />
+              <span className="text-[10px] text-brand-text-muted mt-1 block">
+                Broadcast banner displayed across resident tracking and membership portals.
+              </span>
             </div>
           </div>
         </div>

@@ -34,16 +34,13 @@ export default function AdminDashboardPage() {
   const pendingInquiriesCount = inquiries.filter((i) => i.status === "NEW").length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Top Header & Station Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-green-700">
-              LOBBY COUNTER • ONLINE
-            </span>
-          </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-green-700 block">
+            LOBBY COUNTER • ONLINE
+          </span>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide mt-1">
             LOBBY <span className="text-brand-red">OPERATIONS</span>
           </h1>
@@ -51,43 +48,24 @@ export default function AdminDashboardPage() {
             Buildersville Condominium • Fast Inbound Barcode Scanning & Instant Resident Release
           </p>
         </div>
-
-        {/* Top Quick Actions */}
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/admin/parcels"
-            className="btn btn-primary btn-sm font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md"
-          >
-            <span>Parcel Inventory & Scanner ➔</span>
-          </Link>
-          <Link
-            href="/admin/customers"
-            className="btn btn-outline btn-sm font-bold uppercase cursor-pointer"
-          >
-            Residents & Units
-          </Link>
-        </div>
       </div>
 
       {/* Pending Inquiries Alert Banner */}
       {pendingInquiriesCount > 0 && (
         <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-            <div>
-              <span className="text-xs text-amber-950 font-bold block">
-                {pendingInquiriesCount} Unattended Resident Lobby Inquir{pendingInquiriesCount === 1 ? "y" : "ies"}
-              </span>
-              <span className="text-[11px] text-amber-800">
-                Residents have sent messages regarding doorstep concierge deliveries, proxy authorizations, or hub questions.
-              </span>
-            </div>
+          <div>
+            <span className="text-xs text-amber-950 font-bold block">
+              {pendingInquiriesCount} Unattended Resident Lobby Inquir{pendingInquiriesCount === 1 ? "y" : "ies"}
+            </span>
+            <span className="text-[11px] text-amber-800">
+              Residents have sent messages regarding doorstep concierge deliveries, proxy authorizations, or hub questions.
+            </span>
           </div>
           <Link
             href="/admin/inquiries"
             className="btn btn-primary btn-sm text-xs font-bold uppercase whitespace-nowrap self-start sm:self-auto cursor-pointer"
           >
-            Review Inquiries ({pendingInquiriesCount}) →
+            Review Inquiries ({pendingInquiriesCount})
           </Link>
         </div>
       )}
@@ -105,7 +83,7 @@ export default function AdminDashboardPage() {
             {readyCount}
           </div>
           <span className="text-[11px] text-green-700 font-semibold mt-1 block">
-            Active packages at counter ➔
+            Active packages at counter
           </span>
         </Link>
 
@@ -135,7 +113,7 @@ export default function AdminDashboardPage() {
             {pickedUpCount}
           </div>
           <span className="text-[11px] text-blue-600 font-semibold mt-1 block">
-            Handed over to residents ➔
+            Handed over to residents
           </span>
         </Link>
 
@@ -150,19 +128,16 @@ export default function AdminDashboardPage() {
             {residents.length}
           </div>
           <span className="text-[11px] text-brand-text-secondary font-semibold mt-1 block">
-            Active condo accounts & units ➔
+            Active condo accounts & units
           </span>
         </Link>
       </div>
 
-      {/* Quick Access Workstation Panels */}
+      {/* Quick Access Workstation Panels (Without icons) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {/* Workstation 1: Parcel Inventory & Scanner */}
         <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-gray-300 transition-all">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-red-100 text-brand-red flex items-center justify-center font-bold text-lg">
-              📦
-            </div>
             <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
               PARCEL INVENTORY & SCANNER
             </h3>
@@ -179,7 +154,7 @@ export default function AdminDashboardPage() {
               href="/admin/parcels"
               className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
             >
-              Open Workstation ➔
+              Open Workstation
             </Link>
           </div>
         </div>
@@ -187,9 +162,6 @@ export default function AdminDashboardPage() {
         {/* Workstation 2: Residents, Units & Payments */}
         <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-gray-300 transition-all">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg">
-              👥
-            </div>
             <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
               RESIDENTS & PAYMENT LOGS
             </h3>
@@ -206,7 +178,7 @@ export default function AdminDashboardPage() {
               href="/admin/customers"
               className="btn btn-outline btn-sm text-xs font-bold uppercase cursor-pointer"
             >
-              View Directory & Logs ➔
+              View Directory & Logs
             </Link>
           </div>
         </div>
@@ -214,9 +186,6 @@ export default function AdminDashboardPage() {
         {/* Workstation 3: Lobby Inquiries */}
         <div className="bg-white rounded-2xl border border-brand-border p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-gray-300 transition-all md:col-span-2 lg:col-span-1">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg">
-              💬
-            </div>
             <h3 className="font-[family-name:var(--font-heading)] text-xl text-brand-black uppercase">
               LOBBY RECEPTION INBOX
             </h3>
@@ -233,7 +202,7 @@ export default function AdminDashboardPage() {
               href="/admin/inquiries"
               className="btn btn-outline btn-sm text-xs font-bold uppercase cursor-pointer"
             >
-              Open Inbox ➔
+              Open Inbox
             </Link>
           </div>
         </div>

@@ -158,7 +158,7 @@ export default function AdminCustomersPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
@@ -173,9 +173,6 @@ export default function AdminCustomersPage() {
         <div className="flex items-center gap-2.5">
           <Link href="/register" className="btn btn-primary btn-sm font-bold uppercase">
             + Register New Resident
-          </Link>
-          <Link href="/admin/parcels" className="btn btn-outline btn-sm">
-            Parcel Inventory ➔
           </Link>
         </div>
       </div>

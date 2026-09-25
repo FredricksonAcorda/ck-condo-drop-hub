@@ -707,6 +707,9 @@ export const DEFAULT_HUB_SETTINGS: HubSettings = {
   autoPrintIntakeLabel: true,
   soundEnabled: true,
   maxShelfSlots: 60,
+  lobbyAnnouncement: "Lobby Counter is operating normally. Please present your 4-digit claim code upon pickup.",
+  pickupLocation: "Lobby Counter, Ground Floor, Tower A",
+  operatingHours: "Monday – Sunday: 7:00 AM – 10:00 PM Daily",
 };
 
 export const SEED_INQUIRIES: DeskInquiry[] = [

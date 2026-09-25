@@ -218,9 +218,9 @@ export default function ParcelsInventoryPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
             PARCEL <span className="text-brand-red">INVENTORY</span>
@@ -229,23 +229,14 @@ export default function ParcelsInventoryPage() {
             Buildersville Condominium • Inbound Barcode Intake & Real-Time Package Inventory Registry
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link href="/admin" className="btn btn-outline btn-sm">
-            ← Lobby Console
-          </Link>
-          <Link href="/admin/customers" className="btn btn-outline btn-sm">
-            Residents & Units
-          </Link>
-        </div>
       </div>
 
-      {/* COMBINED SCANNER & QUICK INTAKE BOX (WITHOUT SHELF LOCATION) */}
+      {/* COMBINED SCANNER & QUICK INTAKE BOX */}
       <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm">
         <div className="bg-brand-red text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase flex items-center gap-2">
-              <span>SCANNER & QUICK INTAKE</span>
+            <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
+              SCANNER & QUICK INTAKE
             </h2>
             <p className="text-xs text-white/80">
               Scan barcode with USB gun or type tracking number. The parcel will immediately reflect on the inventory below.
@@ -296,40 +287,43 @@ export default function ParcelsInventoryPage() {
           </div>
         )}
 
-        {/* Intake Form (Shelf Location completely removed) */}
-        <form onSubmit={handleIntakeSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        {/* Intake Form */}
+        <form onSubmit={handleIntakeSubmit} className="p-6 space-y-5">
+          {/* Row 1: Primary Intake Fields (Tracking, Courier, Resident) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             {/* 1. Barcode / Tracking input */}
-            <div className="md:col-span-5">
-              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
-                Courier Tracking / Barcode <span className="text-brand-red">*</span>
-              </label>
+            <div className="md:col-span-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold uppercase text-brand-text">
+                  Courier Tracking / Barcode <span className="text-brand-red">*</span>
+                </label>
+                <span className="text-[11px] text-gray-500 font-medium">USB Gun Ready</span>
+              </div>
               <input
                 ref={trackingInputRef}
                 type="text"
                 placeholder="Scan barcode with gun or type tracking..."
                 value={trackingInput}
                 onChange={(e) => handleTrackingChange(e.target.value)}
-                className="input font-mono uppercase text-sm w-full font-bold border border-gray-300 bg-white"
+                className="input font-mono uppercase text-sm w-full font-bold border border-gray-300 bg-white h-11"
                 required
                 disabled={isSubmitting}
                 autoFocus
               />
-              <div className="flex items-center justify-between mt-1 text-[11px] text-brand-text-secondary">
-                <span>Detected: <strong className="text-brand-red">{courier}</strong></span>
-                <span className="text-gray-400">USB Gun Ready</span>
+              <div className="mt-1 text-[11px] text-brand-text-secondary">
+                Auto-detected: <strong className="text-brand-red">{courier}</strong>
               </div>
             </div>
 
             {/* 2. Courier Selector */}
-            <div className="md:col-span-3">
-              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+            <div className="md:col-span-3 flex flex-col justify-between">
+              <label className="text-xs font-bold uppercase text-brand-text mb-1.5">
                 Courier Partner
               </label>
               <select
                 value={courier}
                 onChange={(e) => setCourier(e.target.value)}
-                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white"
+                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white font-medium h-11"
                 disabled={isSubmitting}
               >
                 <option value="SPX Express">SPX Express</option>
@@ -341,17 +335,20 @@ export default function ParcelsInventoryPage() {
                 <option value="LBC Express">LBC Express</option>
                 <option value="Grab / Lalamove">Grab / Lalamove</option>
               </select>
+              <div className="mt-1 text-[11px] text-brand-text-secondary">
+                Select logistics carrier
+              </div>
             </div>
 
             {/* 3. Resident & Unit Selector */}
-            <div className="md:col-span-4">
-              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+            <div className="md:col-span-4 flex flex-col justify-between">
+              <label className="text-xs font-bold uppercase text-brand-text mb-1.5">
                 Condo Resident & Unit <span className="text-brand-red">*</span>
               </label>
               <select
                 value={selectedResidentId}
                 onChange={(e) => setSelectedResidentId(e.target.value)}
-                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white font-medium"
+                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white font-medium h-11"
                 disabled={isSubmitting}
                 required
               >
@@ -361,22 +358,28 @@ export default function ParcelsInventoryPage() {
                   </option>
                 ))}
               </select>
+              <div className="mt-1 text-[11px] text-brand-text-secondary">
+                Receiver condo resident
+              </div>
             </div>
           </div>
 
-          {/* Secondary Details: Size, Notes, Submit */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-brand-border">
-            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase text-brand-text-secondary">Size:</span>
+          {/* Row 2: Secondary Attributes (Size, Notes, Submit Button) */}
+          <div className="pt-4 border-t border-brand-border grid grid-cols-1 lg:grid-cols-12 gap-5 items-end">
+            {/* Size Options */}
+            <div className="lg:col-span-4">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Parcel Size
+              </label>
+              <div className="grid grid-cols-4 gap-1.5">
                 {(["Small", "Medium", "Large", "Oversize"] as ParcelSize[]).map((sz) => (
                   <button
                     key={sz}
                     type="button"
                     onClick={() => setParcelSize(sz)}
-                    className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                    className={`h-10 text-xs rounded-lg border font-bold transition-all cursor-pointer ${
                       parcelSize === sz
-                        ? "bg-brand-black text-white border-brand-black"
+                        ? "bg-brand-black text-white border-brand-black shadow-xs"
                         : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                     }`}
                   >
@@ -384,30 +387,37 @@ export default function ParcelsInventoryPage() {
                   </button>
                 ))}
               </div>
-
-              <div className="flex-1 sm:w-64">
-                <input
-                  type="text"
-                  placeholder="Optional note (e.g. Fragile, Shopee Pay)..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="input text-xs w-full border border-gray-300 bg-white"
-                  disabled={isSubmitting}
-                />
-              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary w-full sm:w-auto px-6 py-2.5 font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
-            >
-              {isSubmitting ? (
-                <span>Logging Inbound Parcel...</span>
-              ) : (
-                <span>LOG PARCEL & UPDATE INVENTORY ➔</span>
-              )}
-            </button>
+            {/* Notes Input */}
+            <div className="lg:col-span-4">
+              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
+                Package Note (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Fragile, Perishable, Shopee Pay..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="input text-xs w-full border border-gray-300 bg-white h-10 font-medium"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="lg:col-span-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn btn-primary w-full h-10 font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md text-xs"
+              >
+                {isSubmitting ? (
+                  <span>Logging Inbound Parcel...</span>
+                ) : (
+                  <span>LOG PARCEL & UPDATE INVENTORY ➔</span>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>

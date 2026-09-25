@@ -7,7 +7,7 @@ import { useAuth, useParcels } from "@/context";
 
 export default function CustomerDashboardPage() {
   const { user, updateProfile } = useAuth();
-  const { parcels } = useParcels();
+  const { parcels, hubSettings } = useParcels();
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -184,11 +184,11 @@ export default function CustomerDashboardPage() {
           <div className="text-xs space-y-3 text-gray-600 bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-200">
             <div className="flex justify-between border-b border-gray-200 pb-2.5">
               <span className="text-gray-500">Location:</span>
-              <span className="font-semibold text-gray-900">Ground Floor Main Lobby</span>
+              <span className="font-semibold text-gray-900">{hubSettings.pickupLocation || "Lobby Counter, Ground Floor, Tower A"}</span>
             </div>
             <div className="flex justify-between border-b border-gray-200 pb-2.5">
               <span className="text-gray-500">Operating Schedule:</span>
-              <span className="font-semibold text-gray-900">8:00 AM – 9:00 PM Daily</span>
+              <span className="font-semibold text-gray-900">{hubSettings.operatingHours || "Monday – Sunday: 7:00 AM – 10:00 PM Daily"}</span>
             </div>
             <div className="flex justify-between border-b border-gray-200 pb-2.5">
               <span className="text-gray-500">Hotline Number:</span>
@@ -220,19 +220,27 @@ export default function CustomerDashboardPage() {
           </div>
 
           <div className="space-y-3.5 divide-y divide-gray-100 text-xs">
+            {hubSettings.lobbyAnnouncement && (
+              <div className="p-3 bg-red-50/70 border border-brand-red/20 rounded-xl">
+                <span className="text-[10px] text-brand-red font-black uppercase tracking-wider block">Lobby Staff Bulletin</span>
+                <p className="text-gray-900 font-semibold mt-1 leading-relaxed">
+                  {hubSettings.lobbyAnnouncement}
+                </p>
+              </div>
+            )}
             <div className="pt-2 first:pt-0">
               <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
               <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
               <p className="text-gray-600 mt-1 leading-relaxed">
-                Flash Express riders now drop packages directly into dedicated shelf bins at the Lobby.
+                Flash Express riders now drop packages directly into the Lobby Counter.
               </p>
             </div>
 
             <div className="pt-3">
               <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
-              <h4 className="font-bold text-gray-900 mt-0.5">Holiday Schedule Advisory</h4>
+              <h4 className="font-bold text-gray-900 mt-0.5">Lobby Service Schedule</h4>
               <p className="text-gray-600 mt-1 leading-relaxed">
-                Lobby remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
+                Lobby remains open for pickup: {hubSettings.operatingHours || "7:00 AM – 10:00 PM Daily"}.
               </p>
             </div>
 
