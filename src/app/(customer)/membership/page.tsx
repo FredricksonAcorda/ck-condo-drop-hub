@@ -4,16 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
+import { getInvoicesByResident, recordInvoice } from "@/lib/db/invoices";
+import { InvoiceRecord } from "@/types";
 
-interface Invoice {
-  id: string;
-  date: string;
-  plan: string;
-  amount: string;
-  method: string;
-  reference?: string;
-  status: "PAID" | "PENDING";
-}
+type Invoice = InvoiceRecord;
 
 export default function MembershipPage() {
   const { user, updateProfile } = useAuth();
@@ -78,45 +72,58 @@ export default function MembershipPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storageKey = `ck_invoices_${user?.id || "usr-resident-1"}`;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setInvoices(parsed);
-          return;
-        }
-      } catch (e) {
-        console.error("Failed to parse stored invoices", e);
+    const loadInvoices = async () => {
+      const resId = user?.id || "usr-resident-1";
+      const records = await getInvoicesByResident(resId);
+      if (records && records.length > 0) {
+        setInvoices(records);
+      } else {
+        const initial: Invoice[] = [
+          {
+            id: "INV-2026-0901",
+            residentId: resId,
+            residentName: user?.name || "Juan Dela Cruz",
+            residentCode: user?.residentCode || "CK-000123",
+            unit: user?.unit || "Unit 101",
+            tower: user?.tower || "Tower A",
+            date: "Sept 1, 2026",
+            plan: `${currentPlan.replace("_", " ")} Membership`,
+            amount: currentPlan === "PREMIUM" ? "₱299.00" : currentPlan === "REGULAR" ? "₱149.00" : "₱0.00",
+            method: user?.paymentMethod === "CASH_COUNTER" ? "Cash at Counter" : "GCash QR",
+            reference: user?.paymentReference || "GC-9821-4402",
+            status: isPendingPayment ? "PENDING" : "PAID",
+          },
+          {
+            id: "INV-2026-0801",
+            residentId: resId,
+            residentName: user?.name || "Juan Dela Cruz",
+            residentCode: user?.residentCode || "CK-000123",
+            unit: user?.unit || "Unit 101",
+            tower: user?.tower || "Tower A",
+            date: "Aug 1, 2026",
+            plan: "Regular Membership",
+            amount: "₱149.00",
+            method: "GCash QR",
+            reference: "GC-1029-3381",
+            status: "PAID",
+          },
+        ];
+        setInvoices(initial);
       }
-    }
+    };
 
-    // Default initial seed invoices
-    const initial: Invoice[] = [
-      {
-        id: "INV-2026-0901",
-        date: "Sept 1, 2026",
-        plan: `${currentPlan.replace("_", " ")} Membership`,
-        amount: currentPlan === "PREMIUM" ? "₱299.00" : currentPlan === "REGULAR" ? "₱149.00" : "₱0.00",
-        method: user?.paymentMethod === "CASH_COUNTER" ? "Cash at Counter" : "GCash QR",
-        reference: user?.paymentReference || "GC-9821-4402",
-        status: isPendingPayment ? "PENDING" : "PAID",
-      },
-      {
-        id: "INV-2026-0801",
-        date: "Aug 1, 2026",
-        plan: "Regular Membership",
-        amount: "₱149.00",
-        method: "GCash QR",
-        reference: "GC-1029-3381",
-        status: "PAID",
-      },
-    ];
-    setInvoices(initial);
-    localStorage.setItem(storageKey, JSON.stringify(initial));
-  }, [user?.id, currentPlan, isPendingPayment, user?.paymentMethod, user?.paymentReference]);
+    loadInvoices();
+
+    const handleUpdate = () => {
+      loadInvoices();
+    };
+    window.addEventListener("ck_db_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("ck_db_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [user?.id, user?.name, user?.residentCode, user?.unit, user?.tower, currentPlan, isPendingPayment, user?.paymentMethod, user?.paymentReference]);
 
   // 5-item pagination for Billing & Invoice History
   const [invoicePage, setInvoicePage] = useState(1);
@@ -205,9 +212,13 @@ export default function MembershipPage() {
         );
       }
 
-      // Add to persistent invoices
-      const newInvoice: Invoice = {
-        id: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      // Add to centralized invoices database
+      await recordInvoice({
+        residentId: user?.id || "usr-resident-1",
+        residentName: user?.name || "Juan Dela Cruz",
+        residentCode: user?.residentCode || "CK-000123",
+        unit: user?.unit || "Unit 101",
+        tower: user?.tower || "Tower A",
         date: "Today",
         plan: isRenewalMode
           ? `${targetPlan.replace("_", " ")} ${targetPlan === "REGULAR" ? "15-Day" : "30-Day"} Renewal`
@@ -216,27 +227,10 @@ export default function MembershipPage() {
         method: paymentMethod === "GCASH" ? "GCash QR" : "Cash at Counter",
         reference: paymentMethod === "GCASH" ? gcashRef.trim() : undefined,
         status: paymentMethod === "GCASH" || targetPlan === "PER_PARCEL" ? "PAID" : "PENDING",
-      };
-
-      setInvoices((prev) => {
-        // If resolving a pending payment for the target plan, update the previous pending invoice or prepend new
-        const updated = prev.map((inv) =>
-          inv.status === "PENDING" && inv.plan.toLowerCase().includes(targetPlan.toLowerCase())
-            ? {
-                ...inv,
-                status: (paymentMethod === "GCASH" ? "PAID" : "PENDING") as "PAID" | "PENDING",
-                reference: paymentMethod === "GCASH" ? gcashRef.trim() : inv.reference,
-                method: paymentMethod === "GCASH" ? "GCash QR" : inv.method,
-              }
-            : inv
-        );
-        const finalInvoices = [newInvoice, ...updated.filter((inv) => inv.id !== newInvoice.id)];
-        if (typeof window !== "undefined") {
-          const storageKey = `ck_invoices_${user?.id || "usr-resident-1"}`;
-          localStorage.setItem(storageKey, JSON.stringify(finalInvoices));
-        }
-        return finalInvoices;
       });
+
+      const updatedList = await getInvoicesByResident(user?.id || "usr-resident-1");
+      setInvoices(updatedList);
 
       setShowPaymentModal(false);
       setIsRenewalMode(false);

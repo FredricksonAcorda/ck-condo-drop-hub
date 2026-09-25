@@ -6,10 +6,9 @@ import { useParcels, useAuth } from "@/context";
 import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { detectCourierFromBarcode } from "@/lib/scanner/courier-detector";
-import { printThermalShelfLabel, printClaimReleaseSlip } from "@/lib/print/label-generator";
 
 export default function ParcelsInventoryPage() {
-  const { parcels, logParcel, releaseParcel, deleteParcel, hubSettings } = useParcels();
+  const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel } = useParcels();
   const { user } = useAuth();
 
   // Registered Residents for quick intake
@@ -19,32 +18,24 @@ export default function ParcelsInventoryPage() {
   // Quick Inbound Scanner Form State
   const [trackingInput, setTrackingInput] = useState("");
   const [courier, setCourier] = useState("SPX Express");
-  const [shelf, setShelf] = useState("Shelf A-1");
   const [parcelSize, setParcelSize] = useState<ParcelSize>("Medium");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [intakeSuccess, setIntakeSuccess] = useState<string | null>(null);
   const [intakeError, setIntakeError] = useState<string | null>(null);
   const [newlyLoggedId, setNewlyLoggedId] = useState<string | null>(null);
-  const [lastLoggedParcel, setLastLoggedParcel] = useState<Parcel | null>(null);
 
-  // Camera Scanner State
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const trackingInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Filters & Search
+  // Search & Status Filters (Exact UI from Live Parcel Activity Stream)
   const [searchQuery, setSearchQuery] = useState("");
+  const [quickPasscodeSearch, setQuickPasscodeSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | ParcelStatus>("ALL");
-  const [courierFilter, setCourierFilter] = useState<string>("ALL");
-  const [shelfZoneFilter, setShelfZoneFilter] = useState<string>("ALL");
 
-  // Selection & Action Modals
-  const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
-  const [actionAlert, setActionAlert] = useState<string | null>(null);
+  // Release Modal State
   const [releaseModalParcel, setReleaseModalParcel] = useState<Parcel | null>(null);
   const [recipientNameInput, setRecipientNameInput] = useState<string>("");
+  const [releaseSuccess, setReleaseSuccess] = useState<string | null>(null);
+
+  const trackingInputRef = useRef<HTMLInputElement | null>(null);
 
   // Load residents from DB
   useEffect(() => {
@@ -62,33 +53,6 @@ export default function ParcelsInventoryPage() {
     loadResidents();
   }, [selectedResidentId]);
 
-  // Camera management
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    if (showCamera) {
-      setCameraError(null);
-      navigator.mediaDevices
-        ?.getUserMedia({ video: { facingMode: "environment" } })
-        .then((s) => {
-          stream = s;
-          if (videoRef.current) {
-            videoRef.current.srcObject = s;
-          }
-        })
-        .catch((err) => {
-          console.error("Camera access failed:", err);
-          setCameraError("Camera access unavailable. You can use USB barcode scanner gun or type tracking number.");
-          setShowCamera(false);
-        });
-    }
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [showCamera]);
-
   // Handle tracking input and auto-detect courier
   const handleTrackingChange = (value: string) => {
     setTrackingInput(value);
@@ -102,7 +66,7 @@ export default function ParcelsInventoryPage() {
     }
   };
 
-  // Handle Inbound Scan Submit
+  // Handle Inbound Scan Submit (NO PRINTER SETTINGS POPUP - PURE INVENTORY ADDITION)
   const handleIntakeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIntakeError(null);
@@ -128,18 +92,17 @@ export default function ParcelsInventoryPage() {
         residentId: resident.id,
         residentName: resident.name,
         unit: `${resident.unit} - ${resident.tower}`,
-        shelf,
+        shelf: "Lobby Counter",
         size: parcelSize,
         notes: notes.trim() || undefined,
       });
 
-      setLastLoggedParcel(newParcel);
       setNewlyLoggedId(newParcel.id);
       setIntakeSuccess(
-        `✓ Parcel ${newParcel.trackingNumber} logged into ${newParcel.shelf}! Passcode [${newParcel.claimCode}] generated & SMS sent to ${resident.name}.`
+        `✓ Parcel ${newParcel.trackingNumber} successfully added to inventory! Claim Code [${newParcel.claimCode}] generated & SMS sent to ${resident.name}.`
       );
 
-      // If user was filtering by picked up, reset to ALL so they see the new item
+      // If user was filtering by picked up, reset to ALL so they immediately see the new item
       if (statusFilter === "PICKED_UP") {
         setStatusFilter("ALL");
       }
@@ -153,15 +116,6 @@ export default function ParcelsInventoryPage() {
       setTimeout(() => {
         trackingInputRef.current?.focus();
       }, 100);
-
-      // Auto-print thermal label if enabled in settings
-      if (hubSettings.autoPrintIntakeLabel) {
-        printThermalShelfLabel({
-          parcel: newParcel,
-          hubName: hubSettings.hubName,
-          station: hubSettings.stationName,
-        });
-      }
     } catch (err) {
       console.error(err);
       setIntakeError("Failed to log parcel. Please try again.");
@@ -170,49 +124,37 @@ export default function ParcelsInventoryPage() {
     }
   };
 
-  // Statistics
-  const stats = useMemo(() => {
-    const total = parcels.length;
-    const active = parcels.filter((p) => p.status !== "PICKED_UP").length;
-    const overdue = parcels.filter((p) => p.status === "OVERDUE").length;
-    const released = parcels.filter((p) => p.status === "PICKED_UP").length;
-    const capacityPct = Math.round((active / (hubSettings.maxShelfSlots || 60)) * 100);
+  // Compute live KPIs
+  const readyCount = parcels.filter((p) => p.status === "READY").length;
+  const overdueCount = parcels.filter((p) => p.status === "OVERDUE").length;
+  const pickedUpCount = parcels.filter((p) => p.status === "PICKED_UP").length;
 
-    return { total, active, overdue, released, capacityPct };
-  }, [parcels, hubSettings.maxShelfSlots]);
-
-  // Filtered Parcels
+  // Filtered Parcels for the Table
   const filteredParcels = useMemo(() => {
     return parcels.filter((p) => {
-      // Search
-      const search = searchQuery.trim().toLowerCase();
+      const q = searchQuery.trim().toLowerCase();
+      const codeQ = quickPasscodeSearch.trim().toLowerCase();
+
+      // Quick Passcode Search takes priority if entered
+      if (codeQ) {
+        return (
+          p.claimCode.toLowerCase().includes(codeQ) ||
+          p.trackingNumber.toLowerCase().includes(codeQ)
+        );
+      }
+
       const matchesSearch =
-        !search ||
-        p.trackingNumber.toLowerCase().includes(search) ||
-        p.residentName.toLowerCase().includes(search) ||
-        p.unit.toLowerCase().includes(search) ||
-        p.shelf.toLowerCase().includes(search) ||
-        p.courier.toLowerCase().includes(search) ||
-        p.claimCode.toLowerCase().includes(search);
+        !q ||
+        p.trackingNumber.toLowerCase().includes(q) ||
+        p.residentName.toLowerCase().includes(q) ||
+        p.unit.toLowerCase().includes(q) ||
+        p.courier.toLowerCase().includes(q) ||
+        p.claimCode.toLowerCase().includes(q);
 
-      // Status
       const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
-
-      // Courier
-      const matchesCourier = courierFilter === "ALL" || p.courier === courierFilter;
-
-      // Shelf Zone
-      const matchesShelf =
-        shelfZoneFilter === "ALL" ||
-        (shelfZoneFilter === "A" && p.shelf.includes("Shelf A")) ||
-        (shelfZoneFilter === "B" && p.shelf.includes("Shelf B")) ||
-        (shelfZoneFilter === "C" && p.shelf.includes("Shelf C")) ||
-        (shelfZoneFilter === "OVERSIZE" && p.shelf.toLowerCase().includes("oversize")) ||
-        (shelfZoneFilter === "ARCHIVED" && p.shelf.toLowerCase().includes("archived"));
-
-      return matchesSearch && matchesStatus && matchesCourier && matchesShelf;
+      return matchesSearch && matchesStatus;
     });
-  }, [parcels, searchQuery, statusFilter, courierFilter, shelfZoneFilter]);
+  }, [parcels, searchQuery, statusFilter, quickPasscodeSearch]);
 
   // 5-item pagination for Inventory Table
   const [currentPage, setCurrentPage] = useState(1);
@@ -220,7 +162,7 @@ export default function ParcelsInventoryPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, courierFilter, shelfZoneFilter]);
+  }, [searchQuery, statusFilter, quickPasscodeSearch]);
 
   const totalPages = Math.ceil(filteredParcels.length / ITEMS_PER_PAGE) || 1;
   const validPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -231,19 +173,37 @@ export default function ParcelsInventoryPage() {
     return filteredParcels.slice(startIndex, endIndex);
   }, [filteredParcels, startIndex, endIndex]);
 
-  // Release Action
+  // Handle opening release modal
+  const handleOpenReleaseModal = (parcel: Parcel) => {
+    setReleaseModalParcel(parcel);
+    setRecipientNameInput(parcel.residentName);
+  };
+
+  // Confirm Release Action
   const handleConfirmRelease = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!releaseModalParcel) return;
     try {
       const recipient = recipientNameInput.trim() || releaseModalParcel.residentName;
       await releaseParcel(releaseModalParcel.id, recipient);
-      setActionAlert(`✓ Parcel ${releaseModalParcel.trackingNumber} successfully released to ${recipient}!`);
+      setReleaseSuccess(`✓ Parcel ${releaseModalParcel.trackingNumber} successfully released to ${recipient}!`);
       setReleaseModalParcel(null);
       setRecipientNameInput("");
+      setTimeout(() => setReleaseSuccess(null), 5000);
     } catch (err) {
       console.error(err);
       alert("Failed to release parcel.");
+    }
+  };
+
+  // Revert Release
+  const handleRevertStatus = async (parcel: Parcel) => {
+    if (confirm(`Revert package ${parcel.trackingNumber} back to READY FOR PICKUP?`)) {
+      await updateParcel(parcel.id, {
+        status: "READY",
+        claimedAt: undefined,
+        claimedBy: undefined,
+      });
     }
   };
 
@@ -251,7 +211,6 @@ export default function ParcelsInventoryPage() {
   const handleDelete = async (parcel: Parcel) => {
     if (confirm(`Are you sure you want to remove package ${parcel.trackingNumber} from inventory?`)) {
       await deleteParcel(parcel.id);
-      setActionAlert(`Deleted ${parcel.trackingNumber} from records.`);
       if (newlyLoggedId === parcel.id) {
         setNewlyLoggedId(null);
       }
@@ -267,53 +226,21 @@ export default function ParcelsInventoryPage() {
             PARCEL <span className="text-brand-red">INVENTORY</span>
           </h1>
           <p className="text-xs text-brand-text-secondary mt-0.5">
-            Integrated scanner terminal & real-time inventory registry. Scan parcels to immediately log them into the inventory below.
+            Buildersville Condominium • Inbound Barcode Intake & Real-Time Package Inventory Registry
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setShowCamera(!showCamera)}
-            className={`btn btn-sm font-bold uppercase flex items-center gap-1.5 cursor-pointer ${
-              showCamera ? "bg-black text-white" : "btn-outline"
-            }`}
-          >
-            <span>{showCamera ? "Close Camera ✕" : "📷 Camera Scanner"}</span>
-          </button>
           <Link href="/admin" className="btn btn-outline btn-sm">
-            ← Station Dashboard
+            ← Lobby Console
+          </Link>
+          <Link href="/admin/customers" className="btn btn-outline btn-sm">
+            Residents & Units
           </Link>
         </div>
       </div>
 
-      {/* Camera Live Scanner Preview (Collapsible) */}
-      {showCamera && (
-        <div className="bg-brand-black rounded-2xl p-6 text-white border border-white/10 space-y-4 animate-in fade-in">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-wider">Live Camera Scanner</span>
-            </div>
-            <span className="text-[11px] text-white/60">Position courier shipping barcode in center frame</span>
-          </div>
-
-          <div className="relative max-w-md mx-auto aspect-video bg-black rounded-xl overflow-hidden border border-white/20 flex items-center justify-center">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            <div className="absolute inset-8 border-2 border-dashed border-brand-red rounded-lg pointer-events-none flex items-center justify-center">
-              <span className="text-[10px] bg-black/60 px-2 py-0.5 rounded text-white font-mono uppercase">
-                Align Barcode Here
-              </span>
-            </div>
-          </div>
-
-          {cameraError && (
-            <p className="text-xs text-red-400 text-center font-medium">{cameraError}</p>
-          )}
-        </div>
-      )}
-
-      {/* COMBINED SCANNER & INTAKE WORKSTATION */}
+      {/* COMBINED SCANNER & QUICK INTAKE BOX (WITHOUT SHELF LOCATION) */}
       <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm">
         <div className="bg-brand-red text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -338,37 +265,20 @@ export default function ParcelsInventoryPage() {
           </div>
         </div>
 
-        {/* Success Alert with Immediate Thermal Print */}
+        {/* Success Alert */}
         {intakeSuccess && (
-          <div className="bg-green-50 border-b border-green-200 text-green-900 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="bg-green-50 border-b border-green-200 text-green-900 px-6 py-3.5 flex items-center justify-between text-xs sm:text-sm animate-in fade-in">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse shrink-0" />
               <span className="font-semibold">{intakeSuccess}</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {lastLoggedParcel && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    printThermalShelfLabel({
-                      parcel: lastLoggedParcel,
-                      hubName: hubSettings.hubName,
-                      station: hubSettings.stationName,
-                    })
-                  }
-                  className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold cursor-pointer"
-                >
-                  Print Shelf Label (58mm)
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setIntakeSuccess(null)}
-                className="text-green-700 hover:text-green-950 font-bold ml-1 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIntakeSuccess(null)}
+              className="text-green-700 hover:text-green-950 font-bold ml-2 cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -386,11 +296,11 @@ export default function ParcelsInventoryPage() {
           </div>
         )}
 
-        {/* Inbound Intake Form */}
+        {/* Intake Form (Shelf Location completely removed) */}
         <form onSubmit={handleIntakeSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             {/* 1. Barcode / Tracking input */}
-            <div className="md:col-span-4">
+            <div className="md:col-span-5">
               <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
                 Courier Tracking / Barcode <span className="text-brand-red">*</span>
               </label>
@@ -412,7 +322,7 @@ export default function ParcelsInventoryPage() {
             </div>
 
             {/* 2. Courier Selector */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-3">
               <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
                 Courier Partner
               </label>
@@ -434,7 +344,7 @@ export default function ParcelsInventoryPage() {
             </div>
 
             {/* 3. Resident & Unit Selector */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-4">
               <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
                 Condo Resident & Unit <span className="text-brand-red">*</span>
               </label>
@@ -450,40 +360,6 @@ export default function ParcelsInventoryPage() {
                     {r.name} — Unit {r.unit} ({r.tower})
                   </option>
                 ))}
-              </select>
-            </div>
-
-            {/* 4. Shelf Slot Assignment */}
-            <div className="md:col-span-3">
-              <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
-                Shelf Location
-              </label>
-              <select
-                value={shelf}
-                onChange={(e) => setShelf(e.target.value)}
-                className="input text-xs w-full font-mono font-bold cursor-pointer border border-gray-300 bg-white"
-                disabled={isSubmitting}
-              >
-                <optgroup label="Shelf Zone A (Quick Pick)">
-                  <option value="Shelf A-1">Shelf A-1</option>
-                  <option value="Shelf A-2">Shelf A-2</option>
-                  <option value="Shelf A-3">Shelf A-3</option>
-                  <option value="Shelf A-4">Shelf A-4</option>
-                </optgroup>
-                <optgroup label="Shelf Zone B (Standard Boxes)">
-                  <option value="Shelf B-1">Shelf B-1</option>
-                  <option value="Shelf B-2">Shelf B-2</option>
-                  <option value="Shelf B-3">Shelf B-3</option>
-                  <option value="Shelf B-4">Shelf B-4</option>
-                </optgroup>
-                <optgroup label="Shelf Zone C (Extended / Overflow)">
-                  <option value="Shelf C-1">Shelf C-1</option>
-                  <option value="Shelf C-2">Shelf C-2</option>
-                  <option value="Shelf C-3">Shelf C-3</option>
-                </optgroup>
-                <optgroup label="Floor Staging">
-                  <option value="Floor Oversize">Floor Oversize</option>
-                </optgroup>
               </select>
             </div>
           </div>
@@ -509,10 +385,10 @@ export default function ParcelsInventoryPage() {
                 ))}
               </div>
 
-              <div className="flex-1 sm:w-60">
+              <div className="flex-1 sm:w-64">
                 <input
                   type="text"
-                  placeholder="Optional note (e.g. Fragile, Bulky box)..."
+                  placeholder="Optional note (e.g. Fragile, Shopee Pay)..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="input text-xs w-full border border-gray-300 bg-white"
@@ -536,187 +412,140 @@ export default function ParcelsInventoryPage() {
         </form>
       </div>
 
-      {/* Action Notification Alert */}
-      {actionAlert && (
-        <div className="bg-green-600 text-white p-4 rounded-xl font-bold flex items-center justify-between shadow-lg animate-in fade-in text-xs sm:text-sm">
-          <span>{actionAlert}</span>
+      {/* Release Notification Alert */}
+      {releaseSuccess && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-xl flex items-center justify-between text-xs sm:text-sm animate-in fade-in">
+          <span>{releaseSuccess}</span>
           <button
-            onClick={() => setActionAlert(null)}
-            className="text-white/80 hover:text-white text-xs uppercase px-2 py-1 bg-black/20 rounded cursor-pointer"
+            onClick={() => setReleaseSuccess(null)}
+            className="text-blue-700 font-bold ml-2 cursor-pointer"
           >
-            Dismiss
+            ✕
           </button>
         </div>
       )}
 
-      {/* KPI Stats Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-brand-text-muted">Total In Hub</span>
-          <div className="text-2xl font-black text-brand-black mt-0.5">{stats.active}</div>
-          <span className="text-[10px] text-green-600 font-semibold">Active packages</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-brand-text-muted">Capacity Used</span>
-          <div className="text-2xl font-black text-brand-black mt-0.5">{stats.capacityPct}%</div>
-          <span className="text-[10px] text-brand-text-secondary">
-            {stats.active} / {hubSettings.maxShelfSlots} shelf slots
-          </span>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-brand-text-muted">Overdue Alerts</span>
-          <div className="text-2xl font-black text-brand-red mt-0.5">{stats.overdue}</div>
-          <span className="text-[10px] text-brand-red font-semibold">Accruing holding fees</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-brand-text-muted">Released / Claimed</span>
-          <div className="text-2xl font-black text-blue-600 mt-0.5">{stats.released}</div>
-          <span className="text-[10px] text-blue-600 font-semibold">Archived packages</span>
-        </div>
-
-        <div className="col-span-2 lg:col-span-1 bg-white p-4 rounded-xl border border-brand-border shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-brand-text-muted">All-Time Recorded</span>
-          <div className="text-2xl font-black text-brand-black mt-0.5">{stats.total}</div>
-          <span className="text-[10px] text-brand-text-muted font-mono">Registry v1.2</span>
-        </div>
-      </div>
-
-      {/* Filter and Search Controls */}
-      <div className="bg-white p-5 rounded-2xl border border-brand-border shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Search Box */}
-          <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tracking, resident, unit, shelf, or 4-digit claim code..."
-              className="input pl-9 text-xs sm:text-sm font-medium w-full border border-gray-300 bg-white"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-brand-text-muted hover:text-brand-black cursor-pointer"
-              >
-                ✕
-              </button>
-            )}
+      {/* LIVE PARCEL ACTIVITY STREAM / PARCEL INVENTORY (Exact UI from previous Activity Stream) */}
+      <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm space-y-4 p-6">
+        {/* Table Header & Search Tools */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-brand-border pb-4">
+          <div>
+            <h2 className="font-[family-name:var(--font-heading)] text-2xl uppercase tracking-wider text-brand-black">
+              PARCEL INVENTORY
+            </h2>
+            <p className="text-xs text-brand-text-secondary mt-0.5">
+              Real-time inventory stream. You can release parcels directly or update statuses in one click.
+            </p>
           </div>
 
-          {/* Courier Dropdown */}
-          <select
-            value={courierFilter}
-            onChange={(e) => setCourierFilter(e.target.value)}
-            className="input text-xs font-semibold py-2 px-3 md:w-48 border border-gray-300 bg-white cursor-pointer"
-          >
-            <option value="ALL">All Couriers</option>
-            <option value="SPX Express">SPX Express</option>
-            <option value="J&T Express">J&T Express</option>
-            <option value="Flash Express">Flash Express</option>
-            <option value="Lazada Lex">Lazada Lex</option>
-            <option value="TikTok Shop">TikTok Shop</option>
-            <option value="LBC Express">LBC Express</option>
-            <option value="Ninja Van">Ninja Van</option>
-          </select>
+          {/* Quick Passcode Search Box */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Claim Passcode (e.g. CK-8921)..."
+                value={quickPasscodeSearch}
+                onChange={(e) => setQuickPasscodeSearch(e.target.value)}
+                className="input px-3 text-xs font-mono uppercase w-full bg-white border border-gray-300 focus:border-brand-red"
+              />
+            </div>
 
-          {/* Shelf Zone Dropdown */}
-          <select
-            value={shelfZoneFilter}
-            onChange={(e) => setShelfZoneFilter(e.target.value)}
-            className="input text-xs font-semibold py-2 px-3 md:w-44 border border-gray-300 bg-white cursor-pointer"
-          >
-            <option value="ALL">All Shelf Zones</option>
-            <option value="A">Zone A (Shelf A-xx)</option>
-            <option value="B">Zone B (Shelf B-xx)</option>
-            <option value="C">Zone C (Shelf C-xx)</option>
-            <option value="OVERSIZE">Floor / Oversize</option>
-            <option value="ARCHIVED">Archived (Released)</option>
-          </select>
+            <div className="relative w-full sm:w-60">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                placeholder="Search tracking, resident, unit..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input pl-8 text-xs w-full border border-gray-300 bg-white"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Status Tabs */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-border">
-          {[
-            { id: "ALL", label: `All (${parcels.length})` },
-            {
-              id: "READY",
-              label: `Ready for Pickup (${parcels.filter((p) => p.status === "READY").length})`,
-            },
-            {
-              id: "OVERDUE",
-              label: `Overdue (${parcels.filter((p) => p.status === "OVERDUE").length})`,
-            },
-            {
-              id: "PICKED_UP",
-              label: `Released (${parcels.filter((p) => p.status === "PICKED_UP").length})`,
-            },
-          ].map((tab) => (
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex gap-1.5 bg-brand-surface p-1 rounded-xl text-xs font-bold uppercase">
+            {[
+              { id: "ALL", label: `All (${parcels.length})` },
+              { id: "READY", label: `Ready for Pickup (${readyCount})` },
+              { id: "OVERDUE", label: `Overdue (${overdueCount})` },
+              { id: "PICKED_UP", label: `Released (${pickedUpCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  statusFilter === tab.id
+                    ? "bg-brand-red text-white shadow-sm"
+                    : "text-brand-text-secondary hover:text-brand-black"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {quickPasscodeSearch && (
             <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                statusFilter === tab.id
-                  ? "bg-brand-black text-white"
-                  : "bg-brand-surface text-brand-text-secondary hover:text-brand-black hover:bg-gray-200"
-              }`}
+              type="button"
+              onClick={() => setQuickPasscodeSearch("")}
+              className="text-xs text-brand-red font-semibold hover:underline cursor-pointer"
             >
-              {tab.label}
+              Clear Passcode Filter ✕
             </button>
-          ))}
+          )}
         </div>
-      </div>
 
-      {/* Main Parcels Table (Live Inventory Reflection) */}
-      <div className="bg-white rounded-2xl border border-brand-border shadow-sm overflow-hidden">
+        {/* Parcels Table (Shelf column removed) */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-brand-surface border-b border-brand-border text-[10px] uppercase font-black tracking-wider text-brand-text-muted">
-                <th className="py-3.5 px-4">Package & Tracking</th>
-                <th className="py-3.5 px-4">Resident & Unit</th>
-                <th className="py-3.5 px-4">Storage Location</th>
-                <th className="py-3.5 px-4">Arrived / Deadline</th>
-                <th className="py-3.5 px-4">Claim Passcode</th>
-                <th className="py-3.5 px-4">Status & Fee</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-brand-surface text-brand-text-secondary uppercase border-b border-brand-border">
+              <tr>
+                <th className="px-4 py-3">Tracking & Courier</th>
+                <th className="px-4 py-3">Resident & Unit</th>
+                <th className="px-4 py-3">Arrival / Scan Time</th>
+                <th className="px-4 py-3">Claim Code</th>
+                <th className="px-4 py-3">Status Action</th>
+                <th className="px-4 py-3 text-right">Tools</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-brand-border text-xs">
+            <tbody className="divide-y divide-brand-border">
               {filteredParcels.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-brand-text-muted">
-                    <span className="text-3xl block mb-2">📭</span>
-                    No parcels match your current filter and search query.
+                  <td colSpan={6} className="text-center py-10 text-brand-text-secondary">
+                    No parcels found matching your search.
                   </td>
                 </tr>
               ) : (
-                paginatedParcels.map((p) => {
-                  const isPickedUp = p.status === "PICKED_UP";
-                  const isOverdue = p.status === "OVERDUE";
-                  const isJustLogged = newlyLoggedId === p.id;
+                paginatedParcels.map((parcel) => {
+                  const isReady = parcel.status === "READY";
+                  const isOverdue = parcel.status === "OVERDUE";
+                  const isPickedUp = parcel.status === "PICKED_UP";
+                  const isJustLogged = newlyLoggedId === parcel.id;
 
                   return (
                     <tr
-                      key={p.id}
-                      className={`hover:bg-brand-surface/70 transition-colors group ${
+                      key={parcel.id}
+                      className={`hover:bg-brand-surface/60 transition-colors ${
                         isJustLogged
                           ? "bg-green-50 ring-2 ring-green-500/50"
+                          : quickPasscodeSearch &&
+                            parcel.claimCode.toLowerCase().includes(quickPasscodeSearch.toLowerCase())
+                          ? "bg-yellow-50"
                           : ""
                       }`}
                     >
-                      {/* Package & Tracking */}
-                      <td className="py-4 px-4 font-mono">
+                      {/* Tracking & Courier */}
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-black text-brand-black text-sm tracking-wide">
-                            {p.trackingNumber}
+                          <span className="font-mono font-bold text-sm text-brand-black">
+                            {parcel.trackingNumber}
                           </span>
                           {isJustLogged && (
                             <span className="bg-green-600 text-white font-sans text-[9px] font-black uppercase px-2 py-0.5 rounded-full animate-pulse">
@@ -724,170 +553,100 @@ export default function ParcelsInventoryPage() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <span
                             className="inline-block w-2 h-2 rounded-full"
-                            style={{ backgroundColor: p.courierColor }}
+                            style={{ backgroundColor: parcel.courierColor }}
                           />
                           <span className="text-[11px] font-semibold text-brand-text-secondary">
-                            {p.courier}
+                            {parcel.courier}
                           </span>
-                          <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.2 rounded font-sans">
-                            {p.size || "Medium"}
-                          </span>
-                          {p.notes && (
-                            <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-sans font-medium">
-                              {p.notes}
+                          <span className="text-[10px] text-brand-text-muted">({parcel.size || "Standard"})</span>
+                          {parcel.notes && (
+                            <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-medium">
+                              {parcel.notes}
                             </span>
                           )}
                         </div>
                       </td>
 
                       {/* Resident & Unit */}
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-brand-black text-sm">
-                          {p.residentName}
-                        </div>
-                        <div className="text-[11px] text-brand-text-secondary font-medium mt-0.5">
-                          {p.unit}
+                      <td className="px-4 py-3.5">
+                        <div className="font-bold text-sm text-brand-black">{parcel.residentName}</div>
+                        <div className="text-[11px] text-brand-text-secondary font-medium">
+                          {parcel.unit}
                         </div>
                       </td>
 
-                      {/* Storage Location */}
-                      <td className="py-4 px-4">
-                        <span
-                          className={`inline-block font-bold text-xs px-2.5 py-1 rounded-md font-mono ${
-                            isPickedUp
-                              ? "bg-gray-100 text-gray-500"
-                              : "bg-brand-black text-white"
-                          }`}
-                        >
-                          {p.shelf}
-                        </span>
-                      </td>
-
-                      {/* Arrived / Deadline */}
-                      <td className="py-4 px-4">
-                        <div className="text-brand-text font-medium text-[11px]">
-                          {p.dateArrived.split("•")[0]}
-                        </div>
-                        <div
-                          className={`text-[10px] font-semibold mt-0.5 ${
-                            isOverdue ? "text-brand-red font-bold" : "text-brand-text-muted"
-                          }`}
-                        >
-                          Due: {p.deadline}
-                        </div>
-                      </td>
-
-                      {/* Claim Passcode */}
-                      <td className="py-4 px-4 font-mono font-black text-sm">
-                        <span className="bg-brand-surface border border-brand-border px-2 py-0.5 rounded text-brand-black">
-                          {p.claimCode}
-                        </span>
-                      </td>
-
-                      {/* Status & Fee */}
-                      <td className="py-4 px-4">
+                      {/* Arrival / Scanned Time */}
+                      <td className="px-4 py-3.5 text-brand-text-secondary">
+                        <div>{parcel.dateArrived}</div>
                         {isPickedUp ? (
-                          <div>
-                            <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                              Claimed
-                            </span>
-                            <div className="text-[10px] text-brand-text-muted mt-0.5">
-                              by {p.claimedBy || "Resident"}
-                            </div>
-                          </div>
-                        ) : isOverdue ? (
-                          <div>
-                            <span className="inline-block bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-                              Overdue
-                            </span>
-                            <div className="text-[10px] text-brand-red font-bold mt-0.5">
-                              {p.holdingFee}
-                            </div>
+                          <div className="text-[10px] text-blue-600 font-medium mt-0.5">
+                            Claimed: {parcel.claimedAt || "Earlier"}
                           </div>
                         ) : (
-                          <div>
-                            <span className="inline-block bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                              Ready for Pickup
-                            </span>
-                            <div className="text-[10px] text-green-700 font-semibold mt-0.5">
-                              Free Holding
-                            </div>
+                          <div className="text-[10px] text-brand-text-muted mt-0.5">
+                            Holding Deadline: {parcel.deadline}
                           </div>
                         )}
                       </td>
 
-                      {/* Action Buttons */}
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Print Shelf Label */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              printThermalShelfLabel({
-                                parcel: p,
-                                hubName: hubSettings.hubName,
-                                station: hubSettings.stationName,
-                              })
-                            }
-                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs font-semibold cursor-pointer"
-                            title="Print Thermal Shelf Sticker (58mm x 40mm)"
-                          >
-                            Label
-                          </button>
+                      {/* Claim Code */}
+                      <td className="px-4 py-3.5 font-mono text-sm font-black text-brand-red">
+                        <span className="bg-brand-surface border border-brand-border px-2 py-0.5 rounded">
+                          {parcel.claimCode}
+                        </span>
+                      </td>
 
-                          {/* Print Slip */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              printClaimReleaseSlip({
-                                parcel: p,
-                                releasedByStaff: user?.name || "Staff Admin",
-                                hubName: hubSettings.hubName,
-                              })
-                            }
-                            className="p-1.5 bg-brand-surface hover:bg-gray-200 border border-brand-border rounded text-xs font-semibold cursor-pointer"
-                            title="Print Paper Release Receipt"
-                          >
-                            Slip
-                          </button>
-
-                          {/* Release Button */}
-                          {!isPickedUp && (
+                      {/* Status Action (INLINE EDITABLE) */}
+                      <td className="px-4 py-3.5">
+                        {isPickedUp ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                              <span>✓</span>
+                              <span>Released</span>
+                            </span>
                             <button
                               type="button"
-                              onClick={() => {
-                                setReleaseModalParcel(p);
-                                setRecipientNameInput(p.residentName);
-                              }}
-                              className="btn btn-primary btn-sm text-[11px] py-1 px-2.5 font-bold uppercase cursor-pointer"
+                              onClick={() => handleRevertStatus(parcel)}
+                              className="text-[10px] text-brand-text-muted hover:text-brand-red underline cursor-pointer"
+                              title="Revert back to Ready for Pickup"
                             >
-                              Release
+                              Revert
                             </button>
-                          )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                                isOverdue
+                                  ? "bg-brand-red-light text-brand-red"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {isOverdue ? `Overdue (${parcel.holdingFee})` : "Ready for Pickup"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReleaseModal(parcel)}
+                              className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1 px-3 uppercase cursor-pointer"
+                            >
+                              Release ➔
+                            </button>
+                          </div>
+                        )}
+                      </td>
 
-                          {/* Details / Inspection */}
-                          <button
-                            type="button"
-                            onClick={() => setSelectedParcel(p)}
-                            className="p-1.5 hover:bg-brand-surface rounded text-brand-text-muted hover:text-brand-black cursor-pointer"
-                            title="Inspect Details"
-                          >
-                            👁
-                          </button>
-
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(p)}
-                            className="p-1.5 hover:bg-red-50 rounded text-brand-text-muted hover:text-brand-red cursor-pointer"
-                            title="Delete Record"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                      {/* Tools */}
+                      <td className="px-4 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(parcel)}
+                          className="text-xs font-semibold text-brand-red hover:text-brand-red-dark hover:underline cursor-pointer"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   );
@@ -899,7 +658,7 @@ export default function ParcelsInventoryPage() {
 
         {/* 5-Item Pagination Controls Footer */}
         {filteredParcels.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-brand-border bg-white">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-brand-border">
             <div className="text-xs text-brand-text-secondary font-medium text-center sm:text-left">
               Showing{" "}
               <span className="font-bold text-brand-black">
@@ -971,7 +730,7 @@ export default function ParcelsInventoryPage() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-brand-border">
               <h3 className="font-[family-name:var(--font-heading)] text-xl uppercase tracking-wider text-brand-black">
-                CONFIRM HANDOVER
+                CONFIRM RELEASE
               </h3>
               <button
                 onClick={() => setReleaseModalParcel(null)}
@@ -989,16 +748,12 @@ export default function ParcelsInventoryPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Expected Resident:</span>
+                <span className="text-brand-text-secondary">Resident:</span>
                 <span className="font-bold text-brand-black">{releaseModalParcel.residentName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-brand-text-secondary">Unit / Tower:</span>
                 <span className="font-semibold text-brand-text">{releaseModalParcel.unit}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Storage Shelf:</span>
-                <span className="font-mono font-bold text-brand-red">{releaseModalParcel.shelf}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-brand-text-secondary">Claim Passcode:</span>
@@ -1040,115 +795,6 @@ export default function ParcelsInventoryPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Parcel Detail Inspection Modal */}
-      {selectedParcel && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-brand-border">
-              <div>
-                <h3 className="font-[family-name:var(--font-heading)] text-xl uppercase tracking-wider text-brand-black">
-                  PACKAGE INSPECTION
-                </h3>
-                <p className="text-xs text-brand-text-secondary font-mono">{selectedParcel.id}</p>
-              </div>
-              <button
-                onClick={() => setSelectedParcel(null)}
-                className="text-brand-text-muted hover:text-brand-black cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs bg-brand-surface p-4 rounded-xl border border-brand-border">
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Tracking Number
-                </span>
-                <span className="font-mono font-bold text-brand-black">{selectedParcel.trackingNumber}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Courier
-                </span>
-                <span className="font-semibold text-brand-text">{selectedParcel.courier}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Resident Name
-                </span>
-                <span className="font-bold text-brand-black">{selectedParcel.residentName}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Unit & Tower
-                </span>
-                <span className="font-semibold text-brand-text">{selectedParcel.unit}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Storage Slot
-                </span>
-                <span className="font-mono font-bold text-brand-red">{selectedParcel.shelf}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Claim Passcode
-                </span>
-                <span className="font-mono font-black text-brand-black">{selectedParcel.claimCode}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Arrived At
-                </span>
-                <span className="text-brand-text">{selectedParcel.dateArrived}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Holding Deadline
-                </span>
-                <span className="text-brand-text">{selectedParcel.deadline}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Current Status
-                </span>
-                <span className="font-bold uppercase text-brand-red">{selectedParcel.status}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Holding Fee
-                </span>
-                <span className="font-bold text-brand-black">{selectedParcel.holdingFee}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() =>
-                  printThermalShelfLabel({
-                    parcel: selectedParcel,
-                    hubName: hubSettings.hubName,
-                    station: hubSettings.stationName,
-                  })
-                }
-                className="btn btn-outline btn-sm font-bold uppercase cursor-pointer"
-              >
-                Print Thermal Sticker
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedParcel(null)}
-                className="btn btn-primary btn-sm cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}

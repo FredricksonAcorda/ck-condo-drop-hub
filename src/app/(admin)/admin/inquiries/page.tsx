@@ -457,7 +457,7 @@ export default function AdminInquiriesPage() {
                   rows={4}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="e.g. Package has been retrieved and is ready on Shelf A-04. / Doorstep delivery scheduled for 2:30 PM..."
+                  placeholder="e.g. Package has been retrieved and is ready at the Lobby Counter. / Doorstep delivery scheduled for 2:30 PM..."
                   className="input w-full text-xs"
                   required
                 />

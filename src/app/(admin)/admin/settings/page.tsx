@@ -218,7 +218,7 @@ export default function HubSettingsPage() {
 
             <div>
               <label className="block font-bold uppercase text-brand-text mb-1.5">
-                Max Shelf Capacity Slots
+                Max Lobby Holding Capacity Slots
               </label>
               <input
                 type="number"
@@ -262,7 +262,7 @@ export default function HubSettingsPage() {
 
             <div className="flex items-center justify-between p-3 bg-brand-surface rounded-xl border border-brand-border">
               <div>
-                <span className="font-bold text-brand-black block">Auto-Print Shelf Label on Intake</span>
+                <span className="font-bold text-brand-black block">Auto-Print Parcel Label on Intake</span>
                 <span className="text-[11px] text-brand-text-secondary">
                   Automatically triggers browser print dialogue for thermal 58mm × 40mm sticker on parcel log.
                 </span>
