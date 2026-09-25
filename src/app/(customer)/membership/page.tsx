@@ -22,6 +22,7 @@ export default function MembershipPage() {
 
   const [selectedPlanToSwitch, setSelectedPlanToSwitch] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM" | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isRenewalMode, setIsRenewalMode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"GCASH" | "CASH_COUNTER">(user?.paymentMethod || "GCASH");
   const [gcashRef, setGcashRef] = useState(user?.paymentReference || "");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,6 +47,32 @@ export default function MembershipPage() {
     PREMIUM: `5 Free Deliveries/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
   };
 
+  // Subscription expiration and renewal calculation
+  const rawExpiry =
+    user?.subscriptionExpiry ||
+    (currentPlan === "PREMIUM"
+      ? "2026-10-01T23:59:59Z"
+      : currentPlan === "REGULAR"
+      ? "2026-10-15T23:59:59Z"
+      : null);
+
+  const expiryDate = rawExpiry ? new Date(rawExpiry) : null;
+  const today = new Date();
+  const daysLeft = expiryDate
+    ? Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const formattedExpiry = expiryDate
+    ? expiryDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "No Expiration";
+
+  const isExpiringSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+  const isExpired = daysLeft !== null && daysLeft <= 0;
+
   // Sample resident billing history
   const [invoices, setInvoices] = useState<Invoice[]>([
     {
@@ -69,7 +96,14 @@ export default function MembershipPage() {
   ]);
 
   const handleOpenSwitchModal = (plan: "PER_PARCEL" | "REGULAR" | "PREMIUM") => {
+    setIsRenewalMode(false);
     setSelectedPlanToSwitch(plan);
+    setShowPaymentModal(true);
+  };
+
+  const handleOpenRenewModal = () => {
+    setIsRenewalMode(true);
+    setSelectedPlanToSwitch(currentPlan);
     setShowPaymentModal(true);
   };
 
@@ -78,11 +112,31 @@ export default function MembershipPage() {
     setIsProcessing(true);
 
     try {
+      const now = new Date();
+      let newExpiryDate: Date;
+      if (isRenewalMode && user?.subscriptionExpiry) {
+        const curExp = new Date(user.subscriptionExpiry);
+        if (curExp.getTime() > now.getTime()) {
+          newExpiryDate = new Date(curExp.getTime() + 30 * 24 * 60 * 60 * 1000);
+        } else {
+          newExpiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        }
+      } else {
+        newExpiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      }
+
+      const formattedNewDate = newExpiryDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
       if (targetPlan === "PER_PARCEL") {
         await updateProfile({
           plan: "PER_PARCEL",
           planStatus: "ACTIVE",
           paymentMethod: "CASH_COUNTER",
+          deliveryCreditsLeft: 0,
         });
         setSuccessMessage("Switched to Per Parcel plan successfully!");
       } else if (paymentMethod === "GCASH") {
@@ -96,22 +150,35 @@ export default function MembershipPage() {
           planStatus: "ACTIVE",
           paymentMethod: "GCASH",
           paymentReference: gcashRef.trim(),
+          subscriptionExpiry: newExpiryDate.toISOString(),
+          deliveryCreditsLeft: targetPlan === "PREMIUM" ? 5 : 0,
         });
-        setSuccessMessage(`Successfully updated to ${targetPlan} Plan via GCash!`);
+        setSuccessMessage(
+          isRenewalMode
+            ? `🎉 Subscription successfully renewed via GCash! Valid until ${formattedNewDate}.`
+            : `Successfully activated ${targetPlan.replace("_", " ")} Plan via GCash! Valid until ${formattedNewDate}.`
+        );
       } else {
         await updateProfile({
           plan: targetPlan,
           planStatus: "PENDING_PAYMENT",
           paymentMethod: "CASH_COUNTER",
+          subscriptionExpiry: newExpiryDate.toISOString(),
         });
-        setSuccessMessage(`Switched to ${targetPlan} Plan. Please settle at Station 1 Front Desk.`);
+        setSuccessMessage(
+          isRenewalMode
+            ? `Renewal queued for ${targetPlan.replace("_", " ")} Plan. Please settle at Station 1 Front Desk.`
+            : `Switched to ${targetPlan.replace("_", " ")} Plan. Please settle at Station 1 Front Desk.`
+        );
       }
 
       // Add to invoices
       const newInvoice: Invoice = {
         id: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         date: "Today",
-        plan: `${targetPlan.replace("_", " ")} Membership`,
+        plan: isRenewalMode
+          ? `${targetPlan.replace("_", " ")} 30-Day Renewal`
+          : `${targetPlan.replace("_", " ")} Membership`,
         amount: targetPlan === "PREMIUM" ? "₱299.00" : targetPlan === "REGULAR" ? "₱149.00" : "₱0.00",
         method: paymentMethod === "GCASH" ? "GCash QR" : "Cash at Counter",
         reference: paymentMethod === "GCASH" ? gcashRef.trim() : undefined,
@@ -120,7 +187,8 @@ export default function MembershipPage() {
       setInvoices((prev) => [newInvoice, ...prev]);
 
       setShowPaymentModal(false);
-      setTimeout(() => setSuccessMessage(null), 4000);
+      setIsRenewalMode(false);
+      setTimeout(() => setSuccessMessage(null), 5000);
     } catch {
       alert("Failed to update membership. Please try again.");
     } finally {
@@ -190,7 +258,130 @@ export default function MembershipPage() {
         </div>
       )}
 
+      {/* Subscription Expiry & Renewal Reminder Card */}
+      {currentPlan !== "PER_PARCEL" ? (
+        <div
+          className={`rounded-2xl border p-6 transition-all shadow-xs ${
+            isExpired
+              ? "bg-red-50/90 border-red-300 ring-2 ring-red-400/40"
+              : isExpiringSoon
+              ? "bg-gradient-to-br from-amber-50 via-orange-50/30 to-white border-amber-300 ring-2 ring-amber-300/40"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3.5">
+              {/* Badges & Meta */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-gray-900 text-white">
+                  {currentPlan.replace("_", " ")} PLAN
+                </span>
 
+                {isExpired ? (
+                  <span className="bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                    <span>⚠️</span> EXPIRED ON {formattedExpiry}
+                  </span>
+                ) : isExpiringSoon ? (
+                  <span className="bg-amber-500 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs animate-pulse">
+                    <span>⏳</span> EXPIRING IN {daysLeft} DAY{daysLeft === 1 ? "" : "S"}
+                  </span>
+                ) : (
+                  <span className="bg-green-100 text-green-800 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span>✓</span> {daysLeft} DAYS REMAINING
+                  </span>
+                )}
+
+                <span className="text-xs text-gray-500">
+                  Current Expiry: <strong className="text-gray-900 font-semibold">{formattedExpiry}</strong>
+                </span>
+              </div>
+
+              {/* Title & Guidance specifically addressing residents with regular parcels */}
+              <div>
+                <h2 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase">
+                  {isExpired
+                    ? "SUBSCRIPTION EXPIRED — RENEW TO MAINTAIN 0-FEE PARCEL DROPS"
+                    : isExpiringSoon
+                    ? `SUBSCRIPTION EXPIRES ON ${formattedExpiry.toUpperCase()} — RENEWAL RECOMMENDED`
+                    : `SUBSCRIPTION VALID UNTIL ${formattedExpiry.toUpperCase()}`}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-2xl leading-relaxed">
+                  {isExpired
+                    ? "Your membership period has expired. Inactive plans incur per-parcel handling fees (₱15/claim) and standard holding limits. Settle your renewal to reactivate unlimited free drops."
+                    : isExpiringSoon
+                    ? "Attention frequent online shoppers: If you regularly receive deliveries from Shopee, Lazada, or couriers, renew your subscription before expiration to ensure uninterrupted package intake at Station 1 front desk, keep your extended holding grace, and preserve your concierge runs."
+                    : "For residents who regularly receive parcels: Keeping your subscription active ensures seamless front-desk package receiving with 0 per-parcel claim fees, priority shelving, and doorstep delivery options."}
+                </p>
+              </div>
+
+              {/* Benefits Status Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
+                  <span className="text-gray-500 block text-[11px]">Parcel Pick-up Fee</span>
+                  <span className="font-bold text-green-700 text-sm">₱0.00 Covered</span>
+                </div>
+                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
+                  <span className="text-gray-500 block text-[11px]">Free Holding Grace</span>
+                  <span className="font-bold text-gray-900 text-sm">{holdingDays[currentPlan]} Days</span>
+                </div>
+                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs col-span-2 sm:col-span-1">
+                  <span className="text-gray-500 block text-[11px]">Door Deliveries Left</span>
+                  <span className="font-bold text-brand-red text-sm">
+                    {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} Free Runs` : "Pay-Per-Trip"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action CTA */}
+            <div className="shrink-0 flex flex-col gap-2.5 sm:min-w-[220px]">
+              <button
+                type="button"
+                onClick={handleOpenRenewModal}
+                className="btn btn-primary w-full py-3 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                <span>🔄</span>
+                {isExpired ? "Reactivate Subscription" : isExpiringSoon ? "Renew Subscription Now" : "Extend / Renew Ahead"}
+              </button>
+              <p className="text-[11px] text-center text-gray-500">
+                {planPrices[currentPlan]} via GCash QR or Cash at Front Desk
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 transition-all shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-800">
+                  PER PARCEL (PAY-AS-YOU-GO)
+                </span>
+                <span className="text-xs text-gray-500">No recurring monthly charge</span>
+              </div>
+              <h2 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase">
+                FREQUENTLY RECEIVE PARCELS? SAVE UP TO 70% WITH A MONTHLY PLAN
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 max-w-2xl leading-relaxed">
+                You are currently on pay-per-trip mode paying <strong>₱15 per parcel claim</strong>. If you receive 3 or more packages a month, subscribing to our <strong>Regular (₱149/mo)</strong> or <strong>Premium (₱299/mo)</strong> plan will save you money, grant longer holding allowances, and unlock free doorstep concierge deliveries.
+              </p>
+            </div>
+
+            <div className="shrink-0 flex flex-col gap-2 sm:min-w-[220px]">
+              <button
+                type="button"
+                onClick={() => handleOpenSwitchModal("REGULAR")}
+                className="btn btn-primary w-full py-3 text-sm font-bold uppercase tracking-wider cursor-pointer"
+              >
+                Subscribe to Monthly Plan
+              </button>
+              <p className="text-[11px] text-center text-gray-500">
+                Instant activation via GCash QR
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3 Tier Plan Cards Comparison */}
       <div className="space-y-4">
@@ -440,16 +631,31 @@ export default function MembershipPage() {
             <div className="flex items-start justify-between">
               <div>
                 <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
-                  Subscription Payment
+                  {isRenewalMode ? "30-Day Subscription Renewal" : "Subscription Payment"}
                 </span>
                 <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase mt-1">
-                  {selectedPlanToSwitch ? `SWITCH TO ${selectedPlanToSwitch}` : `SETTLE ${currentPlan}`}
+                  {isRenewalMode
+                    ? `RENEW ${(selectedPlanToSwitch || currentPlan).replace("_", " ")}`
+                    : selectedPlanToSwitch
+                    ? `SWITCH TO ${selectedPlanToSwitch.replace("_", " ")}`
+                    : `SETTLE ${currentPlan.replace("_", " ")}`}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Amount Due:{" "}
-                  <strong className="text-green-700 text-sm">
-                    {planPrices[selectedPlanToSwitch || currentPlan]}
-                  </strong>
+                  {isRenewalMode ? (
+                    <>
+                      Renewal Period: <strong className="text-gray-900 font-bold">+30 Days</strong> • Amount Due:{" "}
+                      <strong className="text-green-700 text-sm">
+                        {planPrices[selectedPlanToSwitch || currentPlan]}
+                      </strong>
+                    </>
+                  ) : (
+                    <>
+                      Amount Due:{" "}
+                      <strong className="text-green-700 text-sm">
+                        {planPrices[selectedPlanToSwitch || currentPlan]}
+                      </strong>
+                    </>
+                  )}
                 </p>
               </div>
               <button
@@ -556,7 +762,11 @@ export default function MembershipPage() {
                   disabled={isProcessing}
                   className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
                 >
-                  {isProcessing ? "Verifying..." : "Confirm Payment & Activate"}
+                  {isProcessing
+                    ? "Verifying..."
+                    : isRenewalMode
+                    ? "Confirm Renewal & Extend 30 Days"
+                    : "Confirm Payment & Activate"}
                 </button>
               </div>
             ) : (
@@ -582,7 +792,11 @@ export default function MembershipPage() {
                   disabled={isProcessing}
                   className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
                 >
-                  {isProcessing ? "Updating..." : "Save (Pay Cash at Front Desk)"}
+                  {isProcessing
+                    ? "Updating..."
+                    : isRenewalMode
+                    ? "Request Renewal at Front Desk"
+                    : "Save (Pay Cash at Front Desk)"}
                 </button>
               </div>
             )}

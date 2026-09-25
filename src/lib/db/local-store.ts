@@ -382,6 +382,7 @@ class LocalDatabaseService implements IDatabaseService {
         paymentReference: residentMatch.paymentReference,
         residentCode: residentMatch.residentCode,
         deliveryCreditsLeft: residentMatch.deliveryCreditsLeft,
+        subscriptionExpiry: residentMatch.subscriptionExpiry,
         createdAt: residentMatch.createdAt,
       };
     }

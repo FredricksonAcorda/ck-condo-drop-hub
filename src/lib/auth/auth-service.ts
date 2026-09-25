@@ -21,8 +21,13 @@ class AuthService {
       }
       if (raw === "null") return null;
       const sessionUser = JSON.parse(raw) as AuthUser;
-      if (sessionUser && sessionUser.role === "resident" && sessionUser.deliveryCreditsLeft === undefined) {
-        sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 2 : 0;
+      if (sessionUser && sessionUser.role === "resident") {
+        if (sessionUser.deliveryCreditsLeft === undefined) {
+          sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 2 : 0;
+        }
+        if (!sessionUser.subscriptionExpiry && sessionUser.plan !== "PER_PARCEL") {
+          sessionUser.subscriptionExpiry = sessionUser.plan === "PREMIUM" ? "2026-10-01T23:59:59Z" : "2026-10-15T23:59:59Z";
+        }
       }
       return sessionUser;
     } catch {
@@ -128,6 +133,7 @@ class AuthService {
       paymentReference: newResident.paymentReference,
       residentCode: newResident.residentCode,
       deliveryCreditsLeft: newResident.deliveryCreditsLeft,
+      subscriptionExpiry: newResident.subscriptionExpiry,
       createdAt: newResident.createdAt,
     };
 
@@ -155,6 +161,7 @@ class AuthService {
       paymentReference: updatedResident.paymentReference,
       residentCode: updatedResident.residentCode,
       deliveryCreditsLeft: updatedResident.deliveryCreditsLeft,
+      subscriptionExpiry: updatedResident.subscriptionExpiry,
       createdAt: updatedResident.createdAt,
     };
     this.setSession(updatedUser);

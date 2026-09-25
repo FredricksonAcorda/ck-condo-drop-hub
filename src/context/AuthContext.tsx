@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         paymentReference: resident.paymentReference,
         residentCode: resident.residentCode,
         deliveryCreditsLeft: resident.deliveryCreditsLeft,
+        subscriptionExpiry: resident.subscriptionExpiry,
         createdAt: resident.createdAt,
       };
       await authService.login({ emailOrPhone: resident.email, password: "demo", role: "resident" });

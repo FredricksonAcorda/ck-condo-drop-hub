@@ -16,6 +16,7 @@ export interface AuthUser {
   paymentReference?: string;
   residentCode?: string;
   deliveryCreditsLeft?: number;
+  subscriptionExpiry?: string;
   createdAt: string;
 }
 
@@ -43,6 +44,7 @@ export interface ResidentProfile {
   preferredDeliveryWindow?: string;
   deliveryInstructions?: string;
   deliveryCreditsLeft?: number;
+  subscriptionExpiry?: string;
   totalParcelsReceived: number;
   activeParcelsCount: number;
   status: "ACTIVE" | "INACTIVE";

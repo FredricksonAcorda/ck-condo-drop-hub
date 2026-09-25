@@ -15,6 +15,7 @@ export const SEED_USERS: AuthUser[] = [
     paymentReference: "GC-9821-4402",
     residentCode: "CK-000123",
     deliveryCreditsLeft: 2,
+    subscriptionExpiry: "2026-10-01T23:59:59Z",
     createdAt: "2026-08-01T08:00:00Z",
   },
   {
@@ -31,6 +32,7 @@ export const SEED_USERS: AuthUser[] = [
     paymentReference: "GC-1029-3381",
     residentCode: "CK-000189",
     deliveryCreditsLeft: 0,
+    subscriptionExpiry: "2026-10-15T23:59:59Z",
     createdAt: "2026-08-15T09:30:00Z",
   },
   {
@@ -66,6 +68,7 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
       promoUpdates: false,
     },
     deliveryCreditsLeft: 2,
+    subscriptionExpiry: "2026-10-01T23:59:59Z",
     totalParcelsReceived: 18,
     activeParcelsCount: 3,
     status: "ACTIVE",
@@ -93,6 +96,7 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
       promoUpdates: true,
     },
     deliveryCreditsLeft: 0,
+    subscriptionExpiry: "2026-10-15T23:59:59Z",
     totalParcelsReceived: 9,
     activeParcelsCount: 1,
     status: "ACTIVE",
