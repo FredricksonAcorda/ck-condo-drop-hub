@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context";
+import { useAuth, useParcels } from "@/context";
 
 export default function MyAccountPage() {
   const { user, updateProfile } = useAuth();
+  const { inquiries, sendInquiry } = useParcels();
   const [activeTab, setActiveTab] = useState<"details" | "password" | "notifications" | "delivery">("details");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Door Delivery Dispatch State
+  const [deliveryFeedback, setDeliveryFeedback] = useState<string | null>(null);
+  const [isDispatchingDelivery, setIsDispatchingDelivery] = useState(false);
 
   // Form states
   const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
@@ -32,6 +37,38 @@ export default function MyAccountPage() {
   const [deliveryInstructions, setDeliveryInstructions] = useState(
     "Please ring doorbell and place parcels on the shoe rack outside the unit if no response."
   );
+
+  // Resident's door delivery inquiries
+  const myDeliveryInquiries = inquiries.filter(
+    (i) => i.residentId === user?.id && (i.category.toLowerCase().includes("door") || i.category.toLowerCase().includes("delivery"))
+  );
+
+  const handleDispatchDoorDelivery = async () => {
+    if (!user) return;
+    setIsDispatchingDelivery(true);
+    try {
+      await updateProfile({
+        preferredDeliveryWindow: preferredWindow,
+        deliveryInstructions: deliveryInstructions.trim(),
+      });
+
+      await sendInquiry({
+        residentId: user.id,
+        residentName: user.name,
+        residentUnit: `${user.unit || "Unit 101"}, ${user.tower || "Tower A"}`,
+        residentPhone: user.phone || "0917 123 4567",
+        category: "Doorstep Delivery Request",
+        message: `Preferred Window: ${preferredWindow}. Drop-off Instructions: ${deliveryInstructions.trim() || "Standard door delivery"}`,
+      });
+
+      setDeliveryFeedback("✓ Doorstep delivery request dispatched to Station 1 Concierge Desk! Front desk will assign a runner.");
+      setTimeout(() => setDeliveryFeedback(null), 5000);
+    } catch {
+      alert("Failed to dispatch door delivery request.");
+    } finally {
+      setIsDispatchingDelivery(false);
+    }
+  };
 
   // Synchronize when active user changes (e.g. via demo switcher)
   useEffect(() => {
@@ -398,12 +435,21 @@ export default function MyAccountPage() {
               <div className="p-6 space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                   <h4 className="font-bold text-sm text-gray-900 mb-1">
-                    DOORSTEP CONCIERGE PREFERENCES
+                    DOORSTEP CONCIERGE PREFERENCES & REQUESTS
                   </h4>
                   <p className="text-xs text-gray-500">
-                    Configure instructions for hub runners when bringing parcels to your front door.
+                    Configure instructions for hub runners and dispatch unit delivery requests directly to Station 1 Front Desk.
                   </p>
                 </div>
+
+                {deliveryFeedback && (
+                  <div className="p-3.5 bg-green-50 border border-green-200 text-green-900 text-xs rounded-xl flex items-center justify-between animate-in fade-in shadow-2xs">
+                    <span>{deliveryFeedback}</span>
+                    <button onClick={() => setDeliveryFeedback(null)} className="text-green-700 hover:text-green-900 font-bold ml-2">
+                      ✕
+                    </button>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   {/* Plan Quota Badge */}
@@ -464,11 +510,72 @@ export default function MyAccountPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
-                    Save Delivery Instructions
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving || isDispatchingDelivery}
+                    className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
+                  >
+                    {isSaving ? "Saving..." : "Save Preferences Only"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDispatchDoorDelivery}
+                    disabled={isSaving || isDispatchingDelivery}
+                    className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
+                  >
+                    {isDispatchingDelivery ? "Dispatching to Concierge..." : "Dispatch Request to Front Desk"}
                   </button>
                 </div>
+
+                {/* Dispatched Delivery Requests & Staff Confirmations */}
+                {myDeliveryInquiries.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200 space-y-3">
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">
+                      Dispatched Door Delivery Requests & Staff Status ({myDeliveryInquiries.length})
+                    </span>
+                    <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                      {myDeliveryInquiries.map((inq) => (
+                        <div key={inq.id} className="p-3 rounded-xl border border-gray-200 bg-gray-50/80 text-xs space-y-1.5 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                              <span>🚪</span> Doorstep Delivery Run
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                                inq.status === "RESOLVED"
+                                  ? "bg-green-100 text-green-800 border border-green-200"
+                                  : inq.status === "IN_PROGRESS"
+                                  ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                  : "bg-amber-100 text-amber-800 border border-amber-200 animate-pulse"
+                              }`}
+                            >
+                              {inq.status === "RESOLVED" ? "Completed / Delivered" : inq.status.replace("_", " ")}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 leading-relaxed font-mono text-[11px] bg-white p-2 rounded border border-gray-100">
+                            {inq.message}
+                          </p>
+                          <span className="text-[10px] text-gray-400 block">{inq.createdAt}</span>
+
+                          {/* Front Desk Confirmation / Runner Dispatch Notes */}
+                          {inq.adminReply && (
+                            <div className="mt-1.5 p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-950 space-y-0.5">
+                              <span className="font-bold text-[10px] text-emerald-800 flex items-center gap-1">
+                                <span>✓</span> Front Desk Confirmation:
+                              </span>
+                              <p className="text-[11px]">{inq.adminReply}</p>
+                              {inq.updatedAt && (
+                                <span className="text-[9px] text-emerald-700 block">{inq.updatedAt}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
       </div>
