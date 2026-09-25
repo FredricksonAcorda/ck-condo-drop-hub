@@ -10,11 +10,9 @@ const adminNav = [
   { label: "DASHBOARD", href: "/admin" },
   { label: "SCANNER STATION", href: "/admin/scanner" },
   { label: "HUB INVENTORY", href: "/admin/parcels" },
-  { label: "CUSTOMERS & UNITS", href: "/admin/customers" },
+  { label: "RESIDENTS & UNITS", href: "/admin/customers" },
   { label: "LOBBY INQUIRIES", href: "/admin/inquiries" },
-  { label: "ACTIVITY & SMS LOGS", href: "/admin/reports" },
   { label: "HUB SETTINGS", href: "/admin/settings" },
-  { label: "TRACKING LOOKUP", href: "/track" },
 ];
 
 export default function AdminLayout({
