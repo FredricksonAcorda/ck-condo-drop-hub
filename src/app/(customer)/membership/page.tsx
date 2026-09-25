@@ -118,6 +118,15 @@ export default function MembershipPage() {
     localStorage.setItem(storageKey, JSON.stringify(initial));
   }, [user?.id, currentPlan, isPendingPayment, user?.paymentMethod, user?.paymentReference]);
 
+  // 5-item pagination for Billing & Invoice History
+  const [invoicePage, setInvoicePage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+  const totalInvoicePages = Math.ceil(invoices.length / ITEMS_PER_PAGE) || 1;
+  const validInvoicePage = Math.min(Math.max(1, invoicePage), totalInvoicePages);
+  const startInvIndex = (validInvoicePage - 1) * ITEMS_PER_PAGE;
+  const endInvIndex = Math.min(startInvIndex + ITEMS_PER_PAGE, invoices.length);
+  const paginatedInvoices = invoices.slice(startInvIndex, endInvIndex);
+
   const handleOpenSwitchModal = (plan: "PER_PARCEL" | "REGULAR" | "PREMIUM") => {
     setIsRenewalMode(false);
     setSelectedPlanToSwitch(plan);
@@ -642,7 +651,7 @@ export default function MembershipPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-xs">
-              {invoices.map((inv) => (
+              {paginatedInvoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-mono font-semibold text-gray-900">{inv.id}</td>
                   <td className="px-4 py-3 text-gray-500">{inv.date}</td>
@@ -674,6 +683,73 @@ export default function MembershipPage() {
             </tbody>
           </table>
         </div>
+
+        {/* 5-Item Pagination Controls Footer */}
+        {invoices.length > 5 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-gray-100">
+            <div className="text-xs text-gray-500 font-medium">
+              Showing{" "}
+              <span className="font-bold text-gray-900">
+                {invoices.length === 0 ? 0 : startInvIndex + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-bold text-gray-900">{endInvIndex}</span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900">{invoices.length}</span>{" "}
+              records
+              {totalInvoicePages > 1 && (
+                <span className="ml-1 text-gray-400 font-semibold">
+                  (Page {validInvoicePage} of {totalInvoicePages})
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setInvoicePage((p) => Math.max(1, p - 1))}
+                disabled={validInvoicePage <= 1}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validInvoicePage <= 1
+                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                }`}
+                title="Previous page"
+              >
+                ← Prev
+              </button>
+
+              {Array.from({ length: totalInvoicePages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setInvoicePage(pageNum)}
+                  className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    validInvoicePage === pageNum
+                      ? "bg-brand-red text-white shadow-xs"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setInvoicePage((p) => Math.min(totalInvoicePages, p + 1))}
+                disabled={validInvoicePage >= totalInvoicePages}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validInvoicePage >= totalInvoicePages
+                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                }`}
+                title="Next page"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Interactive Payment / Switch Modal */}

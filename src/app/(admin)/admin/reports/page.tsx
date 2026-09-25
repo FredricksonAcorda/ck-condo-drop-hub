@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParcels } from "@/context";
 import { ActivityType } from "@/types";
 
@@ -48,6 +48,29 @@ export default function ReportsAndLogsPage() {
     if (smsStatusFilter === "ALL") return smsLogs;
     return smsLogs.filter((s) => s.status === smsStatusFilter);
   }, [smsLogs, smsStatusFilter]);
+
+  // 5-item pagination
+  const [activityPage, setActivityPage] = useState(1);
+  const [smsPage, setSmsPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  const totalActivityPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE) || 1;
+  const validActivityPage = Math.min(Math.max(1, activityPage), totalActivityPages);
+  const startActIndex = (validActivityPage - 1) * ITEMS_PER_PAGE;
+  const endActIndex = Math.min(startActIndex + ITEMS_PER_PAGE, filteredActivities.length);
+  const paginatedActivities = useMemo(
+    () => filteredActivities.slice(startActIndex, endActIndex),
+    [filteredActivities, startActIndex, endActIndex]
+  );
+
+  const totalSmsPages = Math.ceil(filteredSms.length / ITEMS_PER_PAGE) || 1;
+  const validSmsPage = Math.min(Math.max(1, smsPage), totalSmsPages);
+  const startSmsIndex = (validSmsPage - 1) * ITEMS_PER_PAGE;
+  const endSmsIndex = Math.min(startSmsIndex + ITEMS_PER_PAGE, filteredSms.length);
+  const paginatedSms = useMemo(
+    () => filteredSms.slice(startSmsIndex, endSmsIndex),
+    [filteredSms, startSmsIndex, endSmsIndex]
+  );
 
   // Handle Send Test SMS
   const handleSendSms = async (e: React.FormEvent) => {
@@ -199,45 +222,114 @@ export default function ReportsAndLogsPage() {
                 No activity logs match this filter.
               </div>
             ) : (
-              <div className="relative border-l-2 border-brand-border ml-3 space-y-6 pl-6">
-                {filteredActivities.map((log) => (
-                  <div key={log.id} className="relative group">
-                    {/* Timeline Node Dot */}
-                    <div className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-brand-red group-hover:scale-125 transition-transform" />
+              <>
+                <div className="relative border-l-2 border-brand-border ml-3 space-y-6 pl-6">
+                  {paginatedActivities.map((log) => (
+                    <div key={log.id} className="relative group">
+                      {/* Timeline Node Dot */}
+                      <div className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-brand-red group-hover:scale-125 transition-transform" />
 
-                    <div className="bg-brand-surface p-4 rounded-xl border border-brand-border/80 hover:border-brand-border transition-colors">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded text-white ${
-                              log.badgeColor || "bg-brand-dark"
-                            }`}
-                          >
-                            {log.type.replace("_", " ")}
+                      <div className="bg-brand-surface p-4 rounded-xl border border-brand-border/80 hover:border-brand-border transition-colors">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[9px] font-black uppercase px-2 py-0.5 rounded text-white ${
+                                log.badgeColor || "bg-brand-dark"
+                              }`}
+                            >
+                              {log.type.replace("_", " ")}
+                            </span>
+                            <h3 className="font-bold text-sm text-brand-black">{log.title}</h3>
+                          </div>
+                          <span className="text-[11px] text-brand-text-secondary font-mono">
+                            {log.timestamp}
                           </span>
-                          <h3 className="font-bold text-sm text-brand-black">{log.title}</h3>
                         </div>
-                        <span className="text-[11px] text-brand-text-secondary font-mono">
-                          {log.timestamp}
-                        </span>
-                      </div>
 
-                      <p className="text-xs text-brand-text mt-1">{log.description}</p>
+                        <p className="text-xs text-brand-text mt-1">{log.description}</p>
 
-                      <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-brand-border/60 text-[10px] text-brand-text-muted">
-                        <span>
-                          Actor: <strong>{log.actor}</strong>
-                        </span>
-                        {log.trackingNumber && (
+                        <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-brand-border/60 text-[10px] text-brand-text-muted">
                           <span>
-                            Tracking: <strong className="font-mono">{log.trackingNumber}</strong>
+                            Actor: <strong>{log.actor}</strong>
                           </span>
-                        )}
+                          {log.trackingNumber && (
+                            <span>
+                              Tracking: <strong className="font-mono">{log.trackingNumber}</strong>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* 5-Item Pagination Controls Footer */}
+                {filteredActivities.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 mt-6 border-t border-brand-border">
+                    <div className="text-xs text-brand-text-secondary font-medium">
+                      Showing{" "}
+                      <span className="font-bold text-brand-black">
+                        {filteredActivities.length === 0 ? 0 : startActIndex + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-bold text-brand-black">{endActIndex}</span>{" "}
+                      of{" "}
+                      <span className="font-bold text-brand-black">{filteredActivities.length}</span>{" "}
+                      activities
+                      {totalActivityPages > 1 && (
+                        <span className="ml-1 text-brand-text-muted font-semibold">
+                          (Page {validActivityPage} of {totalActivityPages})
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                        disabled={validActivityPage <= 1}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                          validActivityPage <= 1
+                            ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                        }`}
+                        title="Previous page"
+                      >
+                        ← Prev
+                      </button>
+
+                      {Array.from({ length: totalActivityPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setActivityPage(pageNum)}
+                          className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            validActivityPage === pageNum
+                              ? "bg-brand-red text-white shadow-xs"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => setActivityPage((p) => Math.min(totalActivityPages, p + 1))}
+                        disabled={validActivityPage >= totalActivityPages}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                          validActivityPage >= totalActivityPages
+                            ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                        }`}
+                        title="Next page"
+                      >
+                        Next →
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -303,7 +395,7 @@ export default function ReportsAndLogsPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredSms.map((sms) => (
+                    paginatedSms.map((sms) => (
                       <tr key={sms.id} className="hover:bg-brand-surface/70">
                         <td className="py-3.5 px-4 font-bold text-brand-black">
                           {sms.recipientName}
@@ -331,6 +423,73 @@ export default function ReportsAndLogsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* 5-Item Pagination Controls Footer */}
+            {filteredSms.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-brand-border bg-white">
+                <div className="text-xs text-brand-text-secondary font-medium">
+                  Showing{" "}
+                  <span className="font-bold text-brand-black">
+                    {filteredSms.length === 0 ? 0 : startSmsIndex + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-bold text-brand-black">{endSmsIndex}</span>{" "}
+                  of{" "}
+                  <span className="font-bold text-brand-black">{filteredSms.length}</span>{" "}
+                  messages
+                  {totalSmsPages > 1 && (
+                    <span className="ml-1 text-brand-text-muted font-semibold">
+                      (Page {validSmsPage} of {totalSmsPages})
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSmsPage((p) => Math.max(1, p - 1))}
+                    disabled={validSmsPage <= 1}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validSmsPage <= 1
+                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                    }`}
+                    title="Previous page"
+                  >
+                    ← Prev
+                  </button>
+
+                  {Array.from({ length: totalSmsPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setSmsPage(pageNum)}
+                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        validSmsPage === pageNum
+                          ? "bg-brand-red text-white shadow-xs"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setSmsPage((p) => Math.min(totalSmsPages, p + 1))}
+                    disabled={validSmsPage >= totalSmsPages}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validSmsPage >= totalSmsPages
+                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                    }`}
+                    title="Next page"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

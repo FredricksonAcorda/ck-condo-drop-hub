@@ -44,39 +44,42 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-brand-surface flex flex-col lg:flex-row">
-      {/* Desktop Admin Sidebar (Approx 305px, Black background) */}
-      <aside className="hidden lg:flex flex-col w-[305px] shrink-0 bg-brand-black text-white min-h-screen sticky top-0 z-30">
-        {/* Brand Header */}
-        <div className="p-6 border-b border-white/10">
-          <Link href="/admin" className="block">
-            <Image
-              src="/brand/logo-white.webp"
-              alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
-              width={240}
-              height={68}
-              className="h-10 w-auto max-h-[40px] object-contain mb-2 select-none"
-              priority
-            />
-            <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-white/60 bg-white/10 px-2.5 py-0.5 rounded">
-              STAFF PORTAL • ADMIN
-            </span>
-          </Link>
-        </div>
-
-        {/* Station Selector / Status Pill */}
-        <div className="px-6 py-4 bg-brand-dark/90 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-semibold text-white/90">Lobby Counter</span>
+    <div className="min-h-screen bg-brand-surface flex flex-col">
+      {/* Desktop Admin Sidebar (Permanently fixed to viewport, zero scroll needed to see logout) */}
+      <aside className="hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-[280px] bg-brand-black text-white h-screen justify-between z-30 border-r border-white/10 select-none">
+        {/* Top Brand & Station Header */}
+        <div className="flex flex-col shrink-0">
+          {/* Brand Header */}
+          <div className="p-5 border-b border-white/10">
+            <Link href="/admin" className="block">
+              <Image
+                src="/brand/logo-white.webp"
+                alt="CK Condo Drop Hub — Quick Drops, Easy Pick Ups"
+                width={220}
+                height={60}
+                className="h-9 w-auto max-h-[36px] object-contain mb-2 select-none"
+                priority
+              />
+              <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-white/60 bg-white/10 px-2 py-0.5 rounded">
+                STAFF PORTAL • ADMIN
+              </span>
+            </Link>
           </div>
-          <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded font-mono">
-            ONLINE
-          </span>
+
+          {/* Station Selector / Status Pill */}
+          <div className="px-5 py-3 bg-brand-dark/90 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-semibold text-white/90">Lobby Counter</span>
+            </div>
+            <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded font-mono">
+              ONLINE
+            </span>
+          </div>
         </div>
 
-        {/* Admin Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5" aria-label="Admin sidebar">
+        {/* Admin Navigation (fits viewport cleanly) */}
+        <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto" aria-label="Admin sidebar">
           {adminNav.map((item) => {
             const isActive = pathname === item.href;
             const isDeskInquiries = item.href === "/admin/inquiries";
@@ -84,7 +87,7 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                   isActive
                     ? "bg-brand-red text-white shadow-md font-black"
                     : "text-white/70 hover:text-white hover:bg-white/5"
@@ -101,18 +104,8 @@ export default function AdminLayout({
           })}
         </nav>
 
-        {/* Information Pattern Block */}
-        <div className="p-4 mx-4 mb-4 rounded-xl bg-gradient-to-r from-white/5 to-white/10 border border-white/10 text-xs">
-          <div className="text-white/90 font-bold mb-1">
-            Scanner Hardware
-          </div>
-          <p className="text-[11px] text-white/60">
-            USB Barcode Scanner & Camera QR ready for inbound drops.
-          </p>
-        </div>
-
-        {/* Staff Identity Block & Logout */}
-        <div className="p-4 border-t border-white/10 bg-brand-dark flex items-center justify-between">
+        {/* Staff Identity Block & Logout pinned at bottom */}
+        <div className="p-4 border-t border-white/10 bg-brand-dark flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-brand-red/30 border border-brand-red flex items-center justify-center text-xs font-bold text-white">
               {initials}
@@ -124,7 +117,7 @@ export default function AdminLayout({
           </div>
           <button
             onClick={handleLogout}
-            className="text-white/50 hover:text-brand-red transition-colors text-xs font-bold cursor-pointer"
+            className="text-white/60 hover:text-brand-red transition-colors text-xs font-bold cursor-pointer"
             title="Log Out"
           >
             LOGOUT
@@ -133,7 +126,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Mobile Admin Topbar Header */}
-      <header className="lg:hidden bg-brand-black text-white px-4 py-3 sticky top-0 z-40 flex items-center justify-between border-b border-white/10">
+      <header className="lg:hidden bg-brand-black text-white px-4 py-3 sticky top-0 z-40 flex items-center justify-between border-b border-white/10 shrink-0">
         <button
           onClick={() => setDrawerOpen(!drawerOpen)}
           className="p-1.5 rounded text-white hover:bg-white/10"
@@ -215,10 +208,10 @@ export default function AdminLayout({
         </>
       )}
 
-      {/* Main Admin Content Canvas */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Admin Content Canvas (Padded left on desktop for fixed sidebar) */}
+      <div className="flex-1 flex flex-col lg:pl-[280px] min-w-0 min-h-screen">
         {/* Desktop Admin Header */}
-        <header className="hidden lg:flex items-center justify-between h-[64px] bg-white border-b border-brand-border px-8">
+        <header className="hidden lg:flex items-center justify-between h-[64px] bg-white border-b border-brand-border px-8 shrink-0 sticky top-0 z-20">
           <div className="flex items-center gap-4">
             <span className="text-xs uppercase font-bold text-brand-text-secondary tracking-wider">
               {new Date().toLocaleDateString("en-US", {

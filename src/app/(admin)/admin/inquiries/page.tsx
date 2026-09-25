@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParcels } from "@/context";
 import { InquiryStatus } from "@/types";
 
@@ -42,6 +42,23 @@ export default function AdminInquiriesPage() {
       return matchesStatus && matchesSearch;
     });
   }, [inquiries, statusFilter, searchQuery]);
+
+  // 5-item pagination for lobby inquiries
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredInquiries.length / ITEMS_PER_PAGE) || 1;
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredInquiries.length);
+
+  const paginatedInquiries = useMemo(() => {
+    return filteredInquiries.slice(startIndex, endIndex);
+  }, [filteredInquiries, startIndex, endIndex]);
 
   // Open Reply Modal
   const handleOpenReply = (id: string, defaultStatus: InquiryStatus = "RESOLVED") => {
@@ -216,7 +233,7 @@ export default function AdminInquiriesPage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {filteredInquiries.map((inq) => (
+            {paginatedInquiries.map((inq) => (
               <div
                 key={inq.id}
                 className="p-5 hover:bg-gray-50/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
@@ -312,6 +329,73 @@ export default function AdminInquiriesPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 5-Item Pagination Controls Footer */}
+        {filteredInquiries.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-brand-border bg-white">
+            <div className="text-xs text-brand-text-secondary font-medium text-center sm:text-left">
+              Showing{" "}
+              <span className="font-bold text-brand-black">
+                {filteredInquiries.length === 0 ? 0 : startIndex + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-bold text-brand-black">{endIndex}</span>{" "}
+              of{" "}
+              <span className="font-bold text-brand-black">{filteredInquiries.length}</span>{" "}
+              inquiries
+              {totalPages > 1 && (
+                <span className="ml-1 text-brand-text-muted font-semibold">
+                  (Page {validPage} of {totalPages})
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={validPage <= 1}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validPage <= 1
+                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                }`}
+                title="Previous page"
+              >
+                ← Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    validPage === pageNum
+                      ? "bg-brand-red text-white shadow-xs"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={validPage >= totalPages}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validPage >= totalPages
+                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                }`}
+                title="Next page"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       </div>
