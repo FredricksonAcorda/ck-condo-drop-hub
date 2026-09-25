@@ -29,6 +29,7 @@ export interface IDatabaseService {
   // Desk Inquiries
   getInquiries(): Promise<DeskInquiry[]>;
   createInquiry(inquiry: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry>;
+  updateInquiry(id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry>;
   updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry>;
 
   // Hub Settings

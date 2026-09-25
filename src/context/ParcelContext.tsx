@@ -23,6 +23,7 @@ interface ParcelContextType {
   getResidentParcels: (residentId: string) => Parcel[];
   sendTestSms: (phone: string, name: string, message: string) => Promise<SmsLogItem>;
   sendInquiry: (input: Omit<DeskInquiry, "id" | "createdAt" | "status">) => Promise<DeskInquiry>;
+  updateInquiry: (id: string, updates: Partial<DeskInquiry>) => Promise<DeskInquiry>;
   updateInquiryStatus: (id: string, status: InquiryStatus, adminReply?: string) => Promise<DeskInquiry>;
   updateHubSettings: (settings: Partial<HubSettings>) => Promise<HubSettings>;
   refresh: () => Promise<void>;
@@ -127,6 +128,12 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     return item;
   };
 
+  const updateInquiry = async (id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry> => {
+    const item = await db.updateInquiry(id, updates);
+    await refresh();
+    return item;
+  };
+
   const updateInquiryStatus = async (id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> => {
     const item = await db.updateInquiryStatus(id, status, adminReply);
     await refresh();
@@ -158,6 +165,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     getResidentParcels,
     sendTestSms,
     sendInquiry,
+    updateInquiry,
     updateInquiryStatus,
     updateHubSettings,
     refresh,

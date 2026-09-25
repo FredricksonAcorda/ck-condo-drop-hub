@@ -516,6 +516,47 @@ class LocalDatabaseService implements IDatabaseService {
     return newInquiry;
   }
 
+  async updateInquiry(id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry> {
+    const inquiries = await this.getInquiries();
+    const index = inquiries.findIndex((i) => i.id === id);
+    if (index === -1) {
+      throw new Error(`Inquiry with ID ${id} not found.`);
+    }
+
+    const now = new Date();
+    const timestampStr =
+      now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) +
+      " • " +
+      now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+    const current = inquiries[index];
+    const updated: DeskInquiry = {
+      ...current,
+      ...updates,
+      updatedAt: timestampStr,
+    };
+
+    inquiries[index] = updated;
+    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
+
+    await this.recordActivity({
+      type: "INQUIRY_RESPONDED",
+      title: `Inquiry #${id.slice(-4)} updated by ${current.residentName}`,
+      description: `Delivery request parameters / message updated.`,
+      actor: current.residentName,
+      badgeColor: "bg-blue-600",
+    });
+
+    return updated;
+  }
+
   async updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> {
     const inquiries = await this.getInquiries();
     const index = inquiries.findIndex((i) => i.id === id);
