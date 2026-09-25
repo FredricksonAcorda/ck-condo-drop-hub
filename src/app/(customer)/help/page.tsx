@@ -68,60 +68,13 @@ export default function HelpCenterPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-gray-900 uppercase tracking-wide">
-            RESIDENT <span className="text-brand-red">HELP CENTER</span>
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Station 1 Front Desk assistance, parcel retrieval policies, and fee calculator.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <a
-            href="tel:09171234567"
-            className="btn btn-primary btn-sm font-bold uppercase"
-          >
-            Call Hotline: 0917 123 4567
-          </a>
-        </div>
-      </div>
-
-      {/* Concierge Info Banner */}
-      <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-          <div className="lg:col-span-2 space-y-2">
-            <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              Concierge Service Desk
-            </span>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl uppercase tracking-wide">
-              STATION 1 <span className="text-brand-red">FRONT RECEPTION</span>
-            </h2>
-            <p className="text-white/80 text-sm leading-relaxed max-w-lg">
-              Located on the Ground Floor Main Lobby of Buildersville Condominium. Our reception team is available 7 days a week to receive, organize, and release your packages safely.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md p-5 rounded-xl border border-white/20 space-y-2.5 text-xs">
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/70">Operating Hours:</span>
-              <span className="font-bold text-white">Daily 8:00 AM – 9:00 PM</span>
-            </div>
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/70">Weekend & Holidays:</span>
-              <span className="font-bold text-green-300">Open Normal Hours</span>
-            </div>
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <span className="text-white/70">Support Email:</span>
-              <span className="font-mono text-white">support@ckcondohub.com</span>
-            </div>
-            <div className="flex justify-between pt-1">
-              <span className="text-white/70">Front Desk Staff:</span>
-              <span className="font-bold text-brand-red">Officer on Duty</span>
-            </div>
-          </div>
-        </div>
+      <div className="bg-white p-6 rounded-xl border border-gray-200">
+        <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-gray-900 uppercase tracking-wide">
+          RESIDENT <span className="text-brand-red">HELP CENTER</span>
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Station 1 Front Desk assistance, parcel retrieval policies, and fee calculator.
+        </p>
       </div>
 
       {/* Grid: Fee Calculator & Contact Form */}

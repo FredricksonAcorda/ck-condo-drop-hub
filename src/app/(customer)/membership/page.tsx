@@ -190,53 +190,7 @@ export default function MembershipPage() {
         </div>
       )}
 
-      {/* Current Active Plan Overview Banner */}
-      <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-          <div className="lg:col-span-2 space-y-2">
-            <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              Current Plan • {user?.unit || "Unit 101"}
-            </span>
-            <h2 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl uppercase tracking-wide">
-              {currentPlan.replace("_", " ")} <span className="text-brand-red">TIER</span>
-            </h2>
-            <p className="text-white/80 text-sm leading-relaxed max-w-lg">
-              {currentPlan === "PREMIUM"
-                ? "Enjoy our highest tier with 7 days free storage grace period and 5 complimentary door-to-door concierge deliveries per month."
-                : currentPlan === "REGULAR"
-                ? "Enjoy automated SMS parcel alerts, 3 days free holding, and unlimited package drops at Station 1."
-                : "Pay-as-you-go parcel drop service for occasional online shoppers."}
-            </p>
-          </div>
 
-          <div className="bg-white/10 backdrop-blur-md p-5 rounded-xl border border-white/20 space-y-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-white/70">Monthly Fee:</span>
-              <span className="font-bold text-base text-white">{planPrices[currentPlan]}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs border-t border-white/10 pt-2">
-              <span className="text-white/70">Free Holding Allowance:</span>
-              <span className="font-bold text-green-300">{holdingDays[currentPlan]} Days Free</span>
-            </div>
-            <div className="flex justify-between items-center text-xs border-t border-white/10 pt-2">
-              <span className="text-white/70">Door Deliveries:</span>
-              <span className="font-bold text-white">{doorCredits[currentPlan]}</span>
-            </div>
-            <div className="pt-2 border-t border-white/10">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedPlanToSwitch(currentPlan);
-                  setShowPaymentModal(true);
-                }}
-                className="btn btn-outline btn-sm w-full !text-white !border-white/50 hover:!bg-white/20 font-bold uppercase cursor-pointer"
-              >
-                {isPendingPayment ? "Complete Payment" : "Manage / Renew"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 3 Tier Plan Cards Comparison */}
       <div className="space-y-4">
