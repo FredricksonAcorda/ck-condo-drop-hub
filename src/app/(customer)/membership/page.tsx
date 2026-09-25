@@ -25,6 +25,7 @@ export default function MembershipPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isRenewalMode, setIsRenewalMode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"GCASH" | "CASH_COUNTER">(user?.paymentMethod || "GCASH");
+  const [modalLayout, setModalLayout] = useState<"OPTION_A" | "OPTION_B">("OPTION_A");
   const [gcashRef, setGcashRef] = useState(user?.paymentReference || "");
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -679,7 +680,11 @@ export default function MembershipPage() {
       {/* Interactive Payment / Switch Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
+          <div
+            className={`bg-white rounded-3xl w-full p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-4 text-left animate-in fade-in zoom-in-95 transition-all duration-200 ${
+              modalLayout === "OPTION_B" && paymentMethod === "GCASH" ? "max-w-2xl" : "max-w-md"
+            }`}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
@@ -745,69 +750,198 @@ export default function MembershipPage() {
               </button>
             </div>
 
-            {/* GCash Form */}
-            {paymentMethod === "GCASH" ? (
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2.5">
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-500">Account Name:</span>
-                    <span className="font-bold text-gray-900">DI**A P.</span>
-                  </div>
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-500">GCash Mobile:</span>
-                    <span className="font-mono font-bold text-gray-900">+63 993 267 ••••</span>
-                  </div>
-
-                  <div className="bg-white p-2 rounded-xl border border-gray-200 inline-block shadow-sm mx-auto my-1">
-                    <Image
-                      src="/images/gcash-official-qr.jpg"
-                      alt="Official GCash QR Code"
-                      width={220}
-                      height={440}
-                      className="w-48 sm:w-52 h-auto rounded-lg object-contain mx-auto"
-                      priority
-                    />
-                  </div>
-                  <p className="text-[11px] text-gray-600 font-medium">
-                    Scan via GCash App, send payment, and input your reference number below.
-                  </p>
+            {/* Layout Preview Switcher (Allows User to Compare Option A vs Option B Live) */}
+            {paymentMethod === "GCASH" && (
+              <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200 px-3 py-1.5 rounded-xl text-xs">
+                <span className="text-blue-950 font-bold text-[11px] flex items-center gap-1.5">
+                  <span>🎨</span> Choose Layout:
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setModalLayout("OPTION_A")}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                      modalLayout === "OPTION_A"
+                        ? "bg-[#005CEE] text-white shadow-2xs"
+                        : "text-blue-700 hover:bg-blue-100"
+                    }`}
+                  >
+                    Option A (Centered)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalLayout("OPTION_B")}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                      modalLayout === "OPTION_B"
+                        ? "bg-[#005CEE] text-white shadow-2xs"
+                        : "text-blue-700 hover:bg-blue-100"
+                    }`}
+                  >
+                    Option B (Side-by-Side)
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    GCash Reference Number
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 9023 8841 2910"
-                    value={gcashRef}
-                    onChange={(e) => setGcashRef(e.target.value)}
-                    className="input w-full font-mono text-sm"
-                  />
-                  <div className="flex justify-end mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setGcashRef("902388412910")}
-                      className="text-[11px] text-brand-red hover:underline cursor-pointer"
-                    >
-                      Fill Sample Reference
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleConfirmPlanPayment}
-                  disabled={isProcessing}
-                  className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
-                >
-                  {isProcessing
-                    ? "Verifying..."
-                    : isRenewalMode
-                    ? "Confirm Renewal & Extend 30 Days"
-                    : "Confirm Payment & Activate"}
-                </button>
               </div>
+            )}
+
+            {/* GCash Form: Option A vs Option B */}
+            {paymentMethod === "GCASH" ? (
+              modalLayout === "OPTION_A" ? (
+                /* OPTION A: Clean, Large Centered Card */
+                <div className="space-y-4">
+                  {/* Amount Due Highlight Banner */}
+                  <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-3.5 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-emerald-100 tracking-wider block">
+                        Total Amount Due
+                      </span>
+                      <span className="text-xl font-black font-[family-name:var(--font-heading)]">
+                        {planPrices[selectedPlanToSwitch || currentPlan]}
+                      </span>
+                    </div>
+                    <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">
+                      InstaPay / GCash
+                    </span>
+                  </div>
+
+                  {/* Clean QR Display (No duplicate account/mobile text) */}
+                  <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-xs text-center space-y-2">
+                    <div className="bg-blue-50/40 p-2.5 rounded-xl border border-blue-100/60 inline-block">
+                      <Image
+                        src="/images/gcash-official-qr.jpg"
+                        alt="Official GCash QR Code"
+                        width={340}
+                        height={460}
+                        className="w-56 sm:w-64 h-auto rounded-lg object-contain mx-auto shadow-2xs"
+                        priority
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-500 font-medium">
+                      Scan with your GCash app and input reference number below.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      GCash Reference Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 9023 8841 2910"
+                      value={gcashRef}
+                      onChange={(e) => setGcashRef(e.target.value)}
+                      className="input w-full font-mono text-sm"
+                    />
+                    <div className="flex justify-end mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setGcashRef("902388412910")}
+                        className="text-[11px] text-brand-red hover:underline cursor-pointer"
+                      >
+                        Fill Sample Reference
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleConfirmPlanPayment}
+                    disabled={isProcessing}
+                    className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
+                  >
+                    {isProcessing
+                      ? "Verifying..."
+                      : isRenewalMode
+                      ? "Confirm Renewal & Extend 30 Days"
+                      : "Confirm Payment & Activate"}
+                  </button>
+                </div>
+              ) : (
+                /* OPTION B: Side-by-Side Split View */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+                    {/* Left: Big QR Code Card */}
+                    <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-xs text-center flex flex-col items-center justify-center space-y-2">
+                      <span className="text-[9px] font-black uppercase text-[#005CEE] tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/50">
+                        Official InstaPay QR
+                      </span>
+                      <div className="bg-blue-50/40 p-2 rounded-xl border border-blue-100/60 w-full flex items-center justify-center">
+                        <Image
+                          src="/images/gcash-official-qr.jpg"
+                          alt="Official GCash QR Code"
+                          width={340}
+                          height={460}
+                          className="w-48 sm:w-56 h-auto rounded-lg object-contain shadow-2xs"
+                          priority
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        Scan via GCash or any InstaPay app
+                      </p>
+                    </div>
+
+                    {/* Right: Payment Breakdown & Reference Input */}
+                    <div className="flex flex-col justify-between space-y-3">
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 space-y-1.5 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-500">Plan:</span>
+                            <span className="font-bold text-gray-900">
+                              {(selectedPlanToSwitch || currentPlan).replace("_", " ")}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-500">Duration:</span>
+                            <span className="font-bold text-gray-900">
+                              {(selectedPlanToSwitch || currentPlan) === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-bold text-gray-700">Total Due:</span>
+                            <span className="font-black text-lg text-emerald-600 font-[family-name:var(--font-heading)]">
+                              {planPrices[selectedPlanToSwitch || currentPlan]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            GCash Reference Number
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 9023 8841 2910"
+                            value={gcashRef}
+                            onChange={(e) => setGcashRef(e.target.value)}
+                            className="input w-full font-mono text-sm"
+                          />
+                          <div className="flex justify-end mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setGcashRef("902388412910")}
+                              className="text-[11px] text-brand-red hover:underline cursor-pointer"
+                            >
+                              Fill Sample Reference
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleConfirmPlanPayment}
+                        disabled={isProcessing}
+                        className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
+                      >
+                        {isProcessing
+                          ? "Verifying..."
+                          : isRenewalMode
+                          ? "Confirm Renewal"
+                          : "Confirm Payment & Activate"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
