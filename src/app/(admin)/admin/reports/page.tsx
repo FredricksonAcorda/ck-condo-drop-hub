@@ -79,6 +79,9 @@ export default function ReportsAndLogsPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Link href="/admin/inquiries" className="btn btn-outline btn-sm font-bold">
+            Desk Inquiries
+          </Link>
           <button
             type="button"
             onClick={() => setShowSmsModal(true)}

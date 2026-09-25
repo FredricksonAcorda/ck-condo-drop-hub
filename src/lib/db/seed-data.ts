@@ -1,4 +1,4 @@
-import { Parcel, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
+import { Parcel, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry } from "@/types";
 
 export const SEED_USERS: AuthUser[] = [
   {
@@ -704,3 +704,45 @@ export const DEFAULT_HUB_SETTINGS: HubSettings = {
   soundEnabled: true,
   maxShelfSlots: 60,
 };
+
+export const SEED_INQUIRIES: DeskInquiry[] = [
+  {
+    id: "inq-101",
+    residentId: "usr-resident-1",
+    residentName: "Juan Dela Cruz",
+    residentUnit: "Unit 101, Tower A",
+    residentPhone: "0917 123 4567",
+    category: "Doorstep Delivery Request",
+    trackingNumber: "SPX-PH-2026-8921",
+    message: "Hi front desk, I have a package ready. Could the runner bring it up to Unit 101 between 2:00 PM and 4:00 PM today? Thank you!",
+    status: "NEW",
+    createdAt: "Sept 25, 2026 • 09:30 AM",
+  },
+  {
+    id: "inq-102",
+    residentId: "usr-resident-2",
+    residentName: "Maria Santos",
+    residentUnit: "Unit 304, Tower B",
+    residentPhone: "0918 234 5678",
+    category: "Missing / Misplaced Package",
+    trackingNumber: "JT-PH-9920148",
+    message: "Shopee app says rider delivered package this morning, but I haven't received an SMS alert yet. Can you please check if it arrived?",
+    status: "IN_PROGRESS",
+    adminReply: "Checking shelf bin intake. Staff on duty is scanning morning drop batches.",
+    createdAt: "Sept 25, 2026 • 10:15 AM",
+    updatedAt: "Sept 25, 2026 • 10:45 AM",
+  },
+  {
+    id: "inq-103",
+    residentId: "usr-resident-1",
+    residentName: "Juan Dela Cruz",
+    residentUnit: "Unit 101, Tower A",
+    residentPhone: "0917 123 4567",
+    category: "Authorized Proxy Claimant",
+    message: "Authorizing my brother Ramon Dela Cruz to pick up parcels on my behalf this weekend with his valid Driver's License.",
+    status: "RESOLVED",
+    adminReply: "Noted with thanks. Ramon Dela Cruz added to verified proxy release logs.",
+    createdAt: "Sept 24, 2026 • 03:00 PM",
+    updatedAt: "Sept 24, 2026 • 03:20 PM",
+  },
+];

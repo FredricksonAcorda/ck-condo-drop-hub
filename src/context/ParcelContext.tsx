@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
+import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 import { scannerAudio } from "@/lib/scanner/audio-feedback";
@@ -10,6 +10,7 @@ interface ParcelContextType {
   parcels: Parcel[];
   activityLogs: ActivityLogItem[];
   smsLogs: SmsLogItem[];
+  inquiries: DeskInquiry[];
   hubSettings: HubSettings;
   loading: boolean;
   error: string | null;
@@ -21,6 +22,8 @@ interface ParcelContextType {
   getParcelByTracking: (tracking: string) => Promise<Parcel | null>;
   getResidentParcels: (residentId: string) => Parcel[];
   sendTestSms: (phone: string, name: string, message: string) => Promise<SmsLogItem>;
+  sendInquiry: (input: Omit<DeskInquiry, "id" | "createdAt" | "status">) => Promise<DeskInquiry>;
+  updateInquiryStatus: (id: string, status: InquiryStatus, adminReply?: string) => Promise<DeskInquiry>;
   updateHubSettings: (settings: Partial<HubSettings>) => Promise<HubSettings>;
   refresh: () => Promise<void>;
 }
@@ -31,6 +34,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLogItem[]>([]);
+  const [inquiries, setInquiries] = useState<DeskInquiry[]>([]);
   const [hubSettings, setHubSettings] = useState<HubSettings>({ ...DEFAULT_HUB_SETTINGS });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,15 +42,17 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
-      const [allParcels, logs, sms, settings] = await Promise.all([
+      const [allParcels, logs, sms, inqs, settings] = await Promise.all([
         db.getAllParcels(),
         db.getActivityLogs(),
         db.getSmsLogs(),
+        db.getInquiries(),
         db.getHubSettings(),
       ]);
       setParcels(allParcels);
       setActivityLogs(logs);
       setSmsLogs(sms);
+      setInquiries(inqs);
       setHubSettings(settings);
       scannerAudio.setSoundEnabled(settings.soundEnabled);
       setError(null);
@@ -115,6 +121,18 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     return item;
   };
 
+  const sendInquiry = async (input: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry> => {
+    const item = await db.createInquiry(input);
+    await refresh();
+    return item;
+  };
+
+  const updateInquiryStatus = async (id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> => {
+    const item = await db.updateInquiryStatus(id, status, adminReply);
+    await refresh();
+    return item;
+  };
+
   const updateHubSettings = async (settingsUpdates: Partial<HubSettings>): Promise<HubSettings> => {
     const updated = await db.updateHubSettings(settingsUpdates);
     setHubSettings(updated);
@@ -127,6 +145,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     parcels,
     activityLogs,
     smsLogs,
+    inquiries,
     hubSettings,
     loading,
     error,
@@ -138,6 +157,8 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     getParcelByTracking,
     getResidentParcels,
     sendTestSms,
+    sendInquiry,
+    updateInquiryStatus,
     updateHubSettings,
     refresh,
   };

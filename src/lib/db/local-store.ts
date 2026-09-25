@@ -1,5 +1,5 @@
 import { IDatabaseService } from "./db-interface";
-import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
+import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
 import {
   SEED_PARCELS,
   SEED_RESIDENTS,
@@ -7,6 +7,7 @@ import {
   SEED_ACTIVITY_LOGS,
   SEED_SMS_LOGS,
   DEFAULT_HUB_SETTINGS,
+  SEED_INQUIRIES,
 } from "./seed-data";
 
 const STORAGE_KEYS = {
@@ -16,6 +17,7 @@ const STORAGE_KEYS = {
   ACTIVITY: "ck_hub_activity_logs_v1",
   SMS: "ck_hub_sms_logs_v1",
   SETTINGS: "ck_hub_settings_v1",
+  INQUIRIES: "ck_hub_desk_inquiries_v1",
 };
 
 class LocalDatabaseService implements IDatabaseService {
@@ -24,6 +26,7 @@ class LocalDatabaseService implements IDatabaseService {
   private inMemoryUsers: AuthUser[] = [...SEED_USERS];
   private inMemoryActivity: ActivityLogItem[] = [...SEED_ACTIVITY_LOGS];
   private inMemorySms: SmsLogItem[] = [...SEED_SMS_LOGS];
+  private inMemoryInquiries: DeskInquiry[] = [...SEED_INQUIRIES];
   private inMemorySettings: HubSettings = { ...DEFAULT_HUB_SETTINGS };
 
   private isClient(): boolean {
@@ -469,6 +472,90 @@ class LocalDatabaseService implements IDatabaseService {
     });
 
     return item;
+  }
+
+  // --- Desk Inquiries ---
+
+  async getInquiries(): Promise<DeskInquiry[]> {
+    return this.load<DeskInquiry[]>(STORAGE_KEYS.INQUIRIES, this.inMemoryInquiries);
+  }
+
+  async createInquiry(input: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry> {
+    const inquiries = await this.getInquiries();
+    const now = new Date();
+    const timestampStr =
+      now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) +
+      " • " +
+      now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+    const newInquiry: DeskInquiry = {
+      ...input,
+      id: `inq-${Date.now()}`,
+      status: "NEW",
+      createdAt: timestampStr,
+    };
+
+    inquiries.unshift(newInquiry);
+    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
+
+    await this.recordActivity({
+      type: "INQUIRY_RECEIVED",
+      title: `Desk Inquiry from ${input.residentName} (${input.residentUnit})`,
+      description: `Category: ${input.category}${input.trackingNumber ? ` • Ref: ${input.trackingNumber}` : ""}`,
+      actor: input.residentName,
+      badgeColor: "bg-purple-600",
+    });
+
+    return newInquiry;
+  }
+
+  async updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> {
+    const inquiries = await this.getInquiries();
+    const index = inquiries.findIndex((i) => i.id === id);
+    if (index === -1) {
+      throw new Error(`Inquiry with ID ${id} not found.`);
+    }
+
+    const now = new Date();
+    const timestampStr =
+      now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) +
+      " • " +
+      now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+    const current = inquiries[index];
+    const updated: DeskInquiry = {
+      ...current,
+      status,
+      adminReply: adminReply !== undefined ? adminReply : current.adminReply,
+      updatedAt: timestampStr,
+    };
+
+    inquiries[index] = updated;
+    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
+
+    await this.recordActivity({
+      type: "INQUIRY_RESPONDED",
+      title: `Inquiry #${id.slice(-4)} marked ${status}`,
+      description: `Resident: ${current.residentName} (${current.residentUnit})${adminReply ? ` • Reply: "${adminReply.slice(0, 40)}..."` : ""}`,
+      actor: "Station 1 Staff",
+      badgeColor: status === "RESOLVED" ? "bg-emerald-600" : "bg-amber-600",
+    });
+
+    return updated;
   }
 
   // --- Hub Settings ---

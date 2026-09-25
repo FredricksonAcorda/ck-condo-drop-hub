@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/context";
+import { useAuth, useParcels } from "@/context";
 
 export default function HelpCenterPage() {
   const { user } = useAuth();
+  const { inquiries, sendInquiry } = useParcels();
 
   // Calculator State
   const [calcPlan, setCalcPlan] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM">(user?.plan || "PREMIUM");
@@ -24,18 +25,33 @@ export default function HelpCenterPage() {
   const [isSending, setIsSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  // Resident's Inquiries
+  const myInquiries = inquiries.filter((inq) => inq.residentId === user?.id);
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !user) return;
 
     setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
+    try {
+      await sendInquiry({
+        residentId: user.id,
+        residentName: user.name,
+        residentUnit: `${user.unit || "Unit 101"}, ${user.tower || "Tower A"}`,
+        residentPhone: user.phone || "0917 123 4567",
+        category,
+        trackingNumber: trackingNum.trim() || undefined,
+        message: message.trim(),
+      });
       setSubmitted(true);
       setMessage("");
       setTrackingNum("");
       setTimeout(() => setSubmitted(false), 5000);
-    }, 700);
+    } catch {
+      alert("Failed to submit inquiry. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const faqs = [
@@ -242,6 +258,55 @@ export default function HelpCenterPage() {
               {isSending ? "Sending to Station 1..." : "Send Message to Concierge"}
             </button>
           </form>
+
+          {/* Resident's Sent Messages & Staff Replies */}
+          {myInquiries.length > 0 && (
+            <div className="pt-3 border-t border-gray-100 space-y-2.5">
+              <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">
+                Your Past Inquiries & Staff Replies ({myInquiries.length})
+              </span>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {myInquiries.map((inq) => (
+                  <div key={inq.id} className="p-2.5 rounded-xl border border-gray-100 bg-gray-50/70 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-900">{inq.category}</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          inq.status === "RESOLVED"
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : inq.status === "IN_PROGRESS"
+                            ? "bg-blue-100 text-blue-800 border border-blue-200"
+                            : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {inq.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    {inq.trackingNumber && (
+                      <span className="font-mono text-[10px] text-gray-500 block">
+                        Tracking: {inq.trackingNumber}
+                      </span>
+                    )}
+                    <p className="text-gray-600 italic">"{inq.message}"</p>
+                    <span className="text-[10px] text-gray-400 block">{inq.createdAt}</span>
+
+                    {/* Staff Reply */}
+                    {inq.adminReply && (
+                      <div className="mt-1.5 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-950 space-y-0.5">
+                        <span className="font-bold text-[10px] text-emerald-800 flex items-center gap-1">
+                          <span>✓</span> Station 1 Front Desk Reply:
+                        </span>
+                        <p className="text-[11px]">{inq.adminReply}</p>
+                        {inq.updatedAt && (
+                          <span className="text-[9px] text-emerald-700 block">{inq.updatedAt}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

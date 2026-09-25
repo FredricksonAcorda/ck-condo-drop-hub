@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/context";
+import { useAuth, useParcels } from "@/context";
 
 const adminNav = [
   { label: "DASHBOARD", href: "/admin" },
   { label: "SCANNER STATION", href: "/admin/scanner" },
   { label: "HUB INVENTORY", href: "/admin/parcels" },
   { label: "CUSTOMERS & UNITS", href: "/admin/customers" },
+  { label: "DESK INQUIRIES", href: "/admin/inquiries" },
   { label: "ACTIVITY & SMS LOGS", href: "/admin/reports" },
   { label: "HUB SETTINGS", href: "/admin/settings" },
   { label: "TRACKING LOOKUP", href: "/track" },
@@ -24,7 +25,10 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { inquiries } = useParcels();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const newInquiriesCount = inquiries.filter((i) => i.status === "NEW").length;
 
   const staffName = user?.role === "admin" ? user.name : "Station 1 Front Desk Staff";
   const initials = staffName
@@ -75,17 +79,23 @@ export default function AdminLayout({
         <nav className="flex-1 px-4 py-6 space-y-1.5" aria-label="Admin sidebar">
           {adminNav.map((item) => {
             const isActive = pathname === item.href;
+            const isDeskInquiries = item.href === "/admin/inquiries";
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                className={`flex items-center justify-between px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                   isActive
                     ? "bg-brand-red text-white shadow-md font-black"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {isDeskInquiries && newInquiriesCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs animate-pulse">
+                    {newInquiriesCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -168,18 +178,26 @@ export default function AdminLayout({
                 </button>
               </div>
               <nav className="mt-4 space-y-1">
-                {adminNav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setDrawerOpen(false)}
-                    className={`block px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                      pathname === item.href ? "bg-brand-red text-white" : "text-white/70 hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {adminNav.map((item) => {
+                  const isDeskInquiries = item.href === "/admin/inquiries";
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setDrawerOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                        pathname === item.href ? "bg-brand-red text-white" : "text-white/70 hover:text-white"
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {isDeskInquiries && newInquiriesCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                          {newInquiriesCount}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
             <div className="pt-4 border-t border-white/10">

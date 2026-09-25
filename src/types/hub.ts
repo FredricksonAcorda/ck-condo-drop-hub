@@ -4,7 +4,9 @@ export type ActivityType =
   | "CLAIM_VERIFIED"
   | "SMS_DISPATCHED"
   | "SETTINGS_UPDATED"
-  | "RESIDENT_REGISTERED";
+  | "RESIDENT_REGISTERED"
+  | "INQUIRY_RECEIVED"
+  | "INQUIRY_RESPONDED";
 
 export interface ActivityLogItem {
   id: string;
@@ -28,6 +30,23 @@ export interface SmsLogItem {
   timestamp: string;
   trackingNumber: string;
   costEstimate: string;
+}
+
+export type InquiryStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
+
+export interface DeskInquiry {
+  id: string;
+  residentId: string;
+  residentName: string;
+  residentUnit: string;
+  residentPhone: string;
+  category: string;
+  trackingNumber?: string;
+  message: string;
+  status: InquiryStatus;
+  adminReply?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface HubSettings {

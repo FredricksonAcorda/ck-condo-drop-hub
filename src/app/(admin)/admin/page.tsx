@@ -10,7 +10,7 @@ import { printThermalShelfLabel, printClaimReleaseSlip } from "@/lib/print/label
 
 function AdminDashboardContent() {
   const { user } = useAuth();
-  const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel, hubSettings } = useParcels();
+  const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel, hubSettings, inquiries } = useParcels();
 
   // Resident directory for intake selector
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
@@ -239,6 +239,29 @@ function AdminDashboardContent() {
           </button>
         </div>
       </div>
+
+      {/* Pending Inquiries Alert Banner */}
+      {inquiries.filter((i) => i.status === "NEW").length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <div>
+              <span className="text-xs text-amber-950 font-bold block">
+                {inquiries.filter((i) => i.status === "NEW").length} Unattended Resident Desk Inquir{inquiries.filter((i) => i.status === "NEW").length === 1 ? "y" : "ies"}
+              </span>
+              <span className="text-[11px] text-amber-800">
+                Residents have sent messages regarding misplaced parcels, proxy claimants, or doorstep runs.
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/admin/inquiries"
+            className="btn btn-primary btn-sm text-xs font-bold uppercase whitespace-nowrap self-start sm:self-auto cursor-pointer"
+          >
+            Review Inquiries ({inquiries.filter((i) => i.status === "NEW").length}) →
+          </Link>
+        </div>
+      )}
 
       {/* 4 Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,4 +1,4 @@
-import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings } from "@/types";
+import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
 
 export interface IDatabaseService {
   // Parcels
@@ -25,6 +25,11 @@ export interface IDatabaseService {
   getActivityLogs(): Promise<ActivityLogItem[]>;
   getSmsLogs(): Promise<SmsLogItem[]>;
   sendTestSms(recipientPhone: string, recipientName: string, message: string): Promise<SmsLogItem>;
+
+  // Desk Inquiries
+  getInquiries(): Promise<DeskInquiry[]>;
+  createInquiry(inquiry: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry>;
+  updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry>;
 
   // Hub Settings
   getHubSettings(): Promise<HubSettings>;
