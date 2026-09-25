@@ -40,9 +40,9 @@ export default function CustomerLayout({
   };
 
   return (
-    <div className="min-h-screen bg-brand-surface flex flex-col">
+    <div className="h-screen bg-brand-surface flex flex-col overflow-hidden">
       {/* Top Header (Clean: Logo & User Status Only, No Duplicate Nav) */}
-      <header className="sticky top-0 z-50 bg-white border-b border-brand-border shadow-sm">
+      <header className="shrink-0 z-50 bg-white border-b border-brand-border shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-[64px]">
           {/* Mobile menu button */}
           <button
@@ -108,11 +108,11 @@ export default function CustomerLayout({
         </div>
       </header>
 
-      <div className="w-full flex-1 flex">
+      <div className="w-full flex-1 flex overflow-hidden">
         {/* Sidebar (desktop): All tabs/buttons only, with logout pinned to bottom */}
-        <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-white border-r border-brand-border min-h-[calc(100vh-64px)] sticky top-[64px]">
+        <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-white border-r border-brand-border h-full justify-between">
           {/* Nav items only */}
-          <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Customer sidebar">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Customer sidebar">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -129,7 +129,7 @@ export default function CustomerLayout({
           </nav>
 
           {/* Resident Identity Block & Logout pinned at bottom */}
-          <div className="p-4 border-t border-brand-border bg-brand-surface flex items-center justify-between mt-auto">
+          <div className="p-4 border-t border-brand-border bg-brand-surface flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center text-xs font-bold">
                 {initials}
@@ -205,7 +205,7 @@ export default function CustomerLayout({
         )}
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

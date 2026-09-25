@@ -18,6 +18,8 @@ export default function MyParcelsPage() {
   const [historyDate, setHistoryDate] = useState(""); // YYYY-MM-DD from calendar
   const [historyClaimedBy, setHistoryClaimedBy] = useState("");
   const [historyStatus, setHistoryStatus] = useState("ALL");
+  const [historyPage, setHistoryPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   // Copy feedback state
   const [copiedTracking, setCopiedTracking] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export default function MyParcelsPage() {
     setHistoryDate("");
     setHistoryClaimedBy("");
     setHistoryStatus("ALL");
+    setHistoryPage(1);
   };
 
   const hasActiveHistoryFilters = Boolean(
@@ -170,6 +173,16 @@ export default function MyParcelsPage() {
     });
   }, [historyParcels, historyTracking, historyCourier, historyDate, historyClaimedBy, historyStatus]);
 
+  // Pagination for Parcel History & Logs (Max 5 items per page)
+  const totalHistoryPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE) || 1;
+  const currentHistoryPage = Math.min(Math.max(1, historyPage), totalHistoryPages);
+  const historyStartIndex = (currentHistoryPage - 1) * ITEMS_PER_PAGE;
+  const historyEndIndex = Math.min(historyStartIndex + ITEMS_PER_PAGE, filteredHistory.length);
+
+  const paginatedHistory = useMemo(() => {
+    return filteredHistory.slice(historyStartIndex, historyEndIndex);
+  }, [filteredHistory, historyStartIndex, historyEndIndex]);
+
   const freeHoldingDays = user?.plan === "PREMIUM" ? 7 : 3;
 
   return (
@@ -192,7 +205,10 @@ export default function MyParcelsPage() {
           <button
             key={tab}
             type="button"
-            onClick={() => setTabFilter(tab)}
+            onClick={() => {
+              setTabFilter(tab);
+              setHistoryPage(1);
+            }}
             className={`px-4 py-2 rounded-lg transition-colors cursor-pointer ${
               tabFilter === tab
                 ? "bg-brand-red text-white shadow-sm font-black"
@@ -453,7 +469,10 @@ export default function MyParcelsPage() {
                     type="text"
                     placeholder="Search tracking #..."
                     value={historyTracking}
-                    onChange={(e) => setHistoryTracking(e.target.value)}
+                    onChange={(e) => {
+                      setHistoryTracking(e.target.value);
+                      setHistoryPage(1);
+                    }}
                     className="input w-full text-xs"
                   />
                 </div>
@@ -465,7 +484,10 @@ export default function MyParcelsPage() {
                   </label>
                   <select
                     value={historyCourier}
-                    onChange={(e) => setHistoryCourier(e.target.value)}
+                    onChange={(e) => {
+                      setHistoryCourier(e.target.value);
+                      setHistoryPage(1);
+                    }}
                     className="input w-full text-xs cursor-pointer"
                   >
                     <option value="ALL">All Couriers</option>
@@ -485,7 +507,10 @@ export default function MyParcelsPage() {
                   <input
                     type="date"
                     value={historyDate}
-                    onChange={(e) => setHistoryDate(e.target.value)}
+                    onChange={(e) => {
+                      setHistoryDate(e.target.value);
+                      setHistoryPage(1);
+                    }}
                     className="input w-full text-xs cursor-pointer bg-white"
                   />
                 </div>
@@ -499,7 +524,10 @@ export default function MyParcelsPage() {
                     type="text"
                     placeholder="e.g. Self, Spouse..."
                     value={historyClaimedBy}
-                    onChange={(e) => setHistoryClaimedBy(e.target.value)}
+                    onChange={(e) => {
+                      setHistoryClaimedBy(e.target.value);
+                      setHistoryPage(1);
+                    }}
                     className="input w-full text-xs"
                   />
                 </div>
@@ -511,7 +539,10 @@ export default function MyParcelsPage() {
                   </label>
                   <select
                     value={historyStatus}
-                    onChange={(e) => setHistoryStatus(e.target.value)}
+                    onChange={(e) => {
+                      setHistoryStatus(e.target.value);
+                      setHistoryPage(1);
+                    }}
                     className="input w-full text-xs cursor-pointer"
                   >
                     <option value="ALL">All Statuses</option>
@@ -562,7 +593,7 @@ export default function MyParcelsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {filteredHistory.map((item) => (
+                      {paginatedHistory.map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-5 py-3.5">
                             <span className="font-mono font-bold text-gray-900">
@@ -606,7 +637,7 @@ export default function MyParcelsPage() {
 
                 {/* Mobile History Stack */}
                 <div className="md:hidden divide-y divide-gray-200 border border-gray-200 rounded-xl overflow-hidden">
-                  {filteredHistory.map((item) => (
+                  {paginatedHistory.map((item) => (
                     <div key={item.id} className="p-4 space-y-2 bg-white">
                       <div className="flex items-start justify-between">
                         <div>
@@ -648,6 +679,76 @@ export default function MyParcelsPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Pagination Controls Footer (Max 5 parcels per view, with Next button) */}
+                {filteredHistory.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 mt-4">
+                    <div className="text-xs text-gray-600 font-medium text-center sm:text-left">
+                      Showing{" "}
+                      <span className="font-bold text-gray-900">
+                        {filteredHistory.length === 0 ? 0 : historyStartIndex + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-bold text-gray-900">{historyEndIndex}</span>{" "}
+                      of{" "}
+                      <span className="font-bold text-gray-900">{filteredHistory.length}</span>{" "}
+                      records
+                      {totalHistoryPages > 1 && (
+                        <span className="ml-1 text-gray-500 font-semibold">
+                          (Page {currentHistoryPage} of {totalHistoryPages})
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {/* Previous Page Button */}
+                      <button
+                        type="button"
+                        onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                        disabled={currentHistoryPage <= 1}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                          currentHistoryPage <= 1
+                            ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
+                        }`}
+                        title="Previous page"
+                      >
+                        ← Prev
+                      </button>
+
+                      {/* Numbered Page Buttons */}
+                      {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setHistoryPage(pageNum)}
+                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            currentHistoryPage === pageNum
+                              ? "bg-brand-red text-white shadow-sm font-black"
+                              : "border border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-black bg-white"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      {/* Next Page Button */}
+                      <button
+                        type="button"
+                        onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
+                        disabled={currentHistoryPage >= totalHistoryPages}
+                        className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                          currentHistoryPage >= totalHistoryPages
+                            ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                            : "bg-brand-red text-white border-brand-red hover:bg-red-700 font-black shadow-xs"
+                        }`}
+                        title="Next page"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
