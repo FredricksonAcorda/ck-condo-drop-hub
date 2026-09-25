@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 
@@ -69,13 +68,6 @@ export default function MyAccountPage() {
     }
   };
 
-  const initials = fullName
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -119,12 +111,9 @@ export default function MyAccountPage() {
         </div>
       )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left 2 Columns: Tabs & Forms */}
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            {/* Tabs Navigation */}
+      {/* Main Settings Card */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        {/* Tabs Navigation */}
             <div className="flex border-b border-gray-200 overflow-x-auto bg-gray-50">
               {[
                 { id: "details", label: "Account Details" },
@@ -427,83 +416,6 @@ export default function MyAccountPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Right Rail: Profile Summary, Membership Plan, Support Links */}
-        <div className="space-y-6">
-          {/* Resident Identity Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4 text-center">
-            <div className="w-20 h-20 bg-brand-red text-white font-[family-name:var(--font-heading)] text-3xl font-bold rounded-full flex items-center justify-center mx-auto shadow-md">
-              {initials}
-            </div>
-            <div>
-              <h3 className="font-bold text-base text-gray-900">{fullName}</h3>
-              <p className="text-xs text-gray-500">{email}</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 text-xs font-mono font-bold text-brand-red">
-                <span>PASSCODE:</span> {user?.residentCode || "CK-000123"}
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-gray-200 text-left text-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Unit / Tower:</span>
-                <span className="font-semibold text-gray-900">{unit}, {tower}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Membership Tier:</span>
-                <span className="font-semibold text-brand-red uppercase">{user?.plan || "PREMIUM"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Account Status:</span>
-                <span className={`font-semibold ${user?.planStatus === "PENDING_PAYMENT" ? "text-amber-600" : "text-green-700"}`}>
-                  ● {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Plan Upgrade Box */}
-          <div className="bg-[#FFFDF4] border-2 border-amber-300 rounded-xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-amber-900 tracking-wide">
-                MEMBERSHIP
-              </span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  user?.planStatus === "PENDING_PAYMENT"
-                    ? "bg-amber-200 text-amber-900 animate-pulse"
-                    : "bg-green-100 text-green-800"
-                }`}
-              >
-                {user?.planStatus === "PENDING_PAYMENT" ? "Pending Payment" : "Active"}
-              </span>
-            </div>
-            <p className="text-sm font-bold text-gray-900">{user?.plan || "PREMIUM"} Plan</p>
-            <p className="text-xs text-gray-500">
-              Includes {user?.plan === "PREMIUM" ? "7" : "3"}-day holding grace period & concierge front desk handling.
-            </p>
-            <Link href="/membership" className="btn btn-outline btn-sm w-full text-center block font-bold uppercase">
-              Manage Subscription
-            </Link>
-          </div>
-
-          {/* Support Link */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-2">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-gray-900">
-              NEED HELP?
-            </h4>
-            <p className="text-xs text-gray-500">
-              Need to change your registered condo unit or report a discrepancy?
-            </p>
-            <a
-              href="tel:09171234567"
-              className="text-xs font-bold text-brand-red hover:underline block pt-1"
-            >
-              Call Reception: 0917 123 4567
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
