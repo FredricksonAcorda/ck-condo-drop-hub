@@ -144,7 +144,7 @@ export default function ScannerStationPage() {
 
   // Quick 1-click release handler
   const handleQuickRelease = async (parcelToRelease: Parcel) => {
-    const staffName = user?.name || hubSettings.stationName || "Front Desk Officer";
+    const staffName = user?.name || hubSettings.stationName || "Staff Admin";
     try {
       const updated = await releaseParcel(parcelToRelease.id, parcelToRelease.residentName);
       scannerAudio.playReleaseSuccess();
@@ -286,7 +286,7 @@ export default function ScannerStationPage() {
                   <div className="text-center p-6 space-y-2">
                     <span className="text-4xl block">📹</span>
                     <p className="text-xs text-white/70 font-medium">
-                      Camera viewfinder inactive. Click below to stream front-desk camera.
+                      Camera viewfinder inactive. Click below to stream Lobby intake camera.
                     </p>
                     <button
                       type="button"
@@ -526,7 +526,7 @@ export default function ScannerStationPage() {
 
                     <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl space-y-3">
                       <div className="text-xs text-orange-900 font-semibold">
-                        Ready to log package into Station 1 shelf inventory.
+                        Ready to log package into Lobby shelf inventory.
                       </div>
                       <Link
                         href={`/admin?tracking=${encodeURIComponent(lastScannedCode)}&courier=${encodeURIComponent(detectedCourier.name)}`}
@@ -582,7 +582,7 @@ export default function ScannerStationPage() {
                                 onClick={() =>
                                   printClaimReleaseSlip({
                                     parcel: p,
-                                    releasedByStaff: user?.name || "Station 1 Staff",
+                                    releasedByStaff: user?.name || "Lobby Staff Admin",
                                     hubName: hubSettings.hubName,
                                   })
                                 }

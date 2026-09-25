@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 
 interface Invoice {
@@ -37,13 +37,13 @@ export default function MembershipPage() {
 
   const holdingDays: Record<string, number> = {
     PER_PARCEL: 3,
-    REGULAR: 3,
-    PREMIUM: 7,
+    REGULAR: 15,
+    PREMIUM: 30,
   };
 
   const doorCredits: Record<string, string> = {
-    PER_PARCEL: "None (Pay-Per-Trip)",
-    REGULAR: "None (Pay-Per-Trip)",
+    PER_PARCEL: "Not available",
+    REGULAR: "Not available for Regular Plans",
     PREMIUM: `5 Free Deliveries/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
   };
 
@@ -73,27 +73,49 @@ export default function MembershipPage() {
   const isExpiringSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
   const isExpired = daysLeft !== null && daysLeft <= 0;
 
-  // Sample resident billing history
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    {
-      id: "INV-2026-0901",
-      date: "Sept 1, 2026",
-      plan: `${currentPlan.replace("_", " ")} Membership`,
-      amount: currentPlan === "PREMIUM" ? "₱299.00" : currentPlan === "REGULAR" ? "₱149.00" : "₱0.00",
-      method: user?.paymentMethod === "CASH_COUNTER" ? "Cash at Counter" : "GCash QR",
-      reference: user?.paymentReference || "GC-9821-4402",
-      status: isPendingPayment ? "PENDING" : "PAID",
-    },
-    {
-      id: "INV-2026-0801",
-      date: "Aug 1, 2026",
-      plan: "Regular Membership",
-      amount: "₱149.00",
-      method: "GCash QR",
-      reference: "GC-1029-3381",
-      status: "PAID",
-    },
-  ]);
+  // Persistent resident billing receipts
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storageKey = `ck_invoices_${user?.id || "usr-resident-1"}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setInvoices(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse stored invoices", e);
+      }
+    }
+
+    // Default initial seed invoices
+    const initial: Invoice[] = [
+      {
+        id: "INV-2026-0901",
+        date: "Sept 1, 2026",
+        plan: `${currentPlan.replace("_", " ")} Membership`,
+        amount: currentPlan === "PREMIUM" ? "₱299.00" : currentPlan === "REGULAR" ? "₱149.00" : "₱0.00",
+        method: user?.paymentMethod === "CASH_COUNTER" ? "Cash at Counter" : "GCash QR",
+        reference: user?.paymentReference || "GC-9821-4402",
+        status: isPendingPayment ? "PENDING" : "PAID",
+      },
+      {
+        id: "INV-2026-0801",
+        date: "Aug 1, 2026",
+        plan: "Regular Membership",
+        amount: "₱149.00",
+        method: "GCash QR",
+        reference: "GC-1029-3381",
+        status: "PAID",
+      },
+    ];
+    setInvoices(initial);
+    localStorage.setItem(storageKey, JSON.stringify(initial));
+  }, [user?.id, currentPlan, isPendingPayment, user?.paymentMethod, user?.paymentReference]);
 
   const handleOpenSwitchModal = (plan: "PER_PARCEL" | "REGULAR" | "PREMIUM") => {
     setIsRenewalMode(false);
@@ -167,12 +189,12 @@ export default function MembershipPage() {
         });
         setSuccessMessage(
           isRenewalMode
-            ? `Renewal queued for ${targetPlan.replace("_", " ")} Plan. Please settle at Station 1 Front Desk.`
-            : `Switched to ${targetPlan.replace("_", " ")} Plan. Please settle at Station 1 Front Desk.`
+            ? `Renewal queued for ${targetPlan.replace("_", " ")} Plan. Please settle at Lobby.`
+            : `Switched to ${targetPlan.replace("_", " ")} Plan. Please settle at Lobby.`
         );
       }
 
-      // Add to invoices
+      // Add to persistent invoices
       const newInvoice: Invoice = {
         id: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         date: "Today",
@@ -184,7 +206,26 @@ export default function MembershipPage() {
         reference: paymentMethod === "GCASH" ? gcashRef.trim() : undefined,
         status: paymentMethod === "GCASH" || targetPlan === "PER_PARCEL" ? "PAID" : "PENDING",
       };
-      setInvoices((prev) => [newInvoice, ...prev]);
+
+      setInvoices((prev) => {
+        // If resolving a pending payment for the target plan, update the previous pending invoice or prepend new
+        const updated = prev.map((inv) =>
+          inv.status === "PENDING" && inv.plan.toLowerCase().includes(targetPlan.toLowerCase())
+            ? {
+                ...inv,
+                status: (paymentMethod === "GCASH" ? "PAID" : "PENDING") as "PAID" | "PENDING",
+                reference: paymentMethod === "GCASH" ? gcashRef.trim() : inv.reference,
+                method: paymentMethod === "GCASH" ? "GCash QR" : inv.method,
+              }
+            : inv
+        );
+        const finalInvoices = [newInvoice, ...updated.filter((inv) => inv.id !== newInvoice.id)];
+        if (typeof window !== "undefined") {
+          const storageKey = `ck_invoices_${user?.id || "usr-resident-1"}`;
+          localStorage.setItem(storageKey, JSON.stringify(finalInvoices));
+        }
+        return finalInvoices;
+      });
 
       setShowPaymentModal(false);
       setIsRenewalMode(false);
@@ -242,7 +283,7 @@ export default function MembershipPage() {
               Your {currentPlan} Subscription is Awaiting Payment
             </h3>
             <p className="text-xs text-gray-600 max-w-xl">
-              Please complete your {planPrices[currentPlan]} payment using GCash QR or visit Station 1 Front Desk to unlock your {holdingDays[currentPlan]}-day free holding period and doorstep deliveries.
+              Please complete your {planPrices[currentPlan]} payment using GCash QR or visit the Lobby to unlock your {holdingDays[currentPlan]}-day free holding period and package benefits.
             </p>
           </div>
           <button
@@ -309,8 +350,8 @@ export default function MembershipPage() {
                   {isExpired
                     ? "Your membership period has expired. Inactive plans incur per-parcel handling fees (₱15/claim) and standard holding limits. Settle your renewal to reactivate unlimited free drops."
                     : isExpiringSoon
-                    ? "Attention frequent online shoppers: If you regularly receive deliveries from Shopee, Lazada, or couriers, renew your subscription before expiration to ensure uninterrupted package intake at Station 1 front desk, keep your extended holding grace, and preserve your concierge runs."
-                    : "For residents who regularly receive parcels: Keeping your subscription active ensures seamless front-desk package receiving with 0 per-parcel claim fees, priority shelving, and doorstep delivery options."}
+                    ? "Attention frequent online shoppers: If you regularly receive deliveries from Shopee, Lazada, or couriers, renew your subscription before expiration to ensure uninterrupted package intake at the Lobby, keep your extended holding grace, and preserve your delivery perks."
+                    : "For residents who regularly receive parcels: Keeping your subscription active ensures seamless Lobby package receiving with 0 per-parcel claim fees, priority shelving, and doorstep delivery options."}
                 </p>
               </div>
 
@@ -327,7 +368,7 @@ export default function MembershipPage() {
                 <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs col-span-2 sm:col-span-1">
                   <span className="text-gray-500 block text-[11px]">Door Deliveries Left</span>
                   <span className="font-bold text-brand-red text-sm">
-                    {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} Free Runs` : "Pay-Per-Trip"}
+                    {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} Free Runs` : "Not Available"}
                   </span>
                 </div>
               </div>
@@ -344,7 +385,7 @@ export default function MembershipPage() {
                 {isExpired ? "Reactivate Subscription" : isExpiringSoon ? "Renew Subscription Now" : "Extend / Renew Ahead"}
               </button>
               <p className="text-[11px] text-center text-gray-500">
-                {planPrices[currentPlan]} via GCash QR or Cash at Front Desk
+                {planPrices[currentPlan]} via GCash QR or Cash at Lobby
               </p>
             </div>
           </div>
@@ -363,7 +404,7 @@ export default function MembershipPage() {
                 FREQUENTLY RECEIVE PARCELS? SAVE UP TO 70% WITH A MONTHLY PLAN
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 max-w-2xl leading-relaxed">
-                You are currently on pay-per-trip mode paying <strong>₱15 per parcel claim</strong>. If you receive 3 or more packages a month, subscribing to our <strong>Regular (₱149/mo)</strong> or <strong>Premium (₱299/mo)</strong> plan will save you money, grant longer holding allowances, and unlock free doorstep concierge deliveries.
+                You are currently on pay-per-trip mode paying <strong>₱15 per parcel claim</strong>. If you receive 3 or more packages a month, subscribing to our <strong>Regular (₱149/mo)</strong> or <strong>Premium (₱299/mo)</strong> plan will save you money, grant longer holding allowances, and unlock free doorstep deliveries.
               </p>
             </div>
 
@@ -476,13 +517,16 @@ export default function MembershipPage() {
                   <span className="text-green-600 font-bold">✓</span> <strong>Unlimited Parcels</strong> Stored
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> 3 Days Free Holding Grace
+                  <span className="text-green-600 font-bold">✓</span> <strong>15 Days Free Holding Grace</strong>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> Instant SMS & Claim Passcodes
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> Station 1 Priority Shelving
+                  <span className="text-green-600 font-bold">✓</span> Lobby Priority Shelving
+                </li>
+                <li className="flex items-center gap-2 text-gray-400">
+                  <span>✕</span> Door delivery not available (Upgrade to Premium)
                 </li>
               </ul>
             </div>
@@ -534,7 +578,7 @@ export default function MembershipPage() {
 
               <ul className="text-xs space-y-2.5 text-gray-700 border-t border-amber-200 pt-4">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> <strong>7 Days Extended Free Holding</strong>
+                  <span className="text-green-600 font-bold">✓</span> <strong>30 Days Extended Free Holding</strong>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> <strong>5 Free Door Deliveries / month</strong>
@@ -543,7 +587,7 @@ export default function MembershipPage() {
                   <span className="text-green-600 font-bold">✓</span> Unlimited Package Drops
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> SMS & Dedicated Hotline Concierge
+                  <span className="text-green-600 font-bold">✓</span> SMS & Dedicated Staff Admin Hotline
                 </li>
               </ul>
             </div>
@@ -772,9 +816,9 @@ export default function MembershipPage() {
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
-                  <div className="font-bold text-sm text-gray-900">Front Desk Cashier:</div>
+                  <div className="font-bold text-sm text-gray-900">Lobby Cashier:</div>
                   <p className="text-gray-600">
-                    Please bring cash payment to Station 1 Front Desk (Ground Floor Lobby).
+                    Please bring cash payment to the Lobby (Ground Floor Lobby).
                   </p>
                   <div className="p-2.5 bg-white rounded-lg border border-gray-200 space-y-1">
                     <div>• Resident Passcode: <strong className="font-mono text-brand-red">{user?.residentCode}</strong></div>
@@ -782,7 +826,7 @@ export default function MembershipPage() {
                     <div>• Amount: <strong className="text-green-700">{planPrices[selectedPlanToSwitch || currentPlan]}</strong></div>
                   </div>
                   <p className="text-gray-500 text-[11px]">
-                    Your subscription will stay in Pending status until confirmed by reception staff.
+                    Your subscription will stay in Pending status until confirmed by Lobby Staff Admin.
                   </p>
                 </div>
 
@@ -795,8 +839,8 @@ export default function MembershipPage() {
                   {isProcessing
                     ? "Updating..."
                     : isRenewalMode
-                    ? "Request Renewal at Front Desk"
-                    : "Save (Pay Cash at Front Desk)"}
+                    ? "Request Renewal at Lobby"
+                    : "Save (Pay Cash at Lobby)"}
                 </button>
               </div>
             )}

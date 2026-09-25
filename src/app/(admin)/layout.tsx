@@ -30,7 +30,7 @@ export default function AdminLayout({
 
   const newInquiriesCount = inquiries.filter((i) => i.status === "NEW").length;
 
-  const staffName = user?.role === "admin" ? user.name : "Station 1 Front Desk Staff";
+  const staffName = user?.role === "admin" ? user.name : "Lobby Staff Admin";
   const initials = staffName
     .split(" ")
     .map((n) => n[0])
@@ -68,7 +68,7 @@ export default function AdminLayout({
         <div className="px-6 py-4 bg-brand-dark/90 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-semibold text-white/90">Station 1: Front Desk</span>
+            <span className="text-xs font-semibold text-white/90">Lobby Counter</span>
           </div>
           <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded font-mono">
             ONLINE
@@ -119,7 +119,7 @@ export default function AdminLayout({
             </div>
             <div>
               <p className="text-xs font-bold text-white leading-tight">{staffName}</p>
-              <p className="text-[10px] text-white/60">Front Desk Officer</p>
+              <p className="text-[10px] text-white/60">Staff Admin</p>
             </div>
           </div>
           <button

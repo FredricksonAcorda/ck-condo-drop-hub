@@ -2,7 +2,7 @@ import FAQAccordion, { FAQItem } from "@/components/ui/FAQAccordion";
 
 const faqItems: FAQItem[] = [
   {
-    question: "How do I sign up and start receiving parcels at the hub?",
+    question: "How do I sign up and start receiving parcels at the Lobby?",
     answer: (
       <p>
         Getting started is quick and easy! Click <strong className="font-bold text-brand-red">Sign Up</strong>, enter your name, mobile number, condominium tower, and unit number. Once registered, you will receive your unique resident drop code to use on your Shopee, Lazada, TikTok, and courier delivery addresses.
@@ -13,12 +13,12 @@ const faqItems: FAQItem[] = [
     question: "How will I know when my parcel has arrived and is ready for pickup?",
     answer: (
       <p>
-        The moment our front desk scans your parcel into the hub, you will receive an automatic <strong className="font-bold text-brand-text">SMS notification</strong> and an instant update in your resident customer portal with your package details and digital claim code.
+        The moment our Lobby Staff Admin scans your parcel into the Lobby, you will receive an automatic <strong className="font-bold text-brand-text">SMS notification</strong> and an instant update in your resident customer portal with your package details and digital claim code.
       </p>
     ),
   },
   {
-    question: "What are the hub operating hours for claiming packages?",
+    question: "What are the Lobby operating hours for claiming packages?",
     answer: (
       <p>
         Our physical storefront is open <strong className="font-bold text-brand-text">Monday to Sunday from 8:00 AM to 9:00 PM</strong>, including weekends and selected public holidays. You can pick up anytime during these hours by presenting your claim QR code or 4-digit verification pin.
@@ -29,15 +29,15 @@ const faqItems: FAQItem[] = [
     question: "How does the free holding period work?",
     answer: (
       <p>
-        Every parcel receives <strong className="font-bold text-brand-text">3 days of free holding</strong> on the Regular and Per Parcel plans, and <strong className="font-bold text-brand-red">7 days of free holding</strong> on the Premium Plan. Parcels held past the free window incur a minimal holding fee of only ₱5 per day.
+        Every parcel receives <strong className="font-bold text-brand-text">3 days of free holding</strong> on the Per Parcel plan, <strong className="font-bold text-brand-red">15 days of free holding with unlimited parcels</strong> on the Regular Plan, and <strong className="font-bold text-brand-red">30 days of free holding</strong> on the Premium VIP Plan. Parcels held past the free window incur a minimal holding fee of only ₱5 per day.
       </p>
     ),
   },
   {
-    question: "How does the door-to-door concierge delivery service work?",
+    question: "How does the door-to-door delivery service work?",
     answer: (
       <p>
-        Premium members receive <strong className="font-bold text-brand-red">5 free door-to-door deliveries</strong> every month. You can request direct doorstep delivery to your unit with a single tap from your online customer portal during operating hours.
+        Premium VIP members receive <strong className="font-bold text-brand-red">5 free door-to-door deliveries</strong> every month. You can request direct doorstep delivery to your unit with a single tap from your online customer portal during operating hours. (Note: Door delivery is exclusive to Premium VIP members and is not available on Regular or Per Parcel plans).
       </p>
     ),
   },
@@ -74,14 +74,14 @@ export default function AnnouncementsSection() {
       desc: (
         <>
           <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
-            Please claim your parcels within the{" "}
+            Please claim your parcels within your plan&apos;s{" "}
             <span className="text-brand-red font-black underline decoration-2 underline-offset-4">
-              3 to 7-day free holding period
+              free holding period (up to 15 or 30 days)
             </span>{" "}
             to prevent extra storage charges.
           </p>
           <p className="text-sm sm:text-base lg:text-lg text-brand-text font-semibold mt-3 leading-relaxed">
-            Prompt pickup keeps our hub organized and prevents penalty fees.
+            Prompt pickup keeps our Lobby organized and prevents penalty fees.
           </p>
         </>
       ),

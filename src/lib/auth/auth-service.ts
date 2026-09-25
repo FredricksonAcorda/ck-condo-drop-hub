@@ -59,7 +59,7 @@ class AuthService {
       const adminUser: AuthUser = {
         id: "usr-admin-1",
         email: "admin@ckcondohub.com",
-        name: "Station 1 Front Desk Staff",
+        name: "Lobby Staff Admin",
         phone: "0917 999 8888",
         role: "admin",
         createdAt: "2026-07-01T08:00:00Z",

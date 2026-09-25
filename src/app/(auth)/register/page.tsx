@@ -578,11 +578,11 @@ export default function RegisterPage() {
                 <div className="bg-[#1c1c21] border border-amber-800/40 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
                     <span>🏢</span>
-                    <span>Station 1 Front Desk Cashier</span>
+                    <span>Lobby Staff Admin Cashier</span>
                   </div>
 
                   <p className="text-xs text-zinc-300 leading-relaxed">
-                    You can pay in cash at the Ground Floor Front Desk reception lobby during operational hours.
+                    You can pay in cash at the Ground Floor Lobby reception counter during operational hours.
                   </p>
 
                   <div className="bg-[#141416] p-3 rounded-xl border border-zinc-800 text-xs space-y-1 text-zinc-300">

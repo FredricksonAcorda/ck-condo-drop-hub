@@ -22,7 +22,7 @@ export default function ReportsAndLogsPage() {
   const [recipientPhone, setRecipientPhone] = useState("0917 123 4567");
   const [recipientName, setRecipientName] = useState("Juan Dela Cruz");
   const [messageText, setMessageText] = useState(
-    "CK Condo Drop Hub: Friendly reminder that you have 2 package(s) ready for pickup at Station 1. Please claim before the holding deadline."
+    "CK Condo Drop Hub: Friendly reminder that you have 2 package(s) ready for pickup at the Lobby. Please claim before the holding deadline."
   );
   const [smsFeedback, setSmsFeedback] = useState<string | null>(null);
 
@@ -74,13 +74,13 @@ export default function ReportsAndLogsPage() {
             AUDIT LOGS & <span className="text-brand-red">SMS QUEUE</span>
           </h1>
           <p className="text-xs text-brand-text-secondary mt-0.5">
-            Front desk station event trail and simulated carrier SMS gateway delivery dispatch.
+            Lobby counter event trail and simulated carrier SMS gateway delivery dispatch.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <Link href="/admin/inquiries" className="btn btn-outline btn-sm font-bold">
-            Desk Inquiries
+            Lobby Inquiries
           </Link>
           <button
             type="button"

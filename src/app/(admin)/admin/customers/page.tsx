@@ -251,9 +251,9 @@ export default function AdminCustomersPage() {
               </div>
 
               <div>
-                <span className="text-brand-text-secondary block mb-0.5">Parcels at Hub:</span>
+                <span className="text-brand-text-secondary block mb-0.5">Parcels at Lobby:</span>
                 <p>
-                  Currently storing <strong>{getActiveParcelsForResident(selectedResident.id)} active parcels</strong> in Station 1 inventory.
+                  Currently storing <strong>{getActiveParcelsForResident(selectedResident.id)} active parcels</strong> in Lobby inventory.
                 </p>
               </div>
             </div>

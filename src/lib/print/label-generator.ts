@@ -7,7 +7,7 @@ export interface PrintLabelOptions {
 }
 
 export function generateShelfLabelHtml(options: PrintLabelOptions): string {
-  const { parcel, hubName = "CK CONDO DROP HUB", station = "Station 1 Front Desk" } = options;
+  const { parcel, hubName = "CK CONDO DROP HUB", station = "Lobby Counter" } = options;
 
   return `
 <!DOCTYPE html>
@@ -190,7 +190,7 @@ export function generateReleaseSlipHtml(options: {
   <div class="center">
     <div class="hub-name">${hubName}</div>
     <div class="title">OFFICIAL PARCEL RELEASE RECEIPT</div>
-    <div>Buildersville Condominium • Station 1</div>
+    <div>Buildersville Condominium • Lobby</div>
   </div>
 
   <div class="divider"></div>
@@ -241,7 +241,7 @@ export function generateReleaseSlipHtml(options: {
 
   <div class="footer">
     Thank you for trusting CK Condo Drop Hub.<br>
-    Questions? Visit the front desk or call building management.
+    Questions? Visit the Lobby or call building management.
   </div>
 
   <script>

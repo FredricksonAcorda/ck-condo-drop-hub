@@ -69,7 +69,7 @@ export default function MyAccountPage() {
         message: `Preferred Window: ${preferredWindow}. Drop-off Instructions: ${deliveryInstructions.trim() || "Standard door delivery"}`,
       });
 
-      setDeliveryFeedback("✓ Doorstep delivery request dispatched to Station 1 Concierge Desk! Front desk will assign a runner.");
+      setDeliveryFeedback("✓ Doorstep delivery request dispatched to the Lobby! Staff Admin will process your request.");
       setIsEditingRequest(false);
       setTimeout(() => setDeliveryFeedback(null), 5000);
     } catch {
@@ -92,7 +92,7 @@ export default function MyAccountPage() {
         message: `Preferred Window: ${preferredWindow}. Drop-off Instructions: ${deliveryInstructions.trim() || "Standard door delivery"}`,
       });
 
-      setDeliveryFeedback("✓ Door delivery request updated! Station 1 Front Desk has been notified of your changes.");
+      setDeliveryFeedback("✓ Door delivery request updated! Lobby Staff Admin has been notified of your changes.");
       setIsEditingRequest(false);
       setTimeout(() => setDeliveryFeedback(null), 5000);
     } catch {
@@ -107,7 +107,7 @@ export default function MyAccountPage() {
     setIsDispatchingDelivery(true);
     try {
       await deleteInquiry(activePendingDelivery.id);
-      setDeliveryFeedback("✓ Active door delivery request cancelled. Front desk has been updated.");
+      setDeliveryFeedback("✓ Active door delivery request cancelled. Lobby has been updated.");
       setIsEditingRequest(false);
       setTimeout(() => setDeliveryFeedback(null), 5000);
     } catch {
@@ -415,7 +415,7 @@ export default function MyAccountPage() {
                     <Link href="/forgot-password" className="text-brand-red font-bold hover:underline">
                       Click here
                     </Link>{" "}
-                    to request a secure recovery code via SMS/Email, or visit the <strong>Station 1 Front Desk</strong> with a valid resident ID for instant staff assistance.
+                    to request a secure recovery code via SMS/Email, or visit the <strong>Lobby</strong> with a valid resident ID for instant Staff Admin assistance.
                   </p>
                 </div>
               </form>
@@ -482,10 +482,10 @@ export default function MyAccountPage() {
               <div className="p-6 space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                   <h4 className="font-bold text-sm text-gray-900 mb-1">
-                    DOORSTEP CONCIERGE PREFERENCES & REQUESTS
+                    DOORSTEP DELIVERY PREFERENCES & REQUESTS
                   </h4>
                   <p className="text-xs text-gray-500">
-                    Configure instructions for hub runners and dispatch unit delivery requests directly to Station 1 Front Desk.
+                    Configure instructions for Staff Admin and dispatch unit delivery requests directly to the Lobby.
                   </p>
                 </div>
 
@@ -502,185 +502,220 @@ export default function MyAccountPage() {
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="font-bold text-amber-950 block text-sm">
-                      {user?.plan === "PREMIUM" ? "Premium Concierge Benefit" : "Concierge Runner Service"}
+                      {user?.plan === "PREMIUM"
+                        ? "Premium Door Delivery Benefit"
+                        : user?.plan === "REGULAR"
+                        ? "Door Delivery isn't available for Regular Plan"
+                        : "Door Delivery isn't available for Per Parcel"}
                     </span>
                     <span className="text-amber-800 text-xs">
                       {user?.plan === "PREMIUM"
-                        ? `Includes 5 free concierge door deliveries per month. You have ${user?.deliveryCreditsLeft ?? 0} free runs remaining.`
-                        : "Your Regular plan has 0 free deliveries. Concierge doorstep delivery is available at pay-per-trip rates."}
+                        ? `Includes 5 free door deliveries per month. You have ${user?.deliveryCreditsLeft ?? 0} free deliveries remaining.`
+                        : user?.plan === "REGULAR"
+                        ? "Door Delivery isn't available for Regular Plan. Upgrade to unlock this."
+                        : "Door Delivery isn't available for Per Parcel. Upgrade to unlock this."}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
                       {user?.plan === "PREMIUM"
                         ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
-                        : "0 Free (Pay-Per-Trip)"}
+                        : "Not Available"}
                     </span>
                     {user?.plan !== "PREMIUM" && (
                       <Link
                         href="/membership"
                         className="text-xs font-bold text-brand-red hover:underline whitespace-nowrap"
                       >
-                        Upgrade Plan →
+                        Upgrade to Premium →
                       </Link>
                     )}
                   </div>
                 </div>
 
-                {/* Active Pending Request Card (Shown when pending and NOT in edit mode) */}
-                {activePendingDelivery && !isEditingRequest ? (
-                  <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-5 space-y-3.5 shadow-2xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 pb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="font-bold text-sm text-amber-950">
-                          Active Door Delivery Request Pending at Station 1 Desk
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 self-start sm:self-auto uppercase tracking-wide">
-                        {activePendingDelivery.status === "IN_PROGRESS" ? "In Progress" : "Pending Front Desk Action"}
-                      </span>
+                {/* If Not Premium: Door delivery is NOT available; residents cannot send request to lobby */}
+                {user?.plan !== "PREMIUM" ? (
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+                      🔒
                     </div>
-
-                    <div className="space-y-1 text-xs">
-                      <span className="text-amber-900 font-bold block text-[11px] uppercase tracking-wider">
-                        Current Request Details:
-                      </span>
-                      <p className="bg-white p-3 rounded-xl border border-amber-200 font-mono text-gray-800 leading-relaxed">
-                        {activePendingDelivery.message}
+                    <div className="space-y-1.5 max-w-md mx-auto">
+                      <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase text-gray-900">
+                        Door Delivery Isn't Available for {user?.plan === "REGULAR" ? "Regular Plan" : "Per Parcel"}
+                      </h3>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {user?.plan === "REGULAR"
+                          ? "Your Regular Plan includes 15 days of unlimited parcel storage at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."
+                          : "Per Parcel accounts are self-pickup at the Lobby. Upgrade your subscription to unlock doorstep delivery service directly to your condo door."}
                       </p>
                     </div>
-
-                    {activePendingDelivery.adminReply && (
-                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
-                        <span className="font-bold text-emerald-800 block text-[11px]">✓ Front Desk Confirmation:</span>
-                        <p>{activePendingDelivery.adminReply}</p>
-                      </div>
-                    )}
-
-                    <div className="pt-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <span className="text-[11px] text-gray-500">
-                        Dispatched: {activePendingDelivery.createdAt}
-                      </span>
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={handleCancelDoorDelivery}
-                          disabled={isDispatchingDelivery}
-                          className="btn btn-outline btn-sm text-xs font-bold uppercase text-red-600 !border-red-200 hover:!bg-red-50 cursor-pointer"
-                        >
-                          Cancel Request ✕
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingRequest(true)}
-                          className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
-                        >
-                          Edit Request ✏️
-                        </button>
-                      </div>
+                    <div>
+                      <Link
+                        href="/membership"
+                        className="btn btn-primary btn-sm font-bold uppercase inline-flex items-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        Upgrade to Premium to Unlock (5 Free Deliveries/mo) →
+                      </Link>
                     </div>
                   </div>
                 ) : (
-                  /* Form: Shown when no pending request OR when editing active request */
-                  <div className="space-y-4">
-                    {!isEditingRequest && latestDelivery?.status === "RESOLVED" && (
-                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
-                        <div className="flex items-center justify-between font-bold text-emerald-950">
-                          <span className="flex items-center gap-1.5">
-                            <span>✓</span> Last Doorstep Delivery Completed by Front Desk
-                          </span>
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-normal">
-                            {latestDelivery.updatedAt || latestDelivery.createdAt}
+                  /* Premium Tier Only: Active Pending Request Card OR Dispatch Form */
+                  <>
+                    {activePendingDelivery && !isEditingRequest ? (
+                      <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                            <span className="font-bold text-sm text-amber-950">
+                              Active Door Delivery Request Pending at Lobby
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 self-start sm:self-auto uppercase tracking-wide">
+                            {activePendingDelivery.status === "IN_PROGRESS" ? "In Progress" : "Pending Lobby Action"}
                           </span>
                         </div>
-                        {latestDelivery.adminReply && (
-                          <p className="text-[11px] text-emerald-800">
-                            Front Desk Note: "{latestDelivery.adminReply}"
+
+                        <div className="space-y-1 text-xs">
+                          <span className="text-amber-900 font-bold block text-[11px] uppercase tracking-wider">
+                            Current Request Details:
+                          </span>
+                          <p className="bg-white p-3 rounded-xl border border-amber-200 font-mono text-gray-800 leading-relaxed">
+                            {activePendingDelivery.message}
                           </p>
+                        </div>
+
+                        {activePendingDelivery.adminReply && (
+                          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
+                            <span className="font-bold text-emerald-800 block text-[11px]">✓ Lobby Confirmation:</span>
+                            <p>{activePendingDelivery.adminReply}</p>
+                          </div>
                         )}
-                        <p className="text-[11px] text-emerald-700 pt-0.5">
-                          Need another package brought to your door? Choose your preferred window below and dispatch a new request.
-                        </p>
+
+                        <div className="pt-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <span className="text-[11px] text-gray-500">
+                            Dispatched: {activePendingDelivery.createdAt}
+                          </span>
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <button
+                              type="button"
+                              onClick={handleCancelDoorDelivery}
+                              disabled={isDispatchingDelivery}
+                              className="btn btn-outline btn-sm text-xs font-bold uppercase text-red-600 !border-red-200 hover:!bg-red-50 cursor-pointer"
+                            >
+                              Cancel Request ✕
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingRequest(true)}
+                              className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
+                            >
+                              Edit Request ✏️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Form: Shown when no pending request OR when editing active request */
+                      <div className="space-y-4">
+                        {!isEditingRequest && latestDelivery?.status === "RESOLVED" && (
+                          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
+                            <div className="flex items-center justify-between font-bold text-emerald-950">
+                              <span className="flex items-center gap-1.5">
+                                <span>✓</span> Last Doorstep Delivery Completed by Lobby
+                              </span>
+                              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-normal">
+                                {latestDelivery.updatedAt || latestDelivery.createdAt}
+                              </span>
+                            </div>
+                            {latestDelivery.adminReply && (
+                              <p className="text-[11px] text-emerald-800">
+                                Lobby Note: "{latestDelivery.adminReply}"
+                              </p>
+                            )}
+                            <p className="text-[11px] text-emerald-700 pt-0.5">
+                              Need another package brought to your door? Choose your preferred window below and dispatch a new request.
+                            </p>
+                          </div>
+                        )}
+
+                        {isEditingRequest && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
+                            <span>Editing your active pending request. Adjust your time window or notes and click <strong>Update Request</strong>.</span>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            Preferred Delivery Window
+                          </label>
+                          <select
+                            value={preferredWindow}
+                            onChange={(e) => setPreferredWindow(e.target.value)}
+                            className="input w-full cursor-pointer"
+                          >
+                            <option>Morning (10:00 AM - 12:00 PM)</option>
+                            <option>Afternoon (2:00 PM - 5:00 PM)</option>
+                            <option>Evening (6:00 PM - 8:30 PM)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            Drop-off Instructions (Saved for Lobby Staff Admin)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={deliveryInstructions}
+                            onChange={(e) => setDeliveryInstructions(e.target.value)}
+                            placeholder="e.g. Please ring doorbell and place parcels on the shoe rack outside the unit..."
+                            className="input w-full"
+                          />
+                        </div>
+
+                        <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                          {isEditingRequest ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingRequest(false)}
+                                disabled={isDispatchingDelivery}
+                                className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
+                              >
+                                Cancel Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleUpdateDoorDelivery}
+                                disabled={isDispatchingDelivery}
+                                className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
+                              >
+                                {isDispatchingDelivery ? "Updating Request..." : "Update Request ✓"}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleSave}
+                                disabled={isSaving || isDispatchingDelivery}
+                                className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
+                              >
+                                {isSaving ? "Saving..." : "Save Preferences"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleDispatchDoorDelivery}
+                                disabled={isSaving || isDispatchingDelivery}
+                                className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
+                              >
+                                {isDispatchingDelivery ? "Dispatching to Lobby..." : "Request Lobby Door Run"}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
-
-                    {isEditingRequest && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
-                        <span>Editing your active pending request. Adjust your time window or notes and click <strong>Update Request</strong>.</span>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Preferred Delivery Window
-                      </label>
-                      <select
-                        value={preferredWindow}
-                        onChange={(e) => setPreferredWindow(e.target.value)}
-                        className="input w-full cursor-pointer"
-                      >
-                        <option>Morning (10:00 AM - 12:00 PM)</option>
-                        <option>Afternoon (2:00 PM - 5:00 PM)</option>
-                        <option>Evening (6:00 PM - 8:30 PM)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Drop-off Instructions (Saved for Concierge Runners)
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={deliveryInstructions}
-                        onChange={(e) => setDeliveryInstructions(e.target.value)}
-                        placeholder="e.g. Please ring doorbell and place parcels on the shoe rack outside the unit..."
-                        className="input w-full"
-                      />
-                    </div>
-
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
-                      {isEditingRequest ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingRequest(false)}
-                            disabled={isDispatchingDelivery}
-                            className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
-                          >
-                            Cancel Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleUpdateDoorDelivery}
-                            disabled={isDispatchingDelivery}
-                            className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
-                          >
-                            {isDispatchingDelivery ? "Updating Request..." : "Update Request ✓"}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={isSaving || isDispatchingDelivery}
-                            className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
-                          >
-                            {isSaving ? "Saving..." : "Save Preferences"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleDispatchDoorDelivery}
-                            disabled={isSaving || isDispatchingDelivery}
-                            className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
-                          >
-                            {isDispatchingDelivery ? "Dispatching to Concierge..." : "Request Concierge Door Run"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}

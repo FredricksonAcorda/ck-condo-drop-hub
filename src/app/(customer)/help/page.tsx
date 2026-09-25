@@ -56,28 +56,28 @@ export default function HelpCenterPage() {
 
   const faqs = [
     {
-      q: "How do I claim my package at Station 1 Front Desk?",
-      a: "Proceed to Station 1 Front Desk in the Ground Floor Main Lobby during operating hours (8:00 AM – 9:00 PM). Present your 4-digit parcel passcode (e.g. CK-8921) or show the QR code from your My Parcels tab. Our receptionist will verify the code and hand you your parcel immediately.",
+      q: "How do I claim my package at the Lobby?",
+      a: "Proceed to the Lobby in the Ground Floor Main Lobby during operating hours (8:00 AM – 9:00 PM). Present your 4-digit parcel passcode (e.g. CK-8921) or show the QR code from your My Parcels tab. Our Staff Admin will verify the code and hand you your parcel immediately.",
     },
     {
       q: "Can my spouse, family member, or helper claim my parcels on my behalf?",
-      a: "Yes! Go to My Account > Authorized Claimants and register their full name and mobile number. They can claim your packages by showing their valid government ID or condominium resident badge at the front desk.",
+      a: "Yes! Go to My Account > Authorized Claimants and register their full name and mobile number. They can claim your packages by showing their valid government ID or condominium resident badge at the Lobby.",
     },
     {
       q: "What happens if I cannot claim my package within the free holding period?",
-      a: "Parcels under Regular and Per-Parcel plans have 3 free calendar days, while Premium members enjoy 7 free calendar days. If a parcel remains unclaimed after the free holding period, a storage holding fee of ₱10.00 per day applies upon pickup.",
+      a: "Parcels under Per-Parcel plans have 3 free calendar days, Regular plans enjoy 15 free calendar days, and Premium members enjoy 30 free calendar days. If a parcel remains unclaimed after the free holding period, a storage holding fee of ₱10.00 per day applies upon pickup.",
     },
     {
       q: "How does Door-to-Door Unit Delivery work?",
-      a: "If you don't want to carry heavy boxes or are away from home, you can schedule a unit delivery from My Parcels or the Dashboard. A hub runner will bring your package directly to your condo door during your chosen delivery window (Morning, Afternoon, or Evening). Premium members receive 5 complimentary door deliveries each month!",
+      a: "If you don't want to carry heavy boxes or are away from home, Premium subscribers can schedule a unit delivery from My Account. A Staff Admin will bring your package directly to your condo door during your chosen delivery window (Morning, Afternoon, or Evening). Premium members receive 5 complimentary door deliveries each month!",
     },
     {
-      q: "What payment methods are accepted at Station 1?",
-      a: "We accept GCash QR (instant scanning), Maya QR, and Cash at the front desk counter. You can pay holding fees, subscription renewals, or per-parcel drops on the spot.",
+      q: "What payment methods are accepted at the Lobby?",
+      a: "We accept GCash QR (instant scanning), Maya QR, and Cash at the Lobby counter. You can pay holding fees, subscription renewals, or per-parcel drops on the spot.",
     },
     {
       q: "Which delivery couriers are supported by CK Condo Drop Hub?",
-      a: "All major Philippine couriers deliver to our hub daily, including Shopee Xpress (SPX), Lazada Express, J&T Express, Flash Express, LBC, Ninja Van, and DHL. Riders log packages directly into Station 1 bins.",
+      a: "All major Philippine couriers deliver to our lobby daily, including Shopee Xpress (SPX), Lazada Express, J&T Express, Flash Express, LBC, Ninja Van, and DHL. Riders log packages directly into Lobby bins.",
     },
   ];
 
@@ -89,7 +89,7 @@ export default function HelpCenterPage() {
           RESIDENT <span className="text-brand-red">HELP CENTER</span>
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Station 1 Front Desk assistance, parcel retrieval policies, and fee calculator.
+          Lobby assistance, parcel retrieval policies, and fee calculator.
         </p>
       </div>
 
@@ -183,7 +183,7 @@ export default function HelpCenterPage() {
           </div>
         </div>
 
-        {/* Contact Concierge Message Form */}
+        {/* Contact Lobby Message Form */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
           <div className="border-b border-gray-200 pb-3">
             <h3 className="font-[family-name:var(--font-heading)] text-xl text-gray-900 uppercase">
@@ -192,12 +192,12 @@ export default function HelpCenterPage() {
           </div>
 
           <p className="text-xs text-gray-500 leading-relaxed">
-            Have a question about a delayed parcel, proxy authorization, or doorstep delivery? Message the Station 1 desk team.
+            Have a question about a delayed parcel, proxy authorization, or doorstep delivery? Message the Lobby Staff Admin team.
           </p>
 
           {submitted && (
             <div className="p-3 bg-green-50 border border-green-200 text-green-800 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
-              <span>Your message has been dispatched to Station 1 Front Desk! A concierge staff member will respond shortly.</span>
+              <span>Your message has been dispatched to the Lobby! A Staff Admin will respond shortly.</span>
             </div>
           )}
 
@@ -217,7 +217,7 @@ export default function HelpCenterPage() {
                 <option>Doorstep Delivery Request</option>
                 <option>Authorized Proxy Claimant</option>
                 <option>Holding Fee & Billing Question</option>
-                <option>General Concierge Inquiry</option>
+                <option>General Lobby Inquiry</option>
               </select>
             </div>
 
@@ -237,7 +237,7 @@ export default function HelpCenterPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Message to Desk Staff:
+                Message to Staff Admin:
               </label>
               <textarea
                 rows={3}
@@ -255,7 +255,7 @@ export default function HelpCenterPage() {
               disabled={isSending}
               className="btn btn-primary btn-sm w-full font-bold uppercase cursor-pointer"
             >
-              {isSending ? "Sending to Station 1..." : "Send Message to Concierge"}
+              {isSending ? "Sending to Lobby..." : "Send Message to Lobby"}
             </button>
           </form>
 
@@ -294,7 +294,7 @@ export default function HelpCenterPage() {
                     {inq.adminReply && (
                       <div className="mt-1.5 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-950 space-y-0.5">
                         <span className="font-bold text-[10px] text-emerald-800 flex items-center gap-1">
-                          <span>✓</span> Station 1 Front Desk Reply:
+                          <span>✓</span> Lobby Staff Admin Reply:
                         </span>
                         <p className="text-[11px]">{inq.adminReply}</p>
                         {inq.updatedAt && (

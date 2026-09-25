@@ -207,11 +207,11 @@ function AdminDashboardContent() {
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-wider text-green-700">
-              STATION 1 FRONT DESK • ONLINE
+              LOBBY COUNTER • ONLINE
             </span>
           </div>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide mt-1">
-            FRONT DESK <span className="text-brand-red">OPERATIONS</span>
+            LOBBY <span className="text-brand-red">OPERATIONS</span>
           </h1>
           <p className="text-xs sm:text-sm text-brand-text-secondary mt-0.5">
             Buildersville Condominium • Fast Inbound Barcode Scanning & Instant Resident Release
@@ -354,7 +354,7 @@ function AdminDashboardContent() {
                 onClick={() =>
                   printClaimReleaseSlip({
                     parcel: lastReleasedParcel,
-                    releasedByStaff: user?.name || "Station 1 Staff",
+                    releasedByStaff: user?.name || "Lobby Staff Admin",
                     hubName: hubSettings.hubName,
                   })
                 }
@@ -831,7 +831,7 @@ function AdminDashboardContent() {
 
 export default function AdminDashboardPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading front desk terminal...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-brand-text-secondary">Loading Lobby terminal...</div>}>
       <AdminDashboardContent />
     </Suspense>
   );

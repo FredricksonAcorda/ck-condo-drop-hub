@@ -198,7 +198,7 @@ export default function MyParcelsPage() {
     return filteredHistory.slice(historyStartIndex, historyEndIndex);
   }, [filteredHistory, historyStartIndex, historyEndIndex]);
 
-  const freeHoldingDays = user?.plan === "PREMIUM" ? 7 : 3;
+  const freeHoldingDays = user?.plan === "PREMIUM" ? 30 : user?.plan === "REGULAR" ? 15 : 3;
 
   return (
     <div className="space-y-6">
@@ -249,17 +249,19 @@ export default function MyParcelsPage() {
             </h2>
           </div>
 
-          {/* Lobby Pickup Guideline & Concierge Door Delivery Quota */}
+          {/* Lobby Pickup Guideline & Door Delivery Quota */}
           <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
+              Present your <strong>Tracking Number</strong> at the Lobby upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
             </div>
             <div className="flex items-center gap-1.5 text-xs shrink-0">
-              <span className="text-emerald-800 font-semibold">Concierge Door Runs:</span>
+              <span className="text-emerald-800 font-semibold">Door Delivery:</span>
               <span className="font-mono font-bold px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-900 text-[11px] shadow-2xs">
                 {user?.plan === "PREMIUM"
                   ? `${user?.deliveryCreditsLeft ?? 0} of 5 Free Left`
-                  : "0 Free (Pay-Per-Trip)"}
+                  : user?.plan === "REGULAR"
+                  ? "Not available for Regular Plans"
+                  : "Not available for Per Parcel"}
               </span>
             </div>
           </div>
@@ -275,7 +277,7 @@ export default function MyParcelsPage() {
               </div>
               <p className="text-base font-bold text-gray-900">All caught up! No parcels currently awaiting pickup.</p>
               <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
-                When a courier rider delivers a package for {user?.name || "your unit"} at Station 1, our front desk staff will scan it into inventory and you will receive an immediate SMS alert.
+                When a courier rider delivers a package for {user?.name || "your unit"} at the Lobby, our Lobby Staff Admin will scan it into inventory and you will receive an immediate SMS alert.
               </p>
             </div>
           ) : (

@@ -87,12 +87,12 @@ export default function AdminInquiriesPage() {
             )}
           </div>
           <p className="text-xs text-brand-text-secondary mt-0.5">
-            Station 1 reception inbox: messages, proxy authorizations, and doorstep requests from condo residents.
+            Lobby reception inbox: messages, proxy authorizations, and doorstep requests from condo residents.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500 font-medium">Front Desk Station 1</span>
+          <span className="text-gray-500 font-medium">Lobby Counter</span>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="font-bold text-gray-900">Live Inbox</span>
         </div>
@@ -263,7 +263,7 @@ export default function AdminInquiriesPage() {
                     <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-[11px] text-emerald-800 flex items-center gap-1">
-                          <span>✓</span> Station 1 Front Desk Reply:
+                          <span>✓</span> Lobby Staff Admin Reply:
                         </span>
                         {inq.updatedAt && (
                           <span className="text-[10px] text-emerald-700">{inq.updatedAt}</span>
@@ -361,13 +361,13 @@ export default function AdminInquiriesPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Desk Staff Response Message:
+                  Lobby Staff Admin Response Message:
                 </label>
                 <textarea
                   rows={4}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="e.g. Package has been retrieved and is ready on Shelf A-04. / Doorstep runner scheduled for 2:30 PM..."
+                  placeholder="e.g. Package has been retrieved and is ready on Shelf A-04. / Doorstep delivery scheduled for 2:30 PM..."
                   className="input w-full text-xs"
                   required
                 />

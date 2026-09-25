@@ -125,7 +125,7 @@ function LoginForm() {
             </>
           ) : (
             <>
-              Sign in to Station 1 front-desk intake<br className="hidden sm:inline" /> & parcel release terminal
+              Sign in to Lobby Staff Admin intake<br className="hidden sm:inline" /> & parcel release terminal
             </>
           )}
         </p>

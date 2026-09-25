@@ -192,7 +192,7 @@ class LocalDatabaseService implements IDatabaseService {
         type: "CLAIM_VERIFIED",
         title: `Claim Verified: ${match.claimCode}`,
         description: `Passcode verified for ${match.residentName} (${match.unit}) for package ${match.trackingNumber}.`,
-        actor: "Front Desk Officer",
+        actor: "Lobby Staff Admin",
         trackingNumber: match.trackingNumber,
         badgeColor: "bg-blue-600",
       });
@@ -468,7 +468,7 @@ class LocalDatabaseService implements IDatabaseService {
       type: "SMS_DISPATCHED",
       title: `Manual SMS Dispatch to ${recipientName}`,
       description: `Sent test message to ${recipientPhone}.`,
-      actor: "Station 1 Staff",
+      actor: "Lobby Staff Admin",
       badgeColor: "bg-blue-500",
     });
 
@@ -629,7 +629,7 @@ class LocalDatabaseService implements IDatabaseService {
       type: "INQUIRY_RESPONDED",
       title: `Inquiry #${id.slice(-4)} marked ${status}`,
       description: `Resident: ${current.residentName} (${current.residentUnit})${adminReply ? ` • Reply: "${adminReply.slice(0, 40)}..."` : ""}`,
-      actor: "Station 1 Staff",
+      actor: "Lobby Staff Admin",
       badgeColor: status === "RESOLVED" ? "bg-emerald-600" : "bg-amber-600",
     });
 

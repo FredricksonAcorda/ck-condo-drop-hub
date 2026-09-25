@@ -25,7 +25,7 @@ const steps: StepItem[] = [
   {
     num: 4,
     title: "PICK UP",
-    desc: "Claim your parcel at the hub or enjoy door-to-door delivery (available for premium members).",
+    desc: "Claim your parcel at the Lobby or enjoy door-to-door delivery (available for premium members).",
   },
 ];
 

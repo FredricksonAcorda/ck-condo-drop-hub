@@ -63,7 +63,9 @@ export default function CustomerDashboardPage() {
     ? "Pending Payment"
     : user?.plan === "PREMIUM"
     ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
-    : "0 (Pay-Per-Trip)";
+    : user?.plan === "REGULAR"
+    ? "Not available for Regular Plans"
+    : "Not available for Per Parcel";
 
   return (
     <div className="space-y-6">
@@ -80,7 +82,7 @@ export default function CustomerDashboardPage() {
               </h3>
             </div>
             <p className="text-xs text-gray-600 max-w-xl leading-relaxed">
-              You registered under the <strong>{user?.plan} Plan</strong>. Please settle your subscription via GCash QR or pay at Station 1 Front Desk to activate free holding days and concierge delivery perks.
+              You registered under the <strong>{user?.plan} Plan</strong>. Please settle your subscription via GCash QR or pay at the Lobby to activate free holding days and package perks.
             </p>
           </div>
 
@@ -114,7 +116,7 @@ export default function CustomerDashboardPage() {
           <p className="text-white/80 text-sm leading-relaxed mb-6">
             {totalActive > 0 ? (
               <>
-                You currently have <strong className="text-white">{totalActive} parcel{totalActive > 1 ? "s" : ""} ready for pickup</strong> at Station 1 Front Desk.
+                You currently have <strong className="text-white">{totalActive} parcel{totalActive > 1 ? "s" : ""} ready for pickup</strong> at the Lobby.
                 {overdueParcels.length > 0 && (
                   <span className="text-yellow-300 ml-1">
                     ({overdueParcels.length} parcel is past the free holding deadline).
@@ -142,12 +144,12 @@ export default function CustomerDashboardPage() {
           <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mt-2">
             {totalActive} Parcel{totalActive === 1 ? "" : "s"}
           </div>
-          <span className="text-xs text-green-700 font-semibold mt-1">Station 1 Front Desk</span>
+          <span className="text-xs text-green-700 font-semibold mt-1">Lobby Counter</span>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <span className="text-xs text-gray-500 uppercase font-semibold">Door Delivery Credits</span>
-          <div className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-gray-900 mt-2">
+          <div className={`mt-2 ${user?.plan === "PREMIUM" ? "font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-gray-900" : "text-sm sm:text-base font-bold text-gray-700 leading-snug"}`}>
             {deliveryCreditsText}
           </div>
           <span className="text-xs text-blue-700 font-semibold mt-1">{user?.plan || "PREMIUM"} Tier</span>
@@ -162,19 +164,19 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      {/* Station 1 Pickup Location & Hub Announcements (Balanced 2-Column Grid) */}
+      {/* Lobby Pickup Location & Announcements (Balanced 2-Column Grid) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Box 1: Station 1 Pickup Location & Schedule */}
+        {/* Box 1: Lobby Pickup Location & Schedule */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between gap-5">
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
               Pickup Location & Hours
             </span>
             <h3 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl text-gray-900 uppercase">
-              Station 1 Front Desk
+              Lobby
             </h3>
             <p className="text-xs text-gray-500">
-              Ground Floor Main Lobby • Concierge Service Counter
+              Ground Floor Main Lobby • Service Counter
             </p>
           </div>
 
@@ -193,12 +195,12 @@ export default function CustomerDashboardPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Door Delivery:</span>
-              <span className="font-semibold text-gray-900">Available at Station 1 Desk</span>
+              <span className="font-semibold text-gray-900">{user?.plan === "PREMIUM" ? "Available (5 Runs/mo)" : "Exclusive to Premium"}</span>
             </div>
           </div>
 
           <p className="text-[11px] text-gray-400 leading-relaxed border-t border-gray-100 pt-3">
-            Present your 4-digit claim code or show your QR pass from the <Link href="/parcels" className="text-brand-red font-semibold hover:underline">My Parcels</Link> tab to the front desk receptionist upon parcel collection.
+            Present your 4-digit claim code or show your QR pass from the <Link href="/parcels" className="text-brand-red font-semibold hover:underline">My Parcels</Link> tab to the Lobby Staff Admin upon parcel collection.
           </p>
         </div>
 
@@ -221,7 +223,7 @@ export default function CustomerDashboardPage() {
               <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
               <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
               <p className="text-gray-600 mt-1 leading-relaxed">
-                Flash Express riders now drop packages directly into dedicated shelf bins at Station 1.
+                Flash Express riders now drop packages directly into dedicated shelf bins at the Lobby.
               </p>
             </div>
 
@@ -229,7 +231,7 @@ export default function CustomerDashboardPage() {
               <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
               <h4 className="font-bold text-gray-900 mt-0.5">Holiday Schedule Advisory</h4>
               <p className="text-gray-600 mt-1 leading-relaxed">
-                Hub remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
+                Lobby remains open for normal hours (8:00 AM – 9:00 PM) during upcoming public holidays.
               </p>
             </div>
 
@@ -379,17 +381,17 @@ export default function CustomerDashboardPage() {
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs text-gray-700">
-                  <div className="font-bold text-sm text-gray-900">Station 1 Front Desk Instructions:</div>
+                  <div className="font-bold text-sm text-gray-900">Lobby Counter Instructions:</div>
                   <p className="text-gray-600">
-                    Please visit Station 1 Front Desk in the Ground Floor Main Lobby during daily operational hours (8:00 AM – 9:00 PM).
+                    Please visit the Lobby (Ground Floor Main Lobby) during daily operational hours (8:00 AM – 9:00 PM).
                   </p>
                   <div className="p-2.5 bg-white rounded-lg border border-gray-200 space-y-1">
                     <div>• State your resident passcode: <strong className="font-mono text-brand-red">{user?.residentCode}</strong></div>
-                    <div>• Inform receptionist you are paying for: <strong>{user?.plan} Membership</strong></div>
+                    <div>• Inform Staff Admin you are paying for: <strong>{user?.plan} Membership</strong></div>
                     <div>• Amount: <strong className="text-green-700">{planPrice}</strong></div>
                   </div>
                   <p className="text-gray-500 text-[11px]">
-                    Once desk staff confirms your payment, your plan will be activated immediately.
+                    Once Lobby Staff Admin confirms your payment, your plan will be activated immediately.
                   </p>
                 </div>
 
@@ -398,7 +400,7 @@ export default function CustomerDashboardPage() {
                   onClick={() => setShowPaymentModal(false)}
                   className="btn btn-primary w-full py-3 font-bold uppercase cursor-pointer"
                 >
-                  Understood (I Will Pay At Desk)
+                  Understood (I Will Pay At Lobby)
                 </button>
               </div>
             )}

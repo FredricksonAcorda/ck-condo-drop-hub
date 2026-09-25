@@ -49,13 +49,13 @@ function TrackParcelContent() {
       <div className="bg-gradient-to-r from-gray-950 via-gray-900 to-brand-red text-white p-6 sm:p-8 rounded-2xl shadow-md relative overflow-hidden">
         <div className="relative z-10 max-w-xl">
           <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-            Station 1 Live Parcel Tracker
+            Lobby Live Parcel Tracker
           </span>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl lg:text-5xl mt-2 mb-2 tracking-wide uppercase">
             TRACK YOUR <span className="text-brand-red">PARCEL</span>
           </h1>
           <p className="text-white/80 text-sm leading-relaxed">
-            Enter your courier tracking number to check whether your delivery has arrived and been sorted at Station 1 Front Desk.
+            Enter your courier tracking number to check whether your delivery has arrived and been sorted at the Lobby.
           </p>
         </div>
       </div>
@@ -154,7 +154,7 @@ function TrackParcelContent() {
                   Storage Shelf Location
                 </span>
                 <div className="font-bold text-sm text-gray-900">{trackResult.shelf}</div>
-                <div className="text-gray-500">Station 1 Front Desk</div>
+                <div className="text-gray-500">Lobby Counter</div>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-1">
@@ -206,7 +206,7 @@ function TrackParcelContent() {
                       Picked Up & Released
                     </span>
                     <span className="text-gray-500">
-                      {trackResult.claimedAt || "Released at Front Desk"}
+                      {trackResult.claimedAt || "Released at Lobby"}
                     </span>
                     <p className="text-gray-500 mt-0.5">
                       Claimed by {trackResult.claimedBy || "Resident"}.
@@ -231,7 +231,7 @@ function TrackParcelContent() {
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs text-gray-500 uppercase font-semibold block">
-                    Front Desk Verification Passcode
+                    Lobby Verification Passcode
                   </span>
                   <span className="font-mono font-black text-2xl text-brand-red tracking-wider">
                     {trackResult.claimCode}
@@ -258,7 +258,7 @@ function TrackParcelContent() {
         </div>
       ) : hasSearched ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-3 shadow-md animate-in fade-in">
-          <h3 className="font-bold text-base text-gray-900">Package Not Yet Arrived at Drop Hub</h3>
+          <h3 className="font-bold text-base text-gray-900">Package Not Yet Arrived at Lobby</h3>
           <p className="text-xs text-gray-500 max-w-md mx-auto">
             No record found for tracking number <span className="font-mono font-bold text-gray-900">&quot;{trackQuery}&quot;</span>. Your delivery rider may still be on the way to the condo lobby.
           </p>
@@ -282,7 +282,7 @@ function TrackParcelContent() {
                 PARCEL CLAIM PASS
               </h3>
               <p className="text-xs text-gray-500 mt-1">
-                Show this verification code to the receptionist at Station 1
+                Show this verification code to Staff Admin at the Lobby
               </p>
             </div>
 
@@ -319,7 +319,7 @@ function TrackParcelContent() {
                   <rect x="50" y="76" width="10" height="14" />
                 </svg>
                 <span className="text-[9px] text-gray-400 mt-1 uppercase font-semibold">
-                  SCAN STATION 1
+                  SCAN AT LOBBY
                 </span>
               </div>
             </div>

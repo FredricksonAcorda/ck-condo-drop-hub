@@ -47,7 +47,7 @@ const services: ServiceItem[] = [
     title: "Payments & Remittance",
     desc: (
       <>
-        <strong className="font-bold text-brand-text">GCash</strong>, <strong className="font-bold text-brand-text">bill payments</strong>, and cash transactions <strong className="font-bold text-brand-text">available at the hub</strong>.
+        <strong className="font-bold text-brand-text">GCash</strong>, <strong className="font-bold text-brand-text">bill payments</strong>, and cash transactions <strong className="font-bold text-brand-text">available at the Lobby</strong>.
       </>
     ),
   },

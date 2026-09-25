@@ -108,7 +108,7 @@ export default function ParcelsInventoryPage() {
             Open Scanner
           </Link>
           <Link href="/admin" className="btn btn-outline btn-sm">
-            ← Front Desk
+            ← Lobby Intake
           </Link>
         </div>
       </div>
