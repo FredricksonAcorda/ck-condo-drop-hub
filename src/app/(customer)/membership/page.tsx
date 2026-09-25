@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 
@@ -747,41 +748,28 @@ export default function MembershipPage() {
             {/* GCash Form */}
             {paymentMethod === "GCASH" ? (
               <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2">
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
-                    <span className="text-gray-500">Merchant:</span>
-                    <span className="font-bold text-gray-900">CK CONDO DROP HUB</span>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center space-y-2.5">
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
+                    <span className="text-gray-500">Account Name:</span>
+                    <span className="font-bold text-gray-900">DI**A P.</span>
                   </div>
-                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1">
+                  <div className="flex justify-between text-xs border-b border-gray-200 pb-1.5">
                     <span className="text-gray-500">GCash Mobile:</span>
-                    <span className="font-mono font-bold text-gray-900">0917 123 4567</span>
+                    <span className="font-mono font-bold text-gray-900">+63 993 267 ••••</span>
                   </div>
 
-                  <div className="bg-white p-3 rounded-xl border border-gray-200 inline-block shadow-inner mx-auto my-1">
-                    <div className="w-32 h-32 bg-blue-50/50 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
-                      <svg className="w-24 h-24" viewBox="0 0 100 100" fill="currentColor">
-                        <rect x="10" y="10" width="24" height="24" rx="2" />
-                        <rect x="14" y="14" width="16" height="16" fill="white" />
-                        <rect x="18" y="18" width="8" height="8" />
-                        <rect x="66" y="10" width="24" height="24" rx="2" />
-                        <rect x="70" y="14" width="16" height="16" fill="white" />
-                        <rect x="74" y="18" width="8" height="8" />
-                        <rect x="10" y="66" width="24" height="24" rx="2" />
-                        <rect x="14" y="70" width="16" height="16" fill="white" />
-                        <rect x="18" y="74" width="8" height="8" />
-                        <rect x="42" y="10" width="12" height="12" />
-                        <rect x="42" y="30" width="12" height="12" />
-                        <rect x="42" y="50" width="12" height="12" />
-                        <rect x="66" y="42" width="12" height="12" />
-                        <rect x="66" y="66" width="12" height="12" />
-                        <rect x="80" y="80" width="10" height="10" />
-                        <rect x="50" y="76" width="10" height="14" />
-                      </svg>
-                      <span className="text-[8px] font-black uppercase text-[#005CEE]">SCAN GCASH QR</span>
-                    </div>
+                  <div className="bg-white p-2 rounded-xl border border-gray-200 inline-block shadow-sm mx-auto my-1">
+                    <Image
+                      src="/images/gcash-official-qr.jpg"
+                      alt="Official GCash QR Code"
+                      width={220}
+                      height={440}
+                      className="w-48 sm:w-52 h-auto rounded-lg object-contain mx-auto"
+                      priority
+                    />
                   </div>
-                  <p className="text-[11px] text-gray-500">
-                    Scan using your GCash app and input your reference number below.
+                  <p className="text-[11px] text-gray-600 font-medium">
+                    Scan via GCash App, send payment, and input your reference number below.
                   </p>
                 </div>
 

@@ -489,12 +489,12 @@ export default function RegisterPage() {
               <div className="space-y-4">
                 <div className="bg-[#1c1c21] border border-zinc-800 rounded-2xl p-4 text-center">
                   <div className="flex items-center justify-between text-xs pb-2 mb-2 border-b border-zinc-800">
-                    <span className="text-zinc-400">Merchant:</span>
-                    <span className="font-bold text-white">CK CONDO DROP HUB</span>
+                    <span className="text-zinc-400">Account Name:</span>
+                    <span className="font-bold text-white">DI**A P.</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pb-2 mb-2 border-b border-zinc-800">
                     <span className="text-zinc-400">GCash Mobile:</span>
-                    <span className="font-mono font-bold text-white">0917 123 4567</span>
+                    <span className="font-mono font-bold text-white">+63 993 267 ••••</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pb-3 mb-3 border-b border-zinc-800">
                     <span className="text-zinc-400">Total Due:</span>
@@ -503,31 +503,16 @@ export default function RegisterPage() {
                     </span>
                   </div>
 
-                  {/* Synthetic GCash QR graphic */}
-                  <div className="bg-white p-3 rounded-xl inline-block shadow-inner mx-auto mb-2">
-                    <div className="w-36 h-36 bg-[#005CEE]/5 flex flex-col items-center justify-center rounded border border-[#005CEE]/20 text-[#005CEE]">
-                      <svg className="w-28 h-28" viewBox="0 0 100 100" fill="currentColor">
-                        <rect x="10" y="10" width="24" height="24" rx="2" />
-                        <rect x="14" y="14" width="16" height="16" fill="white" />
-                        <rect x="18" y="18" width="8" height="8" />
-                        <rect x="66" y="10" width="24" height="24" rx="2" />
-                        <rect x="70" y="14" width="16" height="16" fill="white" />
-                        <rect x="74" y="18" width="8" height="8" />
-                        <rect x="10" y="66" width="24" height="24" rx="2" />
-                        <rect x="14" y="70" width="16" height="16" fill="white" />
-                        <rect x="18" y="74" width="8" height="8" />
-                        <rect x="42" y="10" width="12" height="12" />
-                        <rect x="42" y="30" width="12" height="12" />
-                        <rect x="42" y="50" width="12" height="12" />
-                        <rect x="66" y="42" width="12" height="12" />
-                        <rect x="66" y="66" width="12" height="12" />
-                        <rect x="80" y="80" width="10" height="10" />
-                        <rect x="50" y="76" width="10" height="14" />
-                      </svg>
-                      <span className="text-[9px] font-black tracking-wider text-[#005CEE] uppercase">
-                        SCAN GCASH QR
-                      </span>
-                    </div>
+                  {/* Official GCash QR graphic */}
+                  <div className="bg-white p-2.5 rounded-xl inline-block shadow-sm mx-auto mb-2">
+                    <Image
+                      src="/images/gcash-official-qr.jpg"
+                      alt="Official GCash QR Code"
+                      width={220}
+                      height={440}
+                      className="w-48 sm:w-52 h-auto rounded-lg object-contain mx-auto"
+                      priority
+                    />
                   </div>
                   <p className="text-[11px] text-zinc-400">
                     Scan via GCash App, send payment, and enter the reference number below.

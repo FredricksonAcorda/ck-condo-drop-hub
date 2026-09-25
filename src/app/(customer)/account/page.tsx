@@ -508,55 +508,29 @@ export default function MyAccountPage() {
                         ? "Door Delivery isn't available for Regular Plan"
                         : "Door Delivery isn't available for Per Parcel"}
                     </span>
-                    <span className="text-amber-800 text-xs">
-                      {user?.plan === "PREMIUM"
-                        ? `Includes 5 free door deliveries per month. You have ${user?.deliveryCreditsLeft ?? 0} free deliveries remaining.`
-                        : user?.plan === "REGULAR"
-                        ? "Door Delivery isn't available for Regular Plan. Upgrade to unlock this."
-                        : "Door Delivery isn't available for Per Parcel. Upgrade to unlock this."}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
-                      {user?.plan === "PREMIUM"
-                        ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
-                        : "Not Available"}
-                    </span>
-                    {user?.plan !== "PREMIUM" && (
-                      <Link
-                        href="/membership"
-                        className="text-xs font-bold text-brand-red hover:underline whitespace-nowrap"
-                      >
-                        Upgrade to Premium →
-                      </Link>
+                    {user?.plan === "PREMIUM" && (
+                      <span className="text-amber-800 text-xs">
+                        Includes 5 free door deliveries per month. You have {user?.deliveryCreditsLeft ?? 0} free deliveries remaining.
+                      </span>
                     )}
                   </div>
+                  {user?.plan === "PREMIUM" && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
+                        {`${user?.deliveryCreditsLeft ?? 0} of 5 Left`}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* If Not Premium: Door delivery is NOT available; residents cannot send request to lobby */}
                 {user?.plan !== "PREMIUM" ? (
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 text-center space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
-                      🔒
-                    </div>
-                    <div className="space-y-1.5 max-w-md mx-auto">
-                      <h3 className="font-[family-name:var(--font-heading)] text-lg uppercase text-gray-900">
-                        Door Delivery Isn't Available for {user?.plan === "REGULAR" ? "Regular Plan" : "Per Parcel"}
-                      </h3>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        {user?.plan === "REGULAR"
-                          ? "Your Regular Plan includes 15 days of unlimited parcel storage at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."
-                          : "Per Parcel accounts are self-pickup at the Lobby. Upgrade your subscription to unlock doorstep delivery service directly to your condo door."}
-                      </p>
-                    </div>
-                    <div>
-                      <Link
-                        href="/membership"
-                        className="btn btn-primary btn-sm font-bold uppercase inline-flex items-center gap-2 cursor-pointer shadow-sm"
-                      >
-                        Upgrade to Premium to Unlock (5 Free Deliveries/mo) →
-                      </Link>
-                    </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center">
+                    <p className="text-xs sm:text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">
+                      {user?.plan === "REGULAR"
+                        ? "Your Regular Plan includes 15 days of unlimited parcel storage at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."
+                        : "Per Parcel accounts are self-pickup at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."}
+                    </p>
                   </div>
                 ) : (
                   /* Premium Tier Only: Active Pending Request Card OR Dispatch Form */
