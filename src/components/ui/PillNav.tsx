@@ -119,7 +119,7 @@ const PillNav: React.FC<PillNavProps> = ({
     window.addEventListener('resize', onResize);
 
     if (document.fonts) {
-      document.fonts.ready.then(layout).catch(() => {});
+      document.fonts.ready.then(layout).catch(() => { });
     }
 
     const menu = mobileMenuRef.current;
@@ -352,14 +352,14 @@ const PillNav: React.FC<PillNavProps> = ({
         <span className="label-stack relative inline-block leading-[1] z-[2]">
           <span
             className="pill-label relative z-[2] inline-block leading-[1]"
-            style={{ willChange: 'transform' }}
+            style={{ willChange: 'transform', color: isPrimary ? '#ffffff' : '#07100D' }}
           >
             {item.label}
           </span>
           <span
-            className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
+            className="pill-label-hover absolute left-0 top-0 z-[3] inline-block pointer-events-none"
             style={{
-              color: hoverTextColor,
+              color: '#ffffff',
               willChange: 'transform, opacity'
             }}
             aria-hidden="true"
@@ -509,9 +509,8 @@ const PillNav: React.FC<PillNavProps> = ({
 
       {/* Mobile Drawer Dropdown Container (Responsive width & GSAP safe centering) */}
       <div
-        className={`lg:hidden absolute top-[calc(100%+0.65rem)] left-1/2 -translate-x-1/2 w-[min(340px,calc(100vw-2rem))] z-[998] ${
-          isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
+        className={`lg:hidden absolute top-[calc(100%+0.65rem)] left-1/2 -translate-x-1/2 w-[min(340px,calc(100vw-2rem))] z-[998] ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
       >
         <div
           ref={mobileMenuRef}
@@ -577,11 +576,10 @@ const PillNav: React.FC<PillNavProps> = ({
                         handleLinkClick(e, authItem.href);
                         closeMobileMenu();
                       }}
-                      className={`w-full py-2.5 px-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] ${
-                        isPrimary
+                      className={`w-full py-2.5 px-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] ${isPrimary
                           ? 'bg-brand-red text-white shadow-xs hover:bg-brand-red-hover'
                           : 'bg-brand-surface text-brand-text border border-brand-border hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       {authItem.label}
                     </Link>
