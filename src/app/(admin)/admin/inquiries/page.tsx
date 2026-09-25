@@ -78,7 +78,7 @@ export default function AdminInquiriesPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
-              RESIDENT <span className="text-brand-red">DESK INQUIRIES</span>
+              RESIDENT <span className="text-brand-red">LOBBY INQUIRIES</span>
             </h1>
             {stats.newCount > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full animate-pulse">
@@ -87,7 +87,7 @@ export default function AdminInquiriesPage() {
             )}
           </div>
           <p className="text-xs text-brand-text-secondary mt-0.5">
-            Lobby reception inbox: messages, proxy authorizations, and doorstep requests from condo residents.
+            Lobby reception inbox: messages, proxy authorizations, and doorstep concierge delivery requests from condo residents.
           </p>
         </div>
 
@@ -203,7 +203,7 @@ export default function AdminInquiriesPage() {
 
         {/* Inquiries Table */}
         {loading ? (
-          <div className="p-12 text-center text-gray-400 text-sm">Loading desk inquiries...</div>
+          <div className="p-12 text-center text-gray-400 text-sm">Loading lobby inquiries...</div>
         ) : filteredInquiries.length === 0 ? (
           <div className="p-12 text-center text-gray-500 text-sm space-y-2">
             <span className="text-3xl block">📭</span>
@@ -243,10 +243,16 @@ export default function AdminInquiriesPage() {
                     <span className="text-[11px] text-gray-400">• {inq.createdAt}</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded">
-                      {inq.category}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {inq.category.includes("Doorstep") ? (
+                      <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <span>🚪</span> Doorstep Concierge Request
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                        {inq.category}
+                      </span>
+                    )}
                     {inq.trackingNumber && (
                       <span className="font-mono text-xs font-bold text-gray-700 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded">
                         Ref: {inq.trackingNumber}

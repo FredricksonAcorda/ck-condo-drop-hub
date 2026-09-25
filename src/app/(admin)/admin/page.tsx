@@ -247,10 +247,10 @@ function AdminDashboardContent() {
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
             <div>
               <span className="text-xs text-amber-950 font-bold block">
-                {inquiries.filter((i) => i.status === "NEW").length} Unattended Resident Desk Inquir{inquiries.filter((i) => i.status === "NEW").length === 1 ? "y" : "ies"}
+                {inquiries.filter((i) => i.status === "NEW").length} Unattended Resident Lobby Inquir{inquiries.filter((i) => i.status === "NEW").length === 1 ? "y" : "ies"}
               </span>
               <span className="text-[11px] text-amber-800">
-                Residents have sent messages regarding misplaced parcels, proxy claimants, or doorstep runs.
+                Residents have sent messages regarding misplaced parcels, proxy claimants, or doorstep concierge runs.
               </span>
             </div>
           </div>
@@ -283,7 +283,7 @@ function AdminDashboardContent() {
             {overdueCount}
           </div>
           <span className="text-[11px] text-brand-red font-semibold">
-            {overdueCount > 0 ? "Subject to ₱10/day holding fee" : "None past holding limit"}
+            {overdueCount > 0 ? "Subject to ₱20/day holding fee" : "None past holding limit"}
           </span>
         </div>
 
@@ -452,7 +452,7 @@ function AdminDashboardContent() {
               >
                 {residents.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.unit} – {r.name} ({r.tower})
+                    {r.unit} – {r.name} ({r.plan === "PREMIUM" ? "Premium VIP • 7d" : r.plan === "REGULAR" ? "Regular • 3d" : "Per Parcel • 2d"})
                   </option>
                 ))}
               </select>
@@ -696,7 +696,7 @@ function AdminDashboardContent() {
                                   : "bg-green-100 text-green-800"
                               }`}
                             >
-                              {isOverdue ? `Overdue (${parcel.holdingFee})` : "Ready"}
+                              {isOverdue ? `Overdue (${parcel.holdingFee})` : "Ready for Pickup"}
                             </span>
                             <button
                               type="button"

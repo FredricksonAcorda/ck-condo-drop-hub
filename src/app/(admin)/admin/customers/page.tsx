@@ -55,6 +55,39 @@ export default function AdminCustomersPage() {
     ).length;
   };
 
+  const handleConfirmCashPayment = async (resident: ResidentProfile) => {
+    try {
+      await db.updateResidentProfile(resident.id, {
+        planStatus: "ACTIVE",
+      });
+
+      if (typeof window !== "undefined") {
+        const storageKey = `ck_invoices_${resident.id}`;
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          try {
+            const list = JSON.parse(raw);
+            const updated = list.map((inv: { id: string; status: string; method?: string; date?: string }) =>
+              inv.status === "PENDING"
+                ? { ...inv, status: "PAID", method: "Cash at Counter", date: "Today" }
+                : inv
+            );
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      await loadResidents();
+      setSelectedResident((prev) => (prev && prev.id === resident.id ? { ...prev, planStatus: "ACTIVE" } : prev));
+      alert(`✓ Payment verified! ${resident.name}'s ${resident.plan.replace("_", " ")} plan is now ACTIVE and official receipt is issued.`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to confirm payment.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -64,7 +97,7 @@ export default function AdminCustomersPage() {
             RESIDENTS & <span className="text-brand-red">CUSTOMERS</span>
           </h1>
           <p className="text-xs sm:text-sm text-brand-text-secondary mt-0.5">
-            Directory of registered condominium residents, unit numbers, and active parcel counts.
+            Directory of registered condominium residents, unit numbers, membership tiers, and active parcel counts.
           </p>
         </div>
 
@@ -162,17 +195,31 @@ export default function AdminCustomersPage() {
                         <div className="text-[10px] text-brand-text-secondary">{res.email}</div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
-                            res.plan === "PREMIUM"
-                              ? "bg-amber-100 text-amber-800 border border-amber-300"
-                              : res.plan === "REGULAR"
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {res.plan.replace("_", " ")}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
+                              res.plan === "PREMIUM"
+                                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                : res.plan === "REGULAR"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {res.plan.replace("_", " ")}
+                          </span>
+                          {res.planStatus === "PENDING_PAYMENT" && (
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-300 animate-pulse">
+                              Pending Settle
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          {res.plan === "PREMIUM"
+                            ? "30d Unlimited • 7d Grace • 5 Door Deliv."
+                            : res.plan === "REGULAR"
+                            ? "15d Unlimited • 3d Grace • No Door Deliv."
+                            : "₱20 / Claim • 2d Grace"}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5">
                         {readyCount > 0 ? (
@@ -186,7 +233,7 @@ export default function AdminCustomersPage() {
                       <td className="px-4 py-3.5 text-right">
                         <button
                           onClick={() => setSelectedResident(res)}
-                          className="btn btn-outline btn-sm !py-1 !text-xs"
+                          className="btn btn-outline btn-sm !py-1 !text-xs cursor-pointer"
                         >
                           View Profile
                         </button>
@@ -203,7 +250,7 @@ export default function AdminCustomersPage() {
       {/* Resident Details Modal */}
       {selectedResident && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-brand-border">
               <div className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs">
@@ -225,14 +272,56 @@ export default function AdminCustomersPage() {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 bg-brand-surface p-3 rounded-lg border border-brand-border">
+              <div className="grid grid-cols-2 gap-2 bg-brand-surface p-3 rounded-xl border border-brand-border">
                 <div>
                   <span className="text-brand-text-secondary block">Unit & Tower:</span>
                   <strong className="text-brand-black">{selectedResident.unit}, {selectedResident.tower}</strong>
                 </div>
                 <div>
-                  <span className="text-brand-text-secondary block">Plan:</span>
-                  <strong className="text-brand-red">{selectedResident.plan}</strong>
+                  <span className="text-brand-text-secondary block">Plan Tier:</span>
+                  <strong className="text-brand-red font-bold">{selectedResident.plan.replace("_", " ")}</strong>
+                </div>
+              </div>
+
+              {/* Cash at Counter Settlement Prompt */}
+              {selectedResident.planStatus === "PENDING_PAYMENT" && (
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                    <span>💵 Pending Cash Payment at Lobby Counter</span>
+                    <span>{selectedResident.plan === "PREMIUM" ? "₱299.00" : "₱149.00"}</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800">
+                    Resident selected Cash at Counter for {selectedResident.plan.replace("_", " ")} plan. Click below to verify cash intake.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmCashPayment(selectedResident)}
+                    className="btn btn-primary btn-sm w-full font-bold uppercase cursor-pointer"
+                  >
+                    Confirm Cash Payment & Issue Official Receipt ✓
+                  </button>
+                </div>
+              )}
+
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1.5">
+                <span className="font-bold text-gray-900 block text-xs">Plan Holding & Delivery Specs:</span>
+                <div className="flex justify-between text-gray-600">
+                  <span>Free Holding Grace:</span>
+                  <strong className="text-gray-900">
+                    {selectedResident.plan === "PREMIUM" ? "7 Days Free" : selectedResident.plan === "REGULAR" ? "3 Days Free" : "2 Days Free"}
+                  </strong>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Doorstep Concierge Delivery:</span>
+                  <strong className={selectedResident.plan === "PREMIUM" ? "text-green-700" : "text-gray-500"}>
+                    {selectedResident.plan === "PREMIUM" ? "5 Free / month" : "Not Available (Requires Premium)"}
+                  </strong>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Subscription Validity:</span>
+                  <strong className="text-gray-900">
+                    {selectedResident.plan === "PREMIUM" ? "30 Days Unlimited" : selectedResident.plan === "REGULAR" ? "15 Days Unlimited" : "Per Parcel (₱20/claim)"}
+                  </strong>
                 </div>
               </div>
 
@@ -261,12 +350,12 @@ export default function AdminCustomersPage() {
             <div className="pt-3 border-t border-brand-border flex gap-2">
               <button
                 onClick={() => setSelectedResident(null)}
-                className="btn btn-outline btn-sm flex-1"
+                className="btn btn-outline btn-sm flex-1 cursor-pointer"
               >
                 Close
               </button>
               <Link
-                href={`/admin`}
+                href="/admin/scanner"
                 onClick={() => setSelectedResident(null)}
                 className="btn btn-primary btn-sm flex-1 text-center"
               >

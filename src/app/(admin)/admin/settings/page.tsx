@@ -151,7 +151,7 @@ export default function HubSettingsPage() {
                   step="1"
                   value={formData.overdueFeePerDay}
                   onChange={(e) =>
-                    setFormData({ ...formData, overdueFeePerDay: parseInt(e.target.value) || 10 })
+                    setFormData({ ...formData, overdueFeePerDay: parseInt(e.target.value) || 20 })
                   }
                   className="input pl-8 pr-14 font-bold text-brand-red border border-gray-300 bg-white"
                   required

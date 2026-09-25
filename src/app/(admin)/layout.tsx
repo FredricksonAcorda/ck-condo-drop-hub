@@ -11,7 +11,7 @@ const adminNav = [
   { label: "SCANNER STATION", href: "/admin/scanner" },
   { label: "HUB INVENTORY", href: "/admin/parcels" },
   { label: "CUSTOMERS & UNITS", href: "/admin/customers" },
-  { label: "DESK INQUIRIES", href: "/admin/inquiries" },
+  { label: "LOBBY INQUIRIES", href: "/admin/inquiries" },
   { label: "ACTIVITY & SMS LOGS", href: "/admin/reports" },
   { label: "HUB SETTINGS", href: "/admin/settings" },
   { label: "TRACKING LOOKUP", href: "/track" },

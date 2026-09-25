@@ -373,7 +373,7 @@ export default function ParcelsInventoryPage() {
                         ) : (
                           <div>
                             <span className="inline-block bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                              ● Ready
+                              Ready for Pickup
                             </span>
                             <div className="text-[10px] text-green-700 font-semibold mt-0.5">
                               Free Holding

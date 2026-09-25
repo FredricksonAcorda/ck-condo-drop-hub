@@ -702,7 +702,7 @@ export const DEFAULT_HUB_SETTINGS: HubSettings = {
   stationName: "Lobby Counter",
   freeDaysRegular: 3,
   freeDaysPremium: 7,
-  overdueFeePerDay: 10,
+  overdueFeePerDay: 20,
   smsSenderId: "CKCONDO",
   autoPrintIntakeLabel: true,
   soundEnabled: true,
