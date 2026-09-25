@@ -8,8 +8,7 @@ import { useAuth, useParcels } from "@/context";
 
 const adminNav = [
   { label: "DASHBOARD", href: "/admin" },
-  { label: "SCANNER STATION", href: "/admin/scanner" },
-  { label: "HUB INVENTORY", href: "/admin/parcels" },
+  { label: "PARCEL INVENTORY", href: "/admin/parcels" },
   { label: "RESIDENTS & UNITS", href: "/admin/customers" },
   { label: "LOBBY INQUIRIES", href: "/admin/inquiries" },
   { label: "HUB SETTINGS", href: "/admin/settings" },
@@ -226,8 +225,8 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/admin/scanner" className="btn btn-primary btn-sm">
-              Quick Scanner
+            <Link href="/admin/parcels" className="btn btn-primary btn-sm">
+              Scanner & Inventory
             </Link>
             <Link href="/" className="btn btn-outline btn-sm">
               Public Site ↗

@@ -1,4 +1,5 @@
 export type ParcelStatus = "READY" | "PICKED_UP" | "OVERDUE" | "DELIVERED_DOOR" | "RETURNED";
+export type ParcelSize = "Small" | "Medium" | "Large" | "Bulky" | "Oversize";
 
 export interface Parcel {
   id: string;
