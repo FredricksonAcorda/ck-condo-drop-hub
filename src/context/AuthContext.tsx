@@ -99,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         paymentMethod: resident.paymentMethod || "GCASH",
         paymentReference: resident.paymentReference,
         residentCode: resident.residentCode,
+        deliveryCreditsLeft: resident.deliveryCreditsLeft,
         createdAt: resident.createdAt,
       };
       await authService.login({ emailOrPhone: resident.email, password: "demo", role: "resident" });

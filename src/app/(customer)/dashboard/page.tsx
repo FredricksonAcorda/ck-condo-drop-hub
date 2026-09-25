@@ -62,7 +62,7 @@ export default function CustomerDashboardPage() {
   const deliveryCreditsText = isPendingPayment
     ? "Pending Payment"
     : user?.plan === "PREMIUM"
-    ? "2 of 5 Left"
+    ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
     : "0 (Pay-Per-Trip)";
 
   return (

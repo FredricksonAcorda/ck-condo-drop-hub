@@ -249,9 +249,19 @@ export default function MyParcelsPage() {
             </h2>
           </div>
 
-          {/* Lobby Pickup Guideline (Concise) */}
-          <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium">
-            Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
+          {/* Lobby Pickup Guideline & Concierge Door Delivery Quota */}
+          <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              Present your <strong>Tracking Number</strong> at the front desk upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
+            </div>
+            <div className="flex items-center gap-1.5 text-xs shrink-0">
+              <span className="text-emerald-800 font-semibold">Concierge Door Runs:</span>
+              <span className="font-mono font-bold px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-900 text-[11px] shadow-2xs">
+                {user?.plan === "PREMIUM"
+                  ? `${user?.deliveryCreditsLeft ?? 0} of 5 Free Left`
+                  : "0 Free (Pay-Per-Trip)"}
+              </span>
+            </div>
           </div>
 
           {loading ? (

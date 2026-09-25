@@ -15,6 +15,7 @@ export interface AuthUser {
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
   residentCode?: string;
+  deliveryCreditsLeft?: number;
   createdAt: string;
 }
 

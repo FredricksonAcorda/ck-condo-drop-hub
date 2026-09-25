@@ -14,6 +14,7 @@ export const SEED_USERS: AuthUser[] = [
     paymentMethod: "GCASH",
     paymentReference: "GC-9821-4402",
     residentCode: "CK-000123",
+    deliveryCreditsLeft: 2,
     createdAt: "2026-08-01T08:00:00Z",
   },
   {
@@ -29,6 +30,7 @@ export const SEED_USERS: AuthUser[] = [
     paymentMethod: "GCASH",
     paymentReference: "GC-1029-3381",
     residentCode: "CK-000189",
+    deliveryCreditsLeft: 0,
     createdAt: "2026-08-15T09:30:00Z",
   },
   {

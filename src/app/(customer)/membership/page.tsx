@@ -43,7 +43,7 @@ export default function MembershipPage() {
   const doorCredits: Record<string, string> = {
     PER_PARCEL: "None (Pay-Per-Trip)",
     REGULAR: "None (Pay-Per-Trip)",
-    PREMIUM: "5 Free Deliveries/mo (2 Left)",
+    PREMIUM: `5 Free Deliveries/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
   };
 
   // Sample resident billing history

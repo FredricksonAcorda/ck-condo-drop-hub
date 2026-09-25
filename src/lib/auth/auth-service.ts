@@ -20,7 +20,11 @@ class AuthService {
         return defaultUser;
       }
       if (raw === "null") return null;
-      return JSON.parse(raw) as AuthUser;
+      const sessionUser = JSON.parse(raw) as AuthUser;
+      if (sessionUser && sessionUser.role === "resident" && sessionUser.deliveryCreditsLeft === undefined) {
+        sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 2 : 0;
+      }
+      return sessionUser;
     } catch {
       return null;
     }
@@ -123,6 +127,7 @@ class AuthService {
       paymentMethod: newResident.paymentMethod,
       paymentReference: newResident.paymentReference,
       residentCode: newResident.residentCode,
+      deliveryCreditsLeft: newResident.deliveryCreditsLeft,
       createdAt: newResident.createdAt,
     };
 
@@ -149,6 +154,7 @@ class AuthService {
       paymentMethod: updatedResident.paymentMethod,
       paymentReference: updatedResident.paymentReference,
       residentCode: updatedResident.residentCode,
+      deliveryCreditsLeft: updatedResident.deliveryCreditsLeft,
       createdAt: updatedResident.createdAt,
     };
     this.setSession(updatedUser);

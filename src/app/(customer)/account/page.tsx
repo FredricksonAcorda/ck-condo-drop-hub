@@ -301,17 +301,9 @@ export default function MyAccountPage() {
             {activeTab === "password" && (
               <form onSubmit={handleSave} className="p-6 space-y-4 max-w-md">
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-gray-700">
-                      Current Password
-                    </label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-[11px] font-bold text-brand-red hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Current Password
+                  </label>
                   <input type="password" placeholder="••••••••" className="input w-full" required />
                 </div>
                 <div>
@@ -335,11 +327,11 @@ export default function MyAccountPage() {
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 mt-4">
                   <span className="font-bold text-gray-900 block">Forgot your current password?</span>
                   <p className="leading-relaxed">
-                    If you don't remember your current password, request a secure recovery code via the{" "}
+                    If you don't remember your current password,{" "}
                     <Link href="/forgot-password" className="text-brand-red font-bold hover:underline">
-                      Password Reset Page
+                      Click here
                     </Link>{" "}
-                    or visit the <strong>Station 1 Front Desk</strong> with a valid resident ID for instant staff assistance.
+                    to request a secure recovery code via SMS/Email, or visit the <strong>Station 1 Front Desk</strong> with a valid resident ID for instant staff assistance.
                   </p>
                 </div>
               </form>
@@ -415,20 +407,32 @@ export default function MyAccountPage() {
 
                 <div className="space-y-4">
                   {/* Plan Quota Badge */}
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs flex items-center justify-between">
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <span className="font-bold text-amber-950 block">
-                        {user?.plan === "PREMIUM" ? "Premium Membership Benefit" : "Concierge Runner Service"}
+                      <span className="font-bold text-amber-950 block text-sm">
+                        {user?.plan === "PREMIUM" ? "Premium Concierge Benefit" : "Concierge Runner Service"}
                       </span>
-                      <span className="text-amber-800 text-[11px]">
+                      <span className="text-amber-800 text-xs">
                         {user?.plan === "PREMIUM"
-                          ? "Includes 5 free concierge door deliveries per month."
-                          : "Pay-per-trip concierge delivery available upon package arrival."}
+                          ? `Includes 5 free concierge door deliveries per month. You have ${user?.deliveryCreditsLeft ?? 0} free runs remaining.`
+                          : "Your Regular plan has 0 free deliveries. Concierge doorstep delivery is available at pay-per-trip rates."}
                       </span>
                     </div>
-                    <span className="font-mono font-bold text-xs bg-white px-2.5 py-1 rounded-lg border border-amber-300 text-amber-900 shrink-0">
-                      {user?.plan === "PREMIUM" ? "5 Free / Mo" : "Pay-Per-Trip"}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
+                        {user?.plan === "PREMIUM"
+                          ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
+                          : "0 Free (Pay-Per-Trip)"}
+                      </span>
+                      {user?.plan !== "PREMIUM" && (
+                        <Link
+                          href="/membership"
+                          className="text-xs font-bold text-brand-red hover:underline whitespace-nowrap"
+                        >
+                          Upgrade Plan →
+                        </Link>
+                      )}
+                    </div>
                   </div>
 
                   <div>
