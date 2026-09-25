@@ -29,7 +29,7 @@ const faqItems: FAQItem[] = [
     question: "How does the free holding period work?",
     answer: (
       <p>
-        Every parcel receives <strong className="font-bold text-brand-text">3 days of free holding</strong> on the Per Parcel plan, <strong className="font-bold text-brand-red">15 days of free holding with unlimited parcels</strong> on the Regular Plan, and <strong className="font-bold text-brand-red">30 days of free holding</strong> on the Premium VIP Plan. Parcels held past the free window incur a minimal holding fee of only ₱5 per day.
+        Every parcel receives <strong className="font-bold text-brand-text">3 days of free holding</strong> on both Per Parcel and Regular plans (with Regular enjoying 15 days of unlimited parcels), and <strong className="font-bold text-brand-red">7 days of free holding</strong> with 30 days unlimited parcels on the Premium VIP Plan. Parcels held past the free window incur a minimal holding fee of only ₱5 per day.
       </p>
     ),
   },
@@ -76,7 +76,7 @@ export default function AnnouncementsSection() {
           <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
             Please claim your parcels within your plan&apos;s{" "}
             <span className="text-brand-red font-black underline decoration-2 underline-offset-4">
-              free holding period (up to 15 or 30 days)
+              free holding period (3 to 7 days)
             </span>{" "}
             to prevent extra storage charges.
           </p>

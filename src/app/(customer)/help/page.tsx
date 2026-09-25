@@ -65,7 +65,7 @@ export default function HelpCenterPage() {
     },
     {
       q: "What happens if I cannot claim my package within the free holding period?",
-      a: "Parcels under Per-Parcel plans have 3 free calendar days, Regular plans enjoy 15 free calendar days, and Premium members enjoy 30 free calendar days. If a parcel remains unclaimed after the free holding period, a storage holding fee of ₱10.00 per day applies upon pickup.",
+      a: "Parcels under Per-Parcel and Regular plans have 3 free calendar days (with Regular members enjoying 15 days of unlimited parcels), and Premium VIP members enjoy 7 free calendar days (with 30 days of unlimited parcels). If a parcel remains unclaimed after the free holding period, a storage holding fee of ₱10.00 per day applies upon pickup.",
     },
     {
       q: "How does Door-to-Door Unit Delivery work?",

@@ -198,7 +198,7 @@ export default function MyParcelsPage() {
     return filteredHistory.slice(historyStartIndex, historyEndIndex);
   }, [filteredHistory, historyStartIndex, historyEndIndex]);
 
-  const freeHoldingDays = user?.plan === "PREMIUM" ? 30 : user?.plan === "REGULAR" ? 15 : 3;
+  const freeHoldingDays = user?.plan === "PREMIUM" ? 7 : 3;
 
   return (
     <div className="space-y-6">

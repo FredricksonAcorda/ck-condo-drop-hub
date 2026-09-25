@@ -31,14 +31,14 @@ export default function MembershipPage() {
 
   const planPrices: Record<string, string> = {
     PER_PARCEL: "₱15 / claim",
-    REGULAR: "₱149 / month",
-    PREMIUM: "₱299 / month",
+    REGULAR: "₱149 / 15 days",
+    PREMIUM: "₱299 / month (30 days)",
   };
 
   const holdingDays: Record<string, number> = {
     PER_PARCEL: 3,
-    REGULAR: 15,
-    PREMIUM: 30,
+    REGULAR: 3,
+    PREMIUM: 7,
   };
 
   const doorCredits: Record<string, string> = {
@@ -135,16 +135,17 @@ export default function MembershipPage() {
 
     try {
       const now = new Date();
+      const planDays = targetPlan === "REGULAR" ? 15 : 30;
       let newExpiryDate: Date;
       if (isRenewalMode && user?.subscriptionExpiry) {
         const curExp = new Date(user.subscriptionExpiry);
         if (curExp.getTime() > now.getTime()) {
-          newExpiryDate = new Date(curExp.getTime() + 30 * 24 * 60 * 60 * 1000);
+          newExpiryDate = new Date(curExp.getTime() + planDays * 24 * 60 * 60 * 1000);
         } else {
-          newExpiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+          newExpiryDate = new Date(now.getTime() + planDays * 24 * 60 * 60 * 1000);
         }
       } else {
-        newExpiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        newExpiryDate = new Date(now.getTime() + planDays * 24 * 60 * 60 * 1000);
       }
 
       const formattedNewDate = newExpiryDate.toLocaleDateString("en-US", {
@@ -199,7 +200,7 @@ export default function MembershipPage() {
         id: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         date: "Today",
         plan: isRenewalMode
-          ? `${targetPlan.replace("_", " ")} 30-Day Renewal`
+          ? `${targetPlan.replace("_", " ")} ${targetPlan === "REGULAR" ? "15-Day" : "30-Day"} Renewal`
           : `${targetPlan.replace("_", " ")} Membership`,
         amount: targetPlan === "PREMIUM" ? "₱299.00" : targetPlan === "REGULAR" ? "₱149.00" : "₱0.00",
         method: paymentMethod === "GCASH" ? "GCash QR" : "Cash at Counter",
@@ -356,7 +357,13 @@ export default function MembershipPage() {
               </div>
 
               {/* Benefits Status Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
+                  <span className="text-gray-500 block text-[11px]">Unlimited Parcels</span>
+                  <span className="font-bold text-gray-900 text-sm">
+                    {currentPlan === "REGULAR" ? "15 Days" : "30 Days"}
+                  </span>
+                </div>
                 <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
                   <span className="text-gray-500 block text-[11px]">Parcel Pick-up Fee</span>
                   <span className="font-bold text-green-700 text-sm">₱0.00 Covered</span>
@@ -365,7 +372,7 @@ export default function MembershipPage() {
                   <span className="text-gray-500 block text-[11px]">Free Holding Grace</span>
                   <span className="font-bold text-gray-900 text-sm">{holdingDays[currentPlan]} Days</span>
                 </div>
-                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs col-span-2 sm:col-span-1">
+                <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
                   <span className="text-gray-500 block text-[11px]">Door Deliveries Left</span>
                   <span className="font-bold text-brand-red text-sm">
                     {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} Free Runs` : "Not Available"}
@@ -506,18 +513,18 @@ export default function MembershipPage() {
                 )}
               </div>
               <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mb-1">
-                ₱149 <span className="text-xs font-normal text-gray-500">/ month</span>
+                ₱149 <span className="text-xs font-normal text-gray-500">/ 15 days</span>
               </div>
               <p className="text-xs text-gray-500 mb-4">
-                Ideal for frequent online shoppers and small families.
+                15 days unlimited parcels. Ideal for frequent online shoppers and small families.
               </p>
 
               <ul className="text-xs space-y-2.5 text-gray-700 border-t border-gray-100 pt-4">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> <strong>Unlimited Parcels</strong> Stored
+                  <span className="text-green-600 font-bold">✓</span> <strong>15 Days Unlimited Parcels</strong>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> <strong>15 Days Free Holding Grace</strong>
+                  <span className="text-green-600 font-bold">✓</span> <strong>3 Days Free Holding Grace</strong>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> Instant SMS & Claim Passcodes
@@ -570,7 +577,7 @@ export default function MembershipPage() {
                 )}
               </div>
               <div className="font-[family-name:var(--font-heading)] text-3xl text-gray-900 mb-1">
-                ₱299 <span className="text-xs font-normal text-gray-500">/ month</span>
+                ₱299 <span className="text-xs font-normal text-gray-500">/ month (30 days)</span>
               </div>
               <p className="text-xs text-gray-500 mb-4">
                 Full-service package with extended holding and doorstep deliveries.
@@ -578,13 +585,13 @@ export default function MembershipPage() {
 
               <ul className="text-xs space-y-2.5 text-gray-700 border-t border-amber-200 pt-4">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> <strong>30 Days Extended Free Holding</strong>
+                  <span className="text-green-600 font-bold">✓</span> <strong>30 Days Unlimited Parcels</strong>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-600 font-bold">✓</span> <strong>7 Days Extended Free Holding</strong>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> <strong>5 Free Door Deliveries / month</strong>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> Unlimited Package Drops
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> SMS & Dedicated Staff Admin Hotline
