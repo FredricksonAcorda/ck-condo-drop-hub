@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 
@@ -26,6 +27,12 @@ export default function MyAccountPage() {
   const [emailDigest, setEmailDigest] = useState(false);
   const [promoUpdates, setPromoUpdates] = useState(false);
 
+  // Door delivery preferences
+  const [preferredWindow, setPreferredWindow] = useState("Morning (10:00 AM - 12:00 PM)");
+  const [deliveryInstructions, setDeliveryInstructions] = useState(
+    "Please ring doorbell and place parcels on the shoe rack outside the unit if no response."
+  );
+
   // Synchronize when active user changes (e.g. via demo switcher)
   useEffect(() => {
     if (user) {
@@ -37,8 +44,8 @@ export default function MyAccountPage() {
     }
   }, [user]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSaveError(null);
     setIsSaving(true);
 
@@ -51,6 +58,8 @@ export default function MyAccountPage() {
         tower: tower.trim(),
         authorizedClaimant: authorizedClaimant.trim(),
         claimantPhone: claimantPhone.trim(),
+        preferredDeliveryWindow: preferredWindow,
+        deliveryInstructions: deliveryInstructions.trim(),
         notifications: {
           smsArrival,
           smsReminder,
@@ -292,9 +301,17 @@ export default function MyAccountPage() {
             {activeTab === "password" && (
               <form onSubmit={handleSave} className="p-6 space-y-4 max-w-md">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Current Password
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-700">
+                      Current Password
+                    </label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-[11px] font-bold text-brand-red hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <input type="password" placeholder="••••••••" className="input w-full" required />
                 </div>
                 <div>
@@ -313,6 +330,17 @@ export default function MyAccountPage() {
                   <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
                     Update Password
                   </button>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 mt-4">
+                  <span className="font-bold text-gray-900 block">Forgot your current password?</span>
+                  <p className="leading-relaxed">
+                    If you don't remember your current password, request a secure recovery code via the{" "}
+                    <Link href="/forgot-password" className="text-brand-red font-bold hover:underline">
+                      Password Reset Page
+                    </Link>{" "}
+                    or visit the <strong>Station 1 Front Desk</strong> with a valid resident ID for instant staff assistance.
+                  </p>
                 </div>
               </form>
             )}
@@ -386,11 +414,32 @@ export default function MyAccountPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Plan Quota Badge */}
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-amber-950 block">
+                        {user?.plan === "PREMIUM" ? "Premium Membership Benefit" : "Concierge Runner Service"}
+                      </span>
+                      <span className="text-amber-800 text-[11px]">
+                        {user?.plan === "PREMIUM"
+                          ? "Includes 5 free concierge door deliveries per month."
+                          : "Pay-per-trip concierge delivery available upon package arrival."}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-xs bg-white px-2.5 py-1 rounded-lg border border-amber-300 text-amber-900 shrink-0">
+                      {user?.plan === "PREMIUM" ? "5 Free / Mo" : "Pay-Per-Trip"}
+                    </span>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Preferred Delivery Window
                     </label>
-                    <select className="input w-full cursor-pointer">
+                    <select
+                      value={preferredWindow}
+                      onChange={(e) => setPreferredWindow(e.target.value)}
+                      className="input w-full cursor-pointer"
+                    >
                       <option>Morning (10:00 AM - 12:00 PM)</option>
                       <option>Afternoon (2:00 PM - 5:00 PM)</option>
                       <option>Evening (6:00 PM - 8:30 PM)</option>
@@ -399,11 +448,13 @@ export default function MyAccountPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Drop-off Instructions
+                      Drop-off Instructions (Saved for Concierge Runners)
                     </label>
                     <textarea
                       rows={3}
-                      defaultValue="Please ring doorbell and place parcels on the shoe rack outside the unit if no response."
+                      value={deliveryInstructions}
+                      onChange={(e) => setDeliveryInstructions(e.target.value)}
+                      placeholder="e.g. Please ring doorbell and place parcels on the shoe rack outside the unit..."
                       className="input w-full"
                     />
                   </div>

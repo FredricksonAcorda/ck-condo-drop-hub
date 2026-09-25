@@ -162,8 +162,9 @@ class LocalDatabaseService implements IDatabaseService {
       badgeColor: "bg-orange-500",
     });
 
-    // Automatically dispatch SMS notification record if resident has phone
-    if (resident?.phone) {
+    // Automatically dispatch SMS notification record if resident has phone and enabled SMS alerts
+    const wantsSms = resident?.notifications?.smsArrival ?? true;
+    if (resident?.phone && wantsSms) {
       const smsMessage = `${settings.hubName}: Package ${newParcel.trackingNumber} from ${newParcel.courier} has arrived at ${newParcel.shelf}. Claim passcode: ${newParcel.claimCode}. Free holding until ${newParcel.deadline}.`;
       await this.recordSms({
         recipientPhone: resident.phone,

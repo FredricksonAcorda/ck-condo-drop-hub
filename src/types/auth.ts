@@ -39,6 +39,8 @@ export interface ResidentProfile {
     emailDigest: boolean;
     promoUpdates: boolean;
   };
+  preferredDeliveryWindow?: string;
+  deliveryInstructions?: string;
   deliveryCreditsLeft?: number;
   totalParcelsReceived: number;
   activeParcelsCount: number;
