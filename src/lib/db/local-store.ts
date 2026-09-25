@@ -495,6 +495,20 @@ class LocalDatabaseService implements IDatabaseService {
         minute: "2-digit",
       });
 
+    // If creating a new door delivery request, supersede any older pending requests for this resident
+    if (input.category.toLowerCase().includes("door") || input.category.toLowerCase().includes("delivery")) {
+      inquiries.forEach((item) => {
+        if (
+          item.residentId === input.residentId &&
+          (item.category.toLowerCase().includes("door") || item.category.toLowerCase().includes("delivery")) &&
+          (item.status === "NEW" || item.status === "IN_PROGRESS")
+        ) {
+          item.status = "RESOLVED";
+          item.updatedAt = timestampStr;
+        }
+      });
+    }
+
     const newInquiry: DeskInquiry = {
       ...input,
       id: `inq-${Date.now()}`,
@@ -578,6 +592,9 @@ class LocalDatabaseService implements IDatabaseService {
       });
 
     const current = inquiries[index];
+    const isDoorDelivery =
+      current.category.toLowerCase().includes("door") || current.category.toLowerCase().includes("delivery");
+
     const updated: DeskInquiry = {
       ...current,
       status,
@@ -586,6 +603,25 @@ class LocalDatabaseService implements IDatabaseService {
     };
 
     inquiries[index] = updated;
+
+    // If resolving a door delivery request, also mark any duplicate pending door requests for the same resident as RESOLVED
+    if (status === "RESOLVED" && isDoorDelivery) {
+      inquiries.forEach((item, idx) => {
+        if (
+          idx !== index &&
+          item.residentId === current.residentId &&
+          (item.category.toLowerCase().includes("door") || item.category.toLowerCase().includes("delivery")) &&
+          (item.status === "NEW" || item.status === "IN_PROGRESS")
+        ) {
+          item.status = "RESOLVED";
+          item.updatedAt = timestampStr;
+          if (!item.adminReply && adminReply) {
+            item.adminReply = adminReply;
+          }
+        }
+      });
+    }
+
     this.save(STORAGE_KEYS.INQUIRIES, inquiries);
 
     await this.recordActivity({

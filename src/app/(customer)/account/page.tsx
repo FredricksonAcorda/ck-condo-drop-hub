@@ -39,13 +39,17 @@ export default function MyAccountPage() {
     "Please ring doorbell and place parcels on the shoe rack outside the unit if no response."
   );
 
-  // Active pending delivery request for current resident
-  const activePendingDelivery = inquiries.find(
+  // All doorstep delivery inquiries for current resident (latest first)
+  const myDeliveryInquiries = inquiries.filter(
     (i) =>
       i.residentId === user?.id &&
-      (i.category.toLowerCase().includes("door") || i.category.toLowerCase().includes("delivery")) &&
-      (i.status === "NEW" || i.status === "IN_PROGRESS")
+      (i.category.toLowerCase().includes("door") || i.category.toLowerCase().includes("delivery"))
   );
+  const latestDelivery = myDeliveryInquiries[0];
+  const activePendingDelivery =
+    latestDelivery && (latestDelivery.status === "NEW" || latestDelivery.status === "IN_PROGRESS")
+      ? latestDelivery
+      : null;
 
   const handleDispatchDoorDelivery = async () => {
     if (!user) return;
@@ -555,6 +559,27 @@ export default function MyAccountPage() {
                 ) : (
                   /* Form: Shown when no pending request OR when editing active request */
                   <div className="space-y-4">
+                    {!isEditingRequest && latestDelivery?.status === "RESOLVED" && (
+                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
+                        <div className="flex items-center justify-between font-bold text-emerald-950">
+                          <span className="flex items-center gap-1.5">
+                            <span>✓</span> Last Doorstep Delivery Completed by Front Desk
+                          </span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-normal">
+                            {latestDelivery.updatedAt || latestDelivery.createdAt}
+                          </span>
+                        </div>
+                        {latestDelivery.adminReply && (
+                          <p className="text-[11px] text-emerald-800">
+                            Front Desk Note: "{latestDelivery.adminReply}"
+                          </p>
+                        )}
+                        <p className="text-[11px] text-emerald-700 pt-0.5">
+                          Need another package brought to your door? Choose your preferred window below and dispatch a new request.
+                        </p>
+                      </div>
+                    )}
+
                     {isEditingRequest && (
                       <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
                         <span>Editing your active pending request. Adjust your time window or notes and click <strong>Update Request</strong>.</span>

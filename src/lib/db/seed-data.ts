@@ -715,8 +715,10 @@ export const SEED_INQUIRIES: DeskInquiry[] = [
     category: "Doorstep Delivery Request",
     trackingNumber: "SPX-PH-2026-8921",
     message: "Hi front desk, I have a package ready. Could the runner bring it up to Unit 101 between 2:00 PM and 4:00 PM today? Thank you!",
-    status: "NEW",
-    createdAt: "Sept 25, 2026 • 09:30 AM",
+    status: "RESOLVED",
+    adminReply: "Package brought to Unit 101 by runner Carlos. Received by resident.",
+    createdAt: "Sept 24, 2026 • 09:30 AM",
+    updatedAt: "Sept 24, 2026 • 02:45 PM",
   },
   {
     id: "inq-102",
