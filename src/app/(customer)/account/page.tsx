@@ -6,7 +6,7 @@ import { useAuth, useParcels } from "@/context";
 
 export default function MyAccountPage() {
   const { user, updateProfile } = useAuth();
-  const { inquiries, sendInquiry, updateInquiry } = useParcels();
+  const { inquiries, sendInquiry, updateInquiry, deleteInquiry } = useParcels();
   const [activeTab, setActiveTab] = useState<"details" | "password" | "notifications" | "delivery">("details");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -97,6 +97,21 @@ export default function MyAccountPage() {
       setTimeout(() => setDeliveryFeedback(null), 5000);
     } catch {
       alert("Failed to update door delivery request.");
+    } finally {
+      setIsDispatchingDelivery(false);
+    }
+  };
+
+  const handleCancelDoorDelivery = async () => {
+    if (!activePendingDelivery) return;
+    setIsDispatchingDelivery(true);
+    try {
+      await deleteInquiry(activePendingDelivery.id);
+      setDeliveryFeedback("✓ Active door delivery request cancelled. Front desk has been updated.");
+      setIsEditingRequest(false);
+      setTimeout(() => setDeliveryFeedback(null), 5000);
+    } catch {
+      alert("Failed to cancel door delivery request.");
     } finally {
       setIsDispatchingDelivery(false);
     }
@@ -547,13 +562,23 @@ export default function MyAccountPage() {
                       <span className="text-[11px] text-gray-500">
                         Dispatched: {activePendingDelivery.createdAt}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingRequest(true)}
-                        className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
-                      >
-                        Edit Request ✏️
-                      </button>
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={handleCancelDoorDelivery}
+                          disabled={isDispatchingDelivery}
+                          className="btn btn-outline btn-sm text-xs font-bold uppercase text-red-600 !border-red-200 hover:!bg-red-50 cursor-pointer"
+                        >
+                          Cancel Request ✕
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingRequest(true)}
+                          className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
+                        >
+                          Edit Request ✏️
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -623,7 +648,7 @@ export default function MyAccountPage() {
                             disabled={isDispatchingDelivery}
                             className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
                           >
-                            Cancel
+                            Cancel Edit
                           </button>
                           <button
                             type="button"
@@ -642,7 +667,7 @@ export default function MyAccountPage() {
                             disabled={isSaving || isDispatchingDelivery}
                             className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
                           >
-                            {isSaving ? "Saving..." : "Save Preferences Only"}
+                            {isSaving ? "Saving..." : "Save Preferences"}
                           </button>
                           <button
                             type="button"
@@ -650,7 +675,7 @@ export default function MyAccountPage() {
                             disabled={isSaving || isDispatchingDelivery}
                             className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
                           >
-                            {isDispatchingDelivery ? "Dispatching to Concierge..." : "Dispatch Request to Front Desk"}
+                            {isDispatchingDelivery ? "Dispatching to Concierge..." : "Request Concierge Door Run"}
                           </button>
                         </>
                       )}

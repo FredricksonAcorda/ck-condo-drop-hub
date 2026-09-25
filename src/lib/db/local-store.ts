@@ -635,6 +635,23 @@ class LocalDatabaseService implements IDatabaseService {
     return updated;
   }
 
+  async deleteInquiry(id: string): Promise<boolean> {
+    const inquiries = await this.getInquiries();
+    const filtered = inquiries.filter((i) => i.id !== id);
+    if (filtered.length === inquiries.length) return false;
+
+    this.save(STORAGE_KEYS.INQUIRIES, filtered);
+    await this.recordActivity({
+      type: "INQUIRY_RESPONDED",
+      title: `Inquiry #${id.slice(-4)} cancelled`,
+      description: `Pending request removed by resident.`,
+      actor: "Resident Portal",
+      badgeColor: "bg-gray-500",
+    });
+
+    return true;
+  }
+
   // --- Hub Settings ---
 
   async getHubSettings(): Promise<HubSettings> {

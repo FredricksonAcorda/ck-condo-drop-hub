@@ -32,7 +32,7 @@ export interface SmsLogItem {
   costEstimate: string;
 }
 
-export type InquiryStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
+export type InquiryStatus = "NEW" | "IN_PROGRESS" | "RESOLVED" | "CANCELLED";
 
 export interface DeskInquiry {
   id: string;

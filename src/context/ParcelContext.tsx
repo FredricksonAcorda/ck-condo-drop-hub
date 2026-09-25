@@ -25,6 +25,7 @@ interface ParcelContextType {
   sendInquiry: (input: Omit<DeskInquiry, "id" | "createdAt" | "status">) => Promise<DeskInquiry>;
   updateInquiry: (id: string, updates: Partial<DeskInquiry>) => Promise<DeskInquiry>;
   updateInquiryStatus: (id: string, status: InquiryStatus, adminReply?: string) => Promise<DeskInquiry>;
+  deleteInquiry: (id: string) => Promise<boolean>;
   updateHubSettings: (settings: Partial<HubSettings>) => Promise<HubSettings>;
   refresh: () => Promise<void>;
 }
@@ -140,6 +141,12 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     return item;
   };
 
+  const deleteInquiry = async (id: string): Promise<boolean> => {
+    const result = await db.deleteInquiry(id);
+    await refresh();
+    return result;
+  };
+
   const updateHubSettings = async (settingsUpdates: Partial<HubSettings>): Promise<HubSettings> => {
     const updated = await db.updateHubSettings(settingsUpdates);
     setHubSettings(updated);
@@ -167,6 +174,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     sendInquiry,
     updateInquiry,
     updateInquiryStatus,
+    deleteInquiry,
     updateHubSettings,
     refresh,
   };
