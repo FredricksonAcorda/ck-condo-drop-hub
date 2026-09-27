@@ -88,17 +88,18 @@ class LocalDatabaseService implements IDatabaseService {
     const resident = residents.find((r) => r.id === input.residentId);
     const settings = await this.getHubSettings();
 
-    // Pick courier color
+    // Pick courier color (official list + other)
     const courierColors: Record<string, string> = {
       "SPX Express": "#EE4D2D",
-      "J&T Express": "#D21F1F",
       "Flash Express": "#FFB800",
+      "J&T Express": "#D21F1F",
+      "YTO Express": "#592780",
       "LBC Express": "#E31837",
-      "Ninja Van": "#C10015",
-      "DHL Express": "#D40511",
+      "STO Express": "#FF6600",
+      "Other Courier": "#6B7280",
     };
 
-    const courierColor = courierColors[input.courier] || "#E31837";
+    const courierColor = courierColors[input.courier] || "#6B7280";
     const now = new Date();
     const dateArrivedStr =
       now.toLocaleDateString("en-US", {
@@ -396,7 +397,7 @@ class LocalDatabaseService implements IDatabaseService {
     return this.load<ActivityLogItem[]>(STORAGE_KEYS.ACTIVITY, this.inMemoryActivity);
   }
 
-  private async recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem> {
+  async recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem> {
     const logs = await this.getActivityLogs();
     const now = new Date();
     const timestampStr =

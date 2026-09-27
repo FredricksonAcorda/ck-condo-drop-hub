@@ -14,6 +14,7 @@ export default function MembershipPage() {
   const currentPlan = user?.plan || "PREMIUM";
   const planStatus = user?.planStatus || "ACTIVE";
   const isPendingPayment = planStatus === "PENDING_PAYMENT";
+  const isPendingVerification = planStatus === "PENDING_VERIFICATION";
 
   const [selectedPlanToSwitch, setSelectedPlanToSwitch] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM" | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -39,7 +40,7 @@ export default function MembershipPage() {
   const doorCredits: Record<string, string> = {
     PER_PARCEL: "Not available",
     REGULAR: "Not available for Regular Plans",
-    PREMIUM: `5 Free Deliveries/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
+    PREMIUM: `1 Free Delivery/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
   };
 
   // Subscription expiration and renewal calculation
@@ -175,6 +176,7 @@ export default function MembershipPage() {
         await updateProfile({
           plan: "PER_PARCEL",
           planStatus: "ACTIVE",
+          pendingPlan: undefined,
           paymentMethod: "CASH_COUNTER",
           deliveryCreditsLeft: 0,
         });
@@ -185,34 +187,31 @@ export default function MembershipPage() {
           setIsProcessing(false);
           return;
         }
+        // Manual verification required: Do not auto-tag as premium
         await updateProfile({
-          plan: targetPlan,
-          planStatus: "ACTIVE",
+          planStatus: "PENDING_VERIFICATION",
+          pendingPlan: targetPlan,
           paymentMethod: "GCASH",
           paymentReference: gcashRef.trim(),
-          subscriptionExpiry: newExpiryDate.toISOString(),
-          deliveryCreditsLeft: targetPlan === "PREMIUM" ? 5 : 0,
+          pendingSubmittedAt: now.toISOString(),
         });
         setSuccessMessage(
-          isRenewalMode
-            ? `🎉 Subscription successfully renewed via GCash! Valid until ${formattedNewDate}.`
-            : `Successfully activated ${targetPlan.replace("_", " ")} Plan via GCash! Valid until ${formattedNewDate}.`
+          `⏳ GCash payment submitted (Ref: ${gcashRef.trim()})! Your ${targetPlan.replace("_", " ")} upgrade is pending manual admin verification.`
         );
       } else {
+        // Cash at counter
         await updateProfile({
-          plan: targetPlan,
-          planStatus: "PENDING_PAYMENT",
+          planStatus: "PENDING_VERIFICATION",
+          pendingPlan: targetPlan,
           paymentMethod: "CASH_COUNTER",
-          subscriptionExpiry: newExpiryDate.toISOString(),
+          pendingSubmittedAt: now.toISOString(),
         });
         setSuccessMessage(
-          isRenewalMode
-            ? `Renewal queued for ${targetPlan.replace("_", " ")} Plan. Please settle at Lobby.`
-            : `Switched to ${targetPlan.replace("_", " ")} Plan. Please settle at Lobby.`
+          `⏳ ${targetPlan.replace("_", " ")} Plan queued. Please settle payment at the Lobby counter for admin confirmation.`
         );
       }
 
-      // Add to centralized invoices database
+      // Add to centralized invoices database as PENDING verification
       await recordInvoice({
         residentId: user?.id || "usr-resident-1",
         residentName: user?.name || "Juan Dela Cruz",
@@ -223,10 +222,12 @@ export default function MembershipPage() {
         plan: isRenewalMode
           ? `${targetPlan.replace("_", " ")} ${targetPlan === "REGULAR" ? "15-Day" : "30-Day"} Renewal`
           : `${targetPlan.replace("_", " ")} Membership`,
+        pendingPlan: targetPlan,
         amount: targetPlan === "PREMIUM" ? "₱299.00" : targetPlan === "REGULAR" ? "₱149.00" : "₱0.00",
         method: paymentMethod === "GCASH" ? "GCash QR" : "Cash at Counter",
         reference: paymentMethod === "GCASH" ? gcashRef.trim() : undefined,
-        status: paymentMethod === "GCASH" || targetPlan === "PER_PARCEL" ? "PAID" : "PENDING",
+        status: targetPlan === "PER_PARCEL" ? "PAID" : "PENDING",
+        notes: "Pending Admin Payment Verification",
       });
 
       const updatedList = await getInvoicesByResident(user?.id || "usr-resident-1");
@@ -256,7 +257,12 @@ export default function MembershipPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {isPendingPayment ? (
+          {isPendingVerification ? (
+            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Verification Pending
+            </span>
+          ) : isPendingPayment ? (
             <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 animate-pulse">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
               Pending Payment
@@ -277,6 +283,30 @@ export default function MembershipPage() {
           <button onClick={() => setSuccessMessage(null)} className="text-green-600 hover:text-green-800 cursor-pointer">
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Pending Admin Verification Alert Card */}
+      {isPendingVerification && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50/50 to-white border-2 border-amber-400 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+              <h3 className="font-bold text-sm text-gray-900">
+                Payment Verification in Progress ({user?.pendingPlan || "PREMIUM"} Plan)
+              </h3>
+            </div>
+            <p className="text-xs text-gray-700 max-w-xl leading-relaxed">
+              Your payment confirmation via <strong>{user?.paymentMethod === "GCASH" ? "GCash QR" : "Cash at Counter"}</strong>{" "}
+              {user?.paymentReference ? <span>(Reference: <strong className="font-mono">{user.paymentReference}</strong>)</span> : null} has been submitted.
+              A lobby staff admin is manually verifying your payment. Once confirmed in the admin panel, your account will officially update to <strong>{user?.pendingPlan || "PREMIUM"}</strong> with 1 free door-to-door delivery.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-bold text-amber-800 bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
+              ⏳ Awaiting Admin Approval
+            </span>
+          </div>
         </div>
       )}
 
@@ -595,7 +625,7 @@ export default function MembershipPage() {
                   <span className="text-green-600 font-bold">✓</span> <strong>7 Days Extended Free Holding</strong>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> <strong>5 Free Door Deliveries / month</strong>
+                  <span className="text-green-600 font-bold">✓</span> <strong>1 Free Door Delivery / month</strong>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-600 font-bold">✓</span> SMS & Dedicated Staff Admin Hotline

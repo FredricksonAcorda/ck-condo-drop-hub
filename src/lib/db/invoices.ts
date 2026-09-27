@@ -114,14 +114,31 @@ export async function recordInvoice(
   return record;
 }
 
-export async function confirmCashPayment(invoiceId: string): Promise<InvoiceRecord | null> {
+export async function verifyAndActivateMembership(
+  invoiceId: string,
+  verifiedBy: string = "Lobby Admin"
+): Promise<InvoiceRecord | null> {
   const all = await getAllInvoices();
   const target = all.find((i) => i.id === invoiceId);
   if (!target) return null;
 
+  const now = new Date();
   target.status = "PAID";
-  target.method = "Cash at Counter";
+  target.verifiedAt = now.toISOString();
+  target.verifiedBy = verifiedBy;
   target.date = "Today";
+
+  const isPremium =
+    target.pendingPlan === "PREMIUM" ||
+    target.plan.toUpperCase().includes("PREMIUM");
+
+  const isRegular =
+    target.pendingPlan === "REGULAR" ||
+    target.plan.toUpperCase().includes("REGULAR");
+
+  const targetPlan = isPremium ? "PREMIUM" : isRegular ? "REGULAR" : "PER_PARCEL";
+  const planDays = isPremium ? 30 : 15;
+  const newExpiry = new Date(now.getTime() + planDays * 24 * 60 * 60 * 1000).toISOString();
 
   if (typeof window !== "undefined") {
     localStorage.setItem(INVOICES_KEY, JSON.stringify(all));
@@ -131,10 +148,48 @@ export async function confirmCashPayment(invoiceId: string): Promise<InvoiceReco
     const residentList = all.filter((i) => i.residentId === target.residentId);
     localStorage.setItem(residentKey, JSON.stringify(residentList));
 
-    // Update resident profile to ACTIVE
+    // Update resident profile in DB
     try {
+      const residents = await db.getAllResidents();
+      const resident = residents.find((r) => r.id === target.residentId);
+
       await db.updateResidentProfile(target.residentId, {
+        plan: targetPlan,
         planStatus: "ACTIVE",
+        pendingPlan: undefined,
+        pendingSubmittedAt: undefined,
+        paymentReference: target.reference || resident?.paymentReference,
+        paymentMethod: target.method.includes("GCash") ? "GCASH" : "CASH_COUNTER",
+        deliveryCreditsLeft: isPremium ? 1 : 0,
+        subscriptionExpiry: newExpiry,
+      });
+
+      // Also update currently active auth session if it matches this resident
+      const sessionRaw = localStorage.getItem("ck_hub_session_v1");
+      if (sessionRaw && sessionRaw !== "null") {
+        try {
+          const session = JSON.parse(sessionRaw);
+          if (session && session.id === target.residentId) {
+            session.plan = targetPlan;
+            session.planStatus = "ACTIVE";
+            session.pendingPlan = undefined;
+            session.pendingSubmittedAt = undefined;
+            session.deliveryCreditsLeft = isPremium ? 1 : 0;
+            session.subscriptionExpiry = newExpiry;
+            localStorage.setItem("ck_hub_session_v1", JSON.stringify(session));
+          }
+        } catch {
+          // ignore session parse failure
+        }
+      }
+
+      await db.recordActivity({
+        type: "RESIDENT_REGISTERED",
+        title: `Payment Verified: ${target.residentName}`,
+        description: `Verified payment of ${target.amount} (${target.method}). Activated ${targetPlan} Plan.`,
+        actor: verifiedBy,
+        residentId: target.residentId,
+        badgeColor: "bg-emerald-600",
       });
     } catch (e) {
       console.error("Failed to activate resident profile:", e);
@@ -144,4 +199,66 @@ export async function confirmCashPayment(invoiceId: string): Promise<InvoiceReco
   }
 
   return target;
+}
+
+export async function rejectMembershipPayment(
+  invoiceId: string,
+  reason: string = "Payment receipt could not be verified"
+): Promise<InvoiceRecord | null> {
+  const all = await getAllInvoices();
+  const target = all.find((i) => i.id === invoiceId);
+  if (!target) return null;
+
+  target.status = "REJECTED";
+  target.notes = reason;
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(INVOICES_KEY, JSON.stringify(all));
+
+    const residentKey = `ck_invoices_${target.residentId}`;
+    const residentList = all.filter((i) => i.residentId === target.residentId);
+    localStorage.setItem(residentKey, JSON.stringify(residentList));
+
+    try {
+      await db.updateResidentProfile(target.residentId, {
+        planStatus: "ACTIVE",
+        pendingPlan: undefined,
+        pendingSubmittedAt: undefined,
+      });
+
+      const sessionRaw = localStorage.getItem("ck_hub_session_v1");
+      if (sessionRaw && sessionRaw !== "null") {
+        try {
+          const session = JSON.parse(sessionRaw);
+          if (session && session.id === target.residentId) {
+            session.planStatus = "ACTIVE";
+            session.pendingPlan = undefined;
+            session.pendingSubmittedAt = undefined;
+            localStorage.setItem("ck_hub_session_v1", JSON.stringify(session));
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      await db.recordActivity({
+        type: "RESIDENT_REGISTERED",
+        title: `Payment Rejected: ${target.residentName}`,
+        description: `Membership payment rejected. Reason: ${reason}`,
+        actor: "Lobby Admin",
+        residentId: target.residentId,
+        badgeColor: "bg-red-600",
+      });
+    } catch (e) {
+      console.error("Failed to reset resident status:", e);
+    }
+
+    window.dispatchEvent(new CustomEvent("ck_db_updated", { detail: { key: INVOICES_KEY } }));
+  }
+
+  return target;
+}
+
+export async function confirmCashPayment(invoiceId: string): Promise<InvoiceRecord | null> {
+  return verifyAndActivateMembership(invoiceId, "Lobby Staff (Cash Counter)");
 }

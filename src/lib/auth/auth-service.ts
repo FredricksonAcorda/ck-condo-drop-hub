@@ -23,7 +23,7 @@ class AuthService {
       const sessionUser = JSON.parse(raw) as AuthUser;
       if (sessionUser && sessionUser.role === "resident") {
         if (sessionUser.deliveryCreditsLeft === undefined) {
-          sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 2 : 0;
+          sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 1 : 0;
         }
         if (!sessionUser.subscriptionExpiry && sessionUser.plan !== "PER_PARCEL") {
           sessionUser.subscriptionExpiry = sessionUser.plan === "PREMIUM" ? "2026-10-01T23:59:59Z" : "2026-10-15T23:59:59Z";
@@ -95,7 +95,9 @@ class AuthService {
     const randomCode = `CK-${Math.floor(100000 + Math.random() * 900000).toString().slice(0, 6)}`;
     const plan = data.plan || "REGULAR";
     const isPaid = plan === "REGULAR" || plan === "PREMIUM";
-    const planStatus = !isPaid ? "ACTIVE" : (data.planStatus || (data.paymentReference ? "ACTIVE" : "PENDING_PAYMENT"));
+    const planStatus = !isPaid
+      ? "ACTIVE"
+      : (data.planStatus || (data.paymentReference ? "PENDING_VERIFICATION" : "PENDING_PAYMENT"));
     const paymentMethod = data.paymentMethod || (data.paymentReference ? "GCASH" : "CASH_COUNTER");
 
     const newResident = await db.createResident({
@@ -105,10 +107,12 @@ class AuthService {
       unit: data.unit.trim(),
       tower: data.tower || "Tower A",
       building: "CK Buildersville Condominium",
-      plan,
+      plan: isPaid && planStatus !== "ACTIVE" ? "PER_PARCEL" : plan,
+      pendingPlan: isPaid && planStatus !== "ACTIVE" ? plan : undefined,
       planStatus,
       paymentMethod,
       paymentReference: data.paymentReference,
+      deliveryCreditsLeft: isPaid && planStatus === "ACTIVE" ? (plan === "PREMIUM" ? 1 : 0) : 0,
       residentCode: randomCode,
       status: "ACTIVE",
       notifications: {
@@ -128,6 +132,7 @@ class AuthService {
       unit: newResident.unit,
       tower: newResident.tower,
       plan: newResident.plan,
+      pendingPlan: newResident.pendingPlan,
       planStatus: newResident.planStatus,
       paymentMethod: newResident.paymentMethod,
       paymentReference: newResident.paymentReference,

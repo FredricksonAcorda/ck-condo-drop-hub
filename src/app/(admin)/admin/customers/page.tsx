@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResidentProfile, InvoiceRecord } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { useParcels } from "@/context";
-import { getAllInvoices, confirmCashPayment } from "@/lib/db/invoices";
+import { getAllInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
 
 export default function AdminCustomersPage() {
   const { parcels } = useParcels();
@@ -139,10 +139,10 @@ export default function AdminCustomersPage() {
   const pendingSettlementCount = invoices.filter((i) => i.status === "PENDING").length;
   const paidInvoiceCount = invoices.filter((i) => i.status === "PAID").length;
 
-  // Handle staff confirming cash payment
-  const handleConfirmCash = async (invoiceId: string) => {
+  // Handle staff manually verifying payment and activating plan (Premium / Regular)
+  const handleVerifyPayment = async (invoiceId: string) => {
     try {
-      const confirmed = await confirmCashPayment(invoiceId);
+      const confirmed = await verifyAndActivateMembership(invoiceId, "Lobby Staff Admin");
       if (confirmed) {
         setPaymentFeedback(
           `✓ Payment verified! ${confirmed.residentName}'s ${confirmed.plan} is now ACTIVE and official receipt is marked PAID.`
@@ -153,9 +153,30 @@ export default function AdminCustomersPage() {
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to confirm cash payment.");
+      alert("Failed to verify payment.");
     }
   };
+
+  // Handle staff rejecting invalid payment
+  const handleRejectPayment = async (invoiceId: string) => {
+    const reason = prompt("Enter reason for rejecting payment (optional):", "Receipt reference could not be verified") || undefined;
+    try {
+      const rejected = await rejectMembershipPayment(invoiceId, reason);
+      if (rejected) {
+        setPaymentFeedback(
+          `Payment for ${rejected.residentName} was marked REJECTED.`
+        );
+        await loadInvoices();
+        await loadResidents();
+        setTimeout(() => setPaymentFeedback(null), 5000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reject payment.");
+    }
+  };
+
+  const handleConfirmCash = handleVerifyPayment;
 
   return (
     <div className="space-y-6 w-full">
@@ -328,6 +349,11 @@ export default function AdminCustomersPage() {
                               >
                                 {res.plan.replace("_", " ")}
                               </span>
+                              {res.planStatus === "PENDING_VERIFICATION" && (
+                                <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400 animate-pulse">
+                                  ⏳ Verify {res.pendingPlan || "Premium"}
+                                </span>
+                              )}
                               {res.planStatus === "PENDING_PAYMENT" && (
                                 <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-300 animate-pulse">
                                   Pending Settle
@@ -336,7 +362,7 @@ export default function AdminCustomersPage() {
                             </div>
                             <div className="text-[10px] text-gray-500 mt-1">
                               {res.plan === "PREMIUM"
-                                ? "30d Unlimited • 7d Grace • 5 Door Deliv."
+                                ? "30d Unlimited • 7d Grace • 1 Door Deliv."
                                 : res.plan === "REGULAR"
                                 ? "15d Unlimited • 3d Grace • No Door Deliv."
                                 : "₱20 / Claim • 2d Grace"}
@@ -553,9 +579,13 @@ export default function AdminCustomersPage() {
                             {inv.date}
                           </td>
                           <td className="px-4 py-3.5">
-                            {isPending ? (
-                              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
-                                Pending Settle
+                            {inv.status === "PENDING" ? (
+                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400 animate-pulse">
+                                Pending Verification
+                              </span>
+                            ) : inv.status === "REJECTED" ? (
+                              <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-300">
+                                Rejected
                               </span>
                             ) : (
                               <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
@@ -565,14 +595,25 @@ export default function AdminCustomersPage() {
                             )}
                           </td>
                           <td className="px-4 py-3.5 text-right">
-                            {isPending ? (
-                              <button
-                                type="button"
-                                onClick={() => handleConfirmCash(inv.id)}
-                                className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-[11px] font-bold py-1 px-2.5 uppercase cursor-pointer shadow-xs whitespace-nowrap"
-                              >
-                                Confirm Cash ✓
-                              </button>
+                            {inv.status === "PENDING" ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleVerifyPayment(inv.id)}
+                                  className="btn btn-sm bg-green-700 hover:bg-green-800 text-white text-[11px] font-bold py-1 px-2.5 uppercase cursor-pointer shadow-xs whitespace-nowrap"
+                                  title="Verify payment and activate plan"
+                                >
+                                  Confirm Payment ✓
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectPayment(inv.id)}
+                                  className="btn btn-sm bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-[11px] font-bold py-1 px-2 uppercase cursor-pointer whitespace-nowrap"
+                                  title="Reject payment"
+                                >
+                                  ✕
+                                </button>
+                              </div>
                             ) : (
                               <button
                                 type="button"
@@ -731,29 +772,62 @@ export default function AdminCustomersPage() {
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              {selectedResident.planStatus === "PENDING_PAYMENT" ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await db.updateResidentProfile(selectedResident.id, { planStatus: "ACTIVE" });
-                    // Also find invoice and confirm
-                    const residentInv = invoices.find(
-                      (i) => i.residentId === selectedResident.id && i.status === "PENDING"
-                    );
-                    if (residentInv) {
-                      await confirmCashPayment(residentInv.id);
-                    }
-                    await loadResidents();
-                    await loadInvoices();
-                    setSelectedResident(null);
-                    setPaymentFeedback(
-                      `✓ Cash payment confirmed! ${selectedResident.name}'s plan is now ACTIVE.`
-                    );
-                  }}
-                  className="btn btn-sm bg-green-700 hover:bg-green-800 text-white font-bold uppercase cursor-pointer"
-                >
-                  Confirm Cash Payment ✓
-                </button>
+              {selectedResident.planStatus === "PENDING_VERIFICATION" || selectedResident.planStatus === "PENDING_PAYMENT" ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const residentInv = invoices.find(
+                        (i) => i.residentId === selectedResident.id && i.status === "PENDING"
+                      );
+                      if (residentInv) {
+                        await verifyAndActivateMembership(residentInv.id, "Lobby Staff Admin");
+                      } else {
+                        const targetPlan = selectedResident.pendingPlan || "PREMIUM";
+                        await db.updateResidentProfile(selectedResident.id, {
+                          plan: targetPlan,
+                          planStatus: "ACTIVE",
+                          deliveryCreditsLeft: targetPlan === "PREMIUM" ? 1 : 0,
+                          pendingPlan: undefined,
+                        });
+                      }
+                      await loadResidents();
+                      await loadInvoices();
+                      setSelectedResident(null);
+                      setPaymentFeedback(
+                        `✓ Payment verified! ${selectedResident.name}'s ${selectedResident.pendingPlan || selectedResident.plan} is now ACTIVE.`
+                      );
+                    }}
+                    className="btn btn-sm bg-green-700 hover:bg-green-800 text-white font-bold uppercase cursor-pointer shadow-xs"
+                  >
+                    Confirm & Activate {selectedResident.pendingPlan || "Premium"} ✓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const residentInv = invoices.find(
+                        (i) => i.residentId === selectedResident.id && i.status === "PENDING"
+                      );
+                      if (residentInv) {
+                        await rejectMembershipPayment(residentInv.id, "Payment receipt could not be confirmed");
+                      } else {
+                        await db.updateResidentProfile(selectedResident.id, {
+                          planStatus: "ACTIVE",
+                          pendingPlan: undefined,
+                        });
+                      }
+                      await loadResidents();
+                      await loadInvoices();
+                      setSelectedResident(null);
+                      setPaymentFeedback(
+                        `Payment request for ${selectedResident.name} was rejected.`
+                      );
+                    }}
+                    className="btn btn-sm bg-red-100 hover:bg-red-200 text-red-800 font-bold uppercase cursor-pointer"
+                  >
+                    Reject
+                  </button>
+                </div>
               ) : (
                 <span className="text-xs text-green-700 font-semibold flex items-center gap-1">
                   <span>✓</span> Account Verified & Active

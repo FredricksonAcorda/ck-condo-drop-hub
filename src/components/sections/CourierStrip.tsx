@@ -15,19 +15,7 @@ const courierLogos: LogoItem[] = [
       </div>
     ),
     title: "SPX Express",
-    ariaLabel: "SPX Express Courier Partner"
-  },
-  {
-    node: (
-      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
-        <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight select-none">
-          <span>J&amp;T</span>
-          <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
-        </div>
-      </div>
-    ),
-    title: "J&T Express",
-    ariaLabel: "J&T Express Courier Partner"
+    ariaLabel: "SPX Express Courier Partner",
   },
   {
     node: (
@@ -47,7 +35,31 @@ const courierLogos: LogoItem[] = [
       </div>
     ),
     title: "Flash Express",
-    ariaLabel: "Flash Express Courier Partner"
+    ariaLabel: "Flash Express Courier Partner",
+  },
+  {
+    node: (
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic text-[#D21F1F] tracking-tight select-none">
+          <span>J&amp;T</span>
+          <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal">EXPRESS</span>
+        </div>
+      </div>
+    ),
+    title: "J&T Express",
+    ariaLabel: "J&T Express Courier Partner",
+  },
+  {
+    node: (
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-purple-300 transition-all cursor-pointer">
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic tracking-tight select-none">
+          <span className="text-[#592780] tracking-tight">YTO</span>
+          <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal text-[#592780]">EXPRESS</span>
+        </div>
+      </div>
+    ),
+    title: "YTO Express",
+    ariaLabel: "YTO Express Courier Partner",
   },
   {
     node: (
@@ -63,23 +75,19 @@ const courierLogos: LogoItem[] = [
       </div>
     ),
     title: "LBC Express",
-    ariaLabel: "LBC Express Partner"
+    ariaLabel: "LBC Express Partner",
   },
   {
     node: (
-      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-brand-red/30 transition-all cursor-pointer">
-        <div className="flex items-center gap-1">
-          <span className="text-2xl sm:text-3xl font-black text-[#C10015] tracking-tighter select-none">
-            NINJA
-          </span>
-          <span className="text-2xl sm:text-3xl font-bold text-black select-none">
-            VAN
-          </span>
+      <div className="flex items-center justify-center px-7 sm:px-9 py-4 rounded-2xl bg-white border border-brand-border/80 shadow-xs hover:shadow-md hover:border-orange-300 transition-all cursor-pointer">
+        <div className="flex items-center text-3xl sm:text-4xl font-black italic tracking-tight select-none">
+          <span className="text-[#FF6600]">STO</span>
+          <span className="text-2xl sm:text-3xl font-extrabold ml-1.5 italic tracking-normal text-gray-900">EXPRESS</span>
         </div>
       </div>
     ),
-    title: "Ninja Van",
-    ariaLabel: "Ninja Van Partner"
+    title: "STO Express",
+    ariaLabel: "STO Express Courier Partner",
   },
 ];
 
@@ -95,7 +103,7 @@ export default function CourierStrip() {
           OUR PARTNER <span className="text-brand-red">COURIERS</span>
         </h2>
         <p className="text-xs sm:text-sm text-brand-text-secondary mt-2 max-w-xl mx-auto font-medium leading-relaxed">
-          Official parcel drop-off and pickup point for Shopee, Lazada, TikTok Shop, and all major courier services in the Philippines.
+          Official parcel drop-off and pickup point for SPX, Flash, J&amp;T, YTO, LBC, STO, and other delivery services in the Philippines.
         </p>
       </div>
 

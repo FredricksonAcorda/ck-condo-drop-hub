@@ -6,6 +6,7 @@ import { useParcels, useAuth } from "@/context";
 import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { detectCourierFromBarcode, extractTrackingFromQrOrBarcode } from "@/lib/scanner/courier-detector";
+import ResidentTypeaheadSelect from "@/components/admin/ResidentTypeaheadSelect";
 
 export default function ParcelsInventoryPage() {
   const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel } = useParcels();
@@ -33,6 +34,8 @@ export default function ParcelsInventoryPage() {
   // Release Modal State
   const [releaseModalParcel, setReleaseModalParcel] = useState<Parcel | null>(null);
   const [recipientNameInput, setRecipientNameInput] = useState<string>("");
+  const [releaseCodeInput, setReleaseCodeInput] = useState<string>("");
+  const [releaseCodeError, setReleaseCodeError] = useState<string | null>(null);
   const [releaseSuccess, setReleaseSuccess] = useState<string | null>(null);
 
   const trackingInputRef = useRef<HTMLInputElement | null>(null);
@@ -220,18 +223,39 @@ export default function ParcelsInventoryPage() {
   const handleOpenReleaseModal = (parcel: Parcel) => {
     setReleaseModalParcel(parcel);
     setRecipientNameInput(parcel.residentName);
+    setReleaseCodeInput("");
+    setReleaseCodeError(null);
   };
 
-  // Confirm Release Action
+  // Confirm Release Action with Claim Code Verification
   const handleConfirmRelease = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!releaseModalParcel) return;
+
+    const expectedCode = releaseModalParcel.claimCode.trim().toUpperCase();
+    const enteredCode = releaseCodeInput.trim().toUpperCase();
+
+    // Verify code: must match full CK-XXXX or numeric XXXX suffix
+    const isMatch =
+      enteredCode === expectedCode ||
+      enteredCode === expectedCode.replace("CK-", "") ||
+      `CK-${enteredCode}` === expectedCode;
+
+    if (!isMatch) {
+      setReleaseCodeError(
+        `❌ Incorrect Claim Code! Customer presented "${releaseCodeInput}", which does not match the parcel's code. Release denied.`
+      );
+      return;
+    }
+
     try {
       const recipient = recipientNameInput.trim() || releaseModalParcel.residentName;
       await releaseParcel(releaseModalParcel.id, recipient);
-      setReleaseSuccess(`✓ Parcel ${releaseModalParcel.trackingNumber} successfully released to ${recipient}!`);
+      setReleaseSuccess(`✓ Passcode verified! Parcel ${releaseModalParcel.trackingNumber} successfully released to ${recipient}.`);
       setReleaseModalParcel(null);
       setRecipientNameInput("");
+      setReleaseCodeInput("");
+      setReleaseCodeError(null);
       setTimeout(() => setReleaseSuccess(null), 5000);
     } catch (err) {
       console.error(err);
@@ -358,7 +382,7 @@ export default function ParcelsInventoryPage() {
               </div>
             </div>
 
-            {/* 2. Courier Selector */}
+            {/* 2. Courier Selector (Official list + other) */}
             <div className="md:col-span-3 flex flex-col justify-between">
               <label className="text-xs font-bold uppercase text-brand-text mb-1.5">
                 Courier Partner
@@ -370,39 +394,32 @@ export default function ParcelsInventoryPage() {
                 disabled={isSubmitting}
               >
                 <option value="SPX Express">SPX Express</option>
-                <option value="J&T Express">J&T Express</option>
                 <option value="Flash Express">Flash Express</option>
-                <option value="Lazada Lex">Lazada Lex</option>
-                <option value="TikTok Shop">TikTok Shop</option>
-                <option value="Ninja Van">Ninja Van</option>
+                <option value="J&T Express">J&T Express</option>
+                <option value="YTO Express">YTO Express</option>
                 <option value="LBC Express">LBC Express</option>
-                <option value="Grab / Lalamove">Grab / Lalamove</option>
+                <option value="STO Express">STO Express</option>
+                <option value="Other Courier">Other Courier (SM / Appliances / Brands)</option>
               </select>
               <div className="mt-1 text-[11px] text-brand-text-secondary">
-                Select logistics carrier
+                Official courier or other partners
               </div>
             </div>
 
-            {/* 3. Resident & Unit Selector */}
+            {/* 3. Resident & Unit Selector (Searchable Typeahead Filter) */}
             <div className="md:col-span-4 flex flex-col justify-between">
               <label className="text-xs font-bold uppercase text-brand-text mb-1.5">
                 Condo Resident & Unit <span className="text-brand-red">*</span>
               </label>
-              <select
-                value={selectedResidentId}
-                onChange={(e) => setSelectedResidentId(e.target.value)}
-                className="input text-xs w-full cursor-pointer border border-gray-300 bg-white font-medium h-11"
+              <ResidentTypeaheadSelect
+                residents={residents}
+                selectedResidentId={selectedResidentId}
+                onSelect={(r) => setSelectedResidentId(r.id)}
                 disabled={isSubmitting}
-                required
-              >
-                {residents.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} — Unit {r.unit} ({r.tower})
-                  </option>
-                ))}
-              </select>
+                required={true}
+              />
               <div className="mt-1 text-[11px] text-brand-text-secondary">
-                Receiver condo resident
+                Type name or unit to search
               </div>
             </div>
           </div>
@@ -828,9 +845,35 @@ export default function ParcelsInventoryPage() {
                   onChange={(e) => setRecipientNameInput(e.target.value)}
                   placeholder="Enter name of person claiming..."
                   className="input text-xs w-full border border-gray-300 bg-white"
-                  autoFocus
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Customer Claim Passcode <span className="text-brand-red">* (Required to verify release)</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={releaseCodeInput}
+                  onChange={(e) => {
+                    setReleaseCodeInput(e.target.value);
+                    setReleaseCodeError(null);
+                  }}
+                  placeholder="Enter code presented by resident (e.g. CK-8921)..."
+                  className="input font-mono uppercase font-black text-sm w-full border border-gray-300 bg-white"
+                  autoFocus
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Resident must present their claim passcode from their customer portal screen or SMS.
+                </p>
+              </div>
+
+              {releaseCodeError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-brand-red text-xs font-semibold animate-in fade-in">
+                  {releaseCodeError}
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
@@ -844,7 +887,7 @@ export default function ParcelsInventoryPage() {
                   type="submit"
                   className="btn btn-primary btn-sm font-bold uppercase tracking-wider cursor-pointer"
                 >
-                  Confirm & Release ➔
+                  Verify &amp; Release ➔
                 </button>
               </div>
             </form>

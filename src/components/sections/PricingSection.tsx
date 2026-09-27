@@ -221,7 +221,7 @@ export default function PricingSection() {
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </span>
-                    <span>5 FREE DOOR-TO-DOOR DELIVERY</span>
+                    <span>1 FREE DOOR-TO-DOOR DELIVERY</span>
                   </li>
                 </ul>
               </div>

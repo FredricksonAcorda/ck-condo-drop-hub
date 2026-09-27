@@ -37,7 +37,7 @@ const faqItems: FAQItem[] = [
     question: "How does the door-to-door delivery service work?",
     answer: (
       <p>
-        Premium VIP members receive <strong className="font-bold text-brand-red">5 free door-to-door deliveries</strong> every month. You can request direct doorstep delivery to your unit with a single tap from your online customer portal during operating hours. (Note: Door delivery is exclusive to Premium VIP members and is not available on Regular or Per Parcel plans).
+        Premium VIP members receive <strong className="font-bold text-brand-red">1 free door-to-door delivery</strong> every month. You can request direct doorstep delivery to your unit with a single tap from your online customer portal during operating hours. (Note: Door delivery is exclusive to Premium VIP members and is not available on Regular or Per Parcel plans).
       </p>
     ),
   },
@@ -45,7 +45,7 @@ const faqItems: FAQItem[] = [
     question: "Which courier services are accepted at CK Condo Drop Hub?",
     answer: (
       <p>
-        We accept parcels from all major couriers including <strong className="font-bold text-brand-text">SPX Express</strong>, <strong className="font-bold text-brand-text">J&amp;T Express</strong>, <strong className="font-bold text-brand-text">Flash Express</strong>, LBC, Ninja Van, as well as on-demand riders like Grab and Lalamove.
+        We accept parcels from our official partner couriers: <strong className="font-bold text-brand-text">SPX Express</strong>, <strong className="font-bold text-brand-text">Flash Express</strong>, <strong className="font-bold text-brand-text">J&amp;T Express</strong>, <strong className="font-bold text-brand-text">YTO Express</strong>, <strong className="font-bold text-brand-text">LBC Express</strong>, and <strong className="font-bold text-brand-text">STO Express</strong>, as well as other couriers for appliances and retail items from SM and other brands.
       </p>
     ),
   },

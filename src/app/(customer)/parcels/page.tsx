@@ -38,11 +38,18 @@ export default function MyParcelsPage() {
 
   // Copy feedback state
   const [copiedTracking, setCopiedTracking] = useState<string | null>(null);
+  const [copiedClaimCode, setCopiedClaimCode] = useState<string | null>(null);
 
   const handleCopyTracking = (tracking: string) => {
     navigator.clipboard.writeText(tracking);
     setCopiedTracking(tracking);
     setTimeout(() => setCopiedTracking(null), 2000);
+  };
+
+  const handleCopyClaimCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedClaimCode(code);
+    setTimeout(() => setCopiedClaimCode(null), 2000);
   };
 
   const clearHistoryFilters = () => {
@@ -87,7 +94,7 @@ export default function MyParcelsPage() {
     historyParcels.forEach((p) => {
       if (p.courier) set.add(p.courier);
     });
-    ["SPX Express", "J&T Express", "Flash Express", "LBC Express", "2GO Express"].forEach((c) =>
+    ["SPX Express", "Flash Express", "J&T Express", "YTO Express", "LBC Express", "STO Express", "Other Courier"].forEach((c) =>
       set.add(c)
     );
     return Array.from(set).sort();
@@ -252,13 +259,13 @@ export default function MyParcelsPage() {
           {/* Lobby Pickup Guideline & Door Delivery Quota */}
           <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              Present your <strong>Tracking Number</strong> at the Lobby upon collection. Free holding: <strong>{freeHoldingDays} days</strong>.
+              🔒 <strong>Pickup Verification:</strong> Present your <strong>Claim Passcode</strong> (e.g. {readyParcels[0]?.claimCode || "CK-XXXX"}) at the Lobby to claim your packages. Parcels will not be released without this matching code. Free holding: <strong>{freeHoldingDays} days</strong>.
             </div>
             <div className="flex items-center gap-1.5 text-xs shrink-0">
               <span className="text-emerald-800 font-semibold">Door Delivery:</span>
               <span className="font-mono font-bold px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-900 text-[11px] shadow-2xs">
                 {user?.plan === "PREMIUM"
-                  ? `${user?.deliveryCreditsLeft ?? 0} of 5 Free Left`
+                  ? `${user?.deliveryCreditsLeft ?? 0} of 1 Free Left`
                   : user?.plan === "REGULAR"
                   ? "Not available for Regular Plans"
                   : "Not available for Per Parcel"}
@@ -291,6 +298,7 @@ export default function MyParcelsPage() {
                       <th className="px-6 py-3.5 font-bold">Courier</th>
                       <th className="px-6 py-3.5 font-bold">Arrival Date and Time</th>
                       <th className="px-6 py-3.5 font-bold">Pickup Deadline</th>
+                      <th className="px-6 py-3.5 font-bold">Claim Passcode</th>
                       <th className="px-6 py-3.5 font-bold text-right">Holding Status</th>
                     </tr>
                   </thead>
@@ -358,6 +366,26 @@ export default function MyParcelsPage() {
                           )}
                         </td>
 
+                        {/* Claim Passcode Column */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-black text-sm text-brand-red bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg tracking-wider shadow-2xs">
+                              {parcel.claimCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyClaimCode(parcel.claimCode)}
+                              className="text-[11px] px-2 py-0.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-black font-semibold cursor-pointer transition-colors"
+                              title="Copy claim code to show staff"
+                            >
+                              {copiedClaimCode === parcel.claimCode ? "Copied!" : "Copy"}
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-gray-400 block mt-0.5 font-medium">
+                            Present upon release
+                          </span>
+                        </td>
+
                         {/* Holding Status / Fee */}
                         <td className="px-6 py-4 text-right">
                           <span
@@ -402,6 +430,25 @@ export default function MyParcelsPage() {
                       >
                         {parcel.holdingFee}
                       </span>
+                    </div>
+
+                    {/* Mobile Claim Passcode Card */}
+                    <div className="bg-gradient-to-r from-red-50 to-amber-50/40 border border-red-200 rounded-xl p-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-900 block">
+                          Claim Passcode (Show to Staff)
+                        </span>
+                        <span className="font-mono font-black text-base text-brand-red tracking-wider">
+                          {parcel.claimCode}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyClaimCode(parcel.claimCode)}
+                        className="text-xs font-bold bg-white text-gray-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg shadow-2xs cursor-pointer"
+                      >
+                        {copiedClaimCode === parcel.claimCode ? "Copied!" : "Copy Code"}
+                      </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-3 rounded-xl border border-gray-200">

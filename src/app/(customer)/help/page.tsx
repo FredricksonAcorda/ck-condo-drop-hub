@@ -77,7 +77,7 @@ export default function HelpCenterPage() {
     },
     {
       q: "Which delivery couriers are supported by CK Condo Drop Hub?",
-      a: "All major Philippine couriers deliver to our lobby daily, including Shopee Xpress (SPX), Lazada Express, J&T Express, Flash Express, LBC, Ninja Van, and DHL. Riders log packages directly into Lobby bins.",
+      a: "Our official partner couriers deliver to our lobby daily: SPX Express, Flash Express, J&T Express, YTO Express, LBC Express, and STO Express. We also accept other couriers delivering appliances, groceries, and parcels from SM, IKEA, and other brands.",
     },
   ];
 

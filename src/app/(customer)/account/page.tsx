@@ -510,14 +510,14 @@ export default function MyAccountPage() {
                     </span>
                     {user?.plan === "PREMIUM" && (
                       <span className="text-amber-800 text-xs">
-                        Includes 5 free door deliveries per month. You have {user?.deliveryCreditsLeft ?? 0} free deliveries remaining.
+                        Includes 1 free door delivery per month. You have {user?.deliveryCreditsLeft ?? 0} free delivery remaining.
                       </span>
                     )}
                   </div>
                   {user?.plan === "PREMIUM" && (
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
-                        {`${user?.deliveryCreditsLeft ?? 0} of 5 Left`}
+                        {`${user?.deliveryCreditsLeft ?? 0} of 1 Left`}
                       </span>
                     </div>
                   )}

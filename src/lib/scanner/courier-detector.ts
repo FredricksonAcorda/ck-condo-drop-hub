@@ -8,9 +8,18 @@ export interface DetectedCourier {
 
 export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
   const code = rawCode.trim().toUpperCase();
+  if (!code) {
+    return {
+      name: "Other Courier",
+      code: "OTHER",
+      color: "#6B7280",
+      confidence: "UNKNOWN",
+    };
+  }
 
-  // SPX Express / Shopee Xpress: usually begins with SPX, PH, SPE, or SPXPH
-  if (/^SPX/i.test(code) || /^SPE/i.test(code) || /^PH\d{10,}/i.test(code)) {
+  // 1. SPX Express (Shopee Xpress)
+  // Prefixes: SPX, SPE, SPXPH, SPEPH, or PH followed by digits
+  if (/^SPX/i.test(code) || /^SPE/i.test(code) || /^PH\d{6,}/i.test(code)) {
     return {
       name: "SPX Express",
       code: "SPX",
@@ -19,18 +28,31 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
     };
   }
 
-  // J&T Express: usually begins with JT, JNT, or 10-12 digit starting with 7, 8, 9
-  if (/^JT/i.test(code) || /^JNT/i.test(code) || /^7\d{11}$/.test(code) || /^9\d{11}$/.test(code)) {
+  // 2. YTO Express
+  // Prefixes: YT, YTO, DD, or digits starting with 88 or 80 (common YTO waybills)
+  if (/^YT/i.test(code) || /^YTO/i.test(code) || /^DD\d{6,}/i.test(code) || /^(88|80)\d{10,16}$/.test(code)) {
     return {
-      name: "J&T Express",
-      code: "JT",
-      color: "#D21F1F",
+      name: "YTO Express",
+      code: "YTO",
+      color: "#592780",
       confidence: "HIGH",
     };
   }
 
-  // Flash Express: usually begins with FL, TH, or starts with 00/01 followed by 10-12 digits
-  if (/^FL/i.test(code) || /^TH\d{10,}/i.test(code) || /^FLASH/i.test(code)) {
+  // 3. STO Express
+  // Prefixes: STO, ST, or digits starting with 77 or 55 (common STO waybills)
+  if (/^STO/i.test(code) || /^(77|55)\d{10,14}$/.test(code)) {
+    return {
+      name: "STO Express",
+      code: "STO",
+      color: "#FF6600",
+      confidence: "HIGH",
+    };
+  }
+
+  // 4. Flash Express
+  // Prefixes: FL, FLASH, TH, KEX, or digits starting with 00 or 01
+  if (/^FL/i.test(code) || /^TH\d{6,}/i.test(code) || /^FLASH/i.test(code) || /^KEX/i.test(code) || /^(00|01)\d{10,14}$/.test(code)) {
     return {
       name: "Flash Express",
       code: "FLASH",
@@ -39,8 +61,9 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
     };
   }
 
-  // LBC Express: usually begins with 1000-, LBC, or 12 digits starting with 1
-  if (/^LBC/i.test(code) || /^1\d{11}$/.test(code) || /^1000\d{8}/.test(code)) {
+  // 5. LBC Express
+  // Prefixes: LBC, 1000-, or 12 digits starting with 1
+  if (/^LBC/i.test(code) || /^1000\d{6,}/.test(code) || /^1\d{11}$/.test(code)) {
     return {
       name: "LBC Express",
       code: "LBC",
@@ -49,31 +72,29 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
     };
   }
 
-  // Ninja Van: usually begins with NVD, NV, or SHPV
-  if (/^NV/i.test(code) || /^SHPV/i.test(code) || /^NINJA/i.test(code)) {
+  // 6. J&T Express (JNT)
+  // Prefixes: JT, JNT, J&T, or numeric waybills (10-14 digits, typically starting with 7, 8, 9, 5, 6, 3, etc.)
+  // This prevents JNT from incorrectly detecting as DHL or failing if not starting with JT0.
+  if (
+    /^JT/i.test(code) ||
+    /^JNT/i.test(code) ||
+    /^J&T/i.test(code) ||
+    /^(7|8|9|5|6|3)\d{9,13}$/.test(code) ||
+    /^\d{10,12}$/.test(code)
+  ) {
     return {
-      name: "Ninja Van",
-      code: "NINJA",
-      color: "#C10015",
+      name: "J&T Express",
+      code: "JNT",
+      color: "#D21F1F",
       confidence: "HIGH",
     };
   }
 
-  // DHL Express: 10 numeric digits
-  if (/^DHL/i.test(code) || /^\d{10}$/.test(code)) {
-    return {
-      name: "DHL Express",
-      code: "DHL",
-      color: "#D40511",
-      confidence: "MEDIUM",
-    };
-  }
-
-  // Fallback default
+  // 7. Fallback: Other Courier (for appliances, SM, unlisted delivery brands)
   return {
-    name: "General Courier",
-    code: "GEN",
-    color: "#4B5563",
+    name: "Other Courier",
+    code: "OTHER",
+    color: "#6B7280",
     confidence: "UNKNOWN",
   };
 }

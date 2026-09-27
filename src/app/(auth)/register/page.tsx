@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context";
+import { recordInvoice } from "@/lib/db/invoices";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function RegisterPage() {
   };
 
   const executeRegistration = async (
-    planStatus: "ACTIVE" | "PENDING_PAYMENT",
+    planStatus: "ACTIVE" | "PENDING_PAYMENT" | "PENDING_VERIFICATION",
     method: "GCASH" | "CASH_COUNTER",
     reference?: string
   ) => {
@@ -64,18 +65,37 @@ export default function RegisterPage() {
     setPaymentError(null);
 
     try {
-      await register({
+      const registeredUser = await register({
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim(),
         unit: unit.trim(),
         tower,
         plan,
+        pendingPlan: plan !== "PER_PARCEL" ? plan : undefined,
         planStatus,
         paymentMethod: method,
         paymentReference: reference,
         password,
       });
+
+      if (plan !== "PER_PARCEL") {
+        await recordInvoice({
+          residentId: registeredUser.id,
+          residentName: registeredUser.name,
+          residentCode: registeredUser.residentCode || "CK-000123",
+          unit: registeredUser.unit || unit.trim(),
+          tower: registeredUser.tower || tower,
+          date: "Today",
+          plan: `${plan.replace("_", " ")} Membership`,
+          pendingPlan: plan,
+          amount: plan === "PREMIUM" ? "₱299.00" : "₱149.00",
+          method: method === "GCASH" ? "GCash QR" : "Cash at Counter",
+          reference: reference,
+          status: "PENDING",
+          notes: "Pending Admin Payment Verification",
+        });
+      }
 
       setShowPaymentModal(false);
       router.push("/dashboard");
@@ -97,7 +117,8 @@ export default function RegisterPage() {
         setPaymentError("Please enter a valid GCash reference number (at least 8 digits).");
         return;
       }
-      await executeRegistration("ACTIVE", "GCASH", gcashRef.trim());
+      // Paid plan requires manual verification by admin
+      await executeRegistration("PENDING_VERIFICATION", "GCASH", gcashRef.trim());
     } else {
       // Cash at counter -> plan status is PENDING_PAYMENT
       await executeRegistration("PENDING_PAYMENT", "CASH_COUNTER", undefined);

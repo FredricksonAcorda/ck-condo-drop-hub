@@ -3,21 +3,25 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useParcels } from "@/context";
-import { ResidentProfile } from "@/types";
+import { ResidentProfile, InvoiceRecord } from "@/types";
 import { db } from "@/lib/db/local-store";
+import { getAllInvoices } from "@/lib/db/invoices";
 
 export default function AdminDashboardPage() {
   const { parcels, inquiries } = useParcels();
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
 
-  // Load residents count
+  // Load residents and invoices
   useEffect(() => {
     async function loadData() {
       try {
         const resList = await db.getAllResidents();
         setResidents(resList);
+        const invList = await getAllInvoices();
+        setInvoices(invList);
       } catch (err) {
-        console.error("Failed to load residents:", err);
+        console.error("Failed to load admin data:", err);
       }
     }
     loadData();
@@ -32,6 +36,7 @@ export default function AdminDashboardPage() {
   const overdueCount = parcels.filter((p) => p.status === "OVERDUE").length;
   const pickedUpCount = parcels.filter((p) => p.status === "PICKED_UP").length;
   const pendingInquiriesCount = inquiries.filter((i) => i.status === "NEW").length;
+  const pendingPaymentsCount = invoices.filter((i) => i.status === "PENDING").length;
 
   return (
     <div className="space-y-6 w-full">
@@ -49,6 +54,27 @@ export default function AdminDashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Pending Membership Payments Alert Banner */}
+      {pendingPaymentsCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-in fade-in">
+          <div>
+            <span className="text-xs text-amber-950 font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              {pendingPaymentsCount} Membership Payment{pendingPaymentsCount === 1 ? "" : "s"} Awaiting Admin Verification
+            </span>
+            <span className="text-[11px] text-amber-900 mt-0.5 block">
+              Residents have submitted GCash/Cash payment confirmation for plan upgrades (Premium VIP / Regular).
+            </span>
+          </div>
+          <Link
+            href="/admin/customers"
+            className="btn btn-primary btn-sm text-xs font-bold uppercase whitespace-nowrap self-start sm:self-auto cursor-pointer"
+          >
+            Review & Verify ({pendingPaymentsCount}) ➔
+          </Link>
+        </div>
+      )}
 
       {/* Pending Inquiries Alert Banner */}
       {pendingInquiriesCount > 0 && (

@@ -20,11 +20,15 @@ export interface InvoiceRecord {
   unit: string;
   tower: string;
   plan: string;
+  pendingPlan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   amount: string;
   date: string;
   timestamp?: string;
   method: string;
   reference?: string;
-  status: "PAID" | "PENDING";
+  status: "PAID" | "PENDING" | "REJECTED";
+  verifiedAt?: string;
+  verifiedBy?: string;
+  notes?: string;
 }
 
