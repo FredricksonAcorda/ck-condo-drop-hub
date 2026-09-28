@@ -579,6 +579,37 @@
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   For delivery, pickup, or authorized delegate systems, always support multi-entity proxy lists with bounded upper limits (`n <= 3`) and strict identity/contact validation to balance household convenience with security.
 
+## 28. Authentication UI Hardening, Clean Production Fields, and Real-Time Password Complexity Engine (Fix / Modification / Add)
+
+- **Current State**:
+  The sign up and sign in forms contained development helper artifacts (such as "Prefill Sample Resident Details" on `/register`, pre-filled sample resident/staff credentials in `/login`, and quick test demo buttons and Google authentication placeholders). The password field on registration was a generic text input without visual complexity validation.
+- **The Problem**:
+  On a live production client handover site, pre-filling credentials allows unauthorized visitors to easily access demo accounts. Unused Google buttons cause user confusion, and lacking password complexity validation allows weak, easily compromisable passwords during resident registration.
+- **What to Do (Solution)**:
+  1. **Cleaned Registration Page (`/register`)**:
+     - Removed the "Prefill Sample Resident Details" button and its handler.
+     - Repositioned and centered the "Already have an account? Sign In" link directly below the Sign Up button in the middle of the container.
+  2. **Cleaned Sign In Page (`/login`)**:
+     - Converted pre-filled values for resident email/phone, staff email, and password to blank initial states (`""`) with helpful placeholder guides (`e.g. admin@ckcondohub.com`, `Enter your password`).
+     - Removed the Google Sign-In button and "or" divider.
+     - Removed the "Quick Test:" demo account pills (`Juan (Unit 101)` / `Staff Admin`).
+     - Repositioned and centered the "Don't have an account? Sign Up" link directly below the Sign In button in the middle of the container.
+  3. **Created Secure Password Creation Component (`SecurePasswordInput.tsx`)**:
+     - Input field with accessible show/hide toggle.
+     - Color-coded real-time password strength meter (Red = Weak, Orange = Moderate, Green = Strong).
+     - Dynamic 5-point complexity checklist updating in real time:
+       * Minimum 8 characters
+       * At least one uppercase letter (A-Z)
+       * At least one lowercase letter (a-z)
+       * At least one number (0-9)
+       * At least one special character (!, @, #, $, %)
+     - Smart helper suggestions advising how to strengthen the password.
+     - Integrated into registration validation (`isPasswordStrongEnough`) to prevent weak password submissions.
+- **Result**:
+  Clean, professional, and hardened authentication portal tailored for client production handover with zero development test artifacts and institutional-grade password security.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never leave demo prefill states or non-functional third-party buttons in production handovers. Pair client-side dynamic password strength meters with strict form submit gates to ensure both immediate user guidance and enforced security.
+
 ---
 
 ## Autonomous Agent Instructions for Future Updates
@@ -591,4 +622,5 @@ Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **
    - **What to Do (Solution)**
    - **Result**
 3. Include the cross-project transferable insight so that the pattern can be reapplied to other client codebases.
+
 

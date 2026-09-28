@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context";
 import { recordInvoice } from "@/lib/db/invoices";
-import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
+import { PhilippinePhoneInput, GmailInput, SecurePasswordInput, isPasswordStrongEnough } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 import { BRANCHES } from "@/constants";
 
@@ -22,7 +22,6 @@ export default function RegisterPage() {
   const [unitNumber, setUnitNumber] = useState("");
   const [plan, setPlan] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM">("PREMIUM");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,8 +57,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
+    if (!isPasswordStrongEnough(password)) {
+      setErrorMessage("Please ensure your password satisfies all 5 security complexity requirements below.");
       return;
     }
 
@@ -151,18 +150,6 @@ export default function RegisterPage() {
       // Cash at counter -> plan status is PENDING_PAYMENT
       await executeRegistration("PENDING_PAYMENT", "CASH_COUNTER", undefined);
     }
-  };
-
-  const handlePrefillDemo = () => {
-    setFullName("Juan Dela Cruz");
-    setPhone("+63 917 123 4567");
-    setEmail(`juan.${Date.now().toString().slice(-4)}@gmail.com`);
-    setBranch("Malinta Branch");
-    setBuildingNumber("1");
-    setFloorNumber("2");
-    setUnitNumber("204");
-    setPlan("PREMIUM");
-    setPassword("password123");
   };
 
   return (
@@ -389,34 +376,21 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Password */}
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            autoComplete="new-password"
-            placeholder="Password (min. 8 characters)"
+        {/* Secure Password Creation with Real-Time Strength Meter & Requirements */}
+        <div>
+          <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+            Password <span className="text-brand-red">*</span>
+          </label>
+          <SecurePasswordInput
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
+            onChange={(val) => {
+              setPassword(val);
               if (errorMessage) setErrorMessage(null);
             }}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+            placeholder="Create a strong password"
             required
             disabled={isLoading}
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            )}
-          </button>
         </div>
 
         {/* Terms agreement checkbox */}
@@ -454,33 +428,18 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      {/* Link to Login */}
-      <div className="text-center space-y-1 mt-4">
-        <span className="text-xs text-zinc-400">Already have an account? </span>
-        <Link href="/login" className="text-xs text-brand-red hover:underline font-semibold">
-          Sign in
-        </Link>
+      {/* Link to Login - Centered below sign up button */}
+      <div className="text-center mt-5">
+        <p className="text-xs text-zinc-400">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-brand-red hover:underline font-semibold transition-colors"
+          >
+            Sign In
+          </Link>
+        </p>
       </div>
-
-      {/* Or Divider */}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-[#141416] px-3 text-zinc-500 font-medium">or</span>
-        </div>
-      </div>
-
-      {/* Quick Demo Autofill Button */}
-      <button
-        type="button"
-        onClick={handlePrefillDemo}
-        className="w-full bg-[#1c1c21] hover:bg-[#24242b] border border-zinc-800 rounded-xl py-2.5 px-4 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-      >
-        <span>⚡</span>
-        <span>Prefill Sample Resident Details</span>
-      </button>
 
       {/* Terms & Privacy Footer */}
       <p className="text-[11px] text-zinc-500 text-center leading-relaxed mt-4">
