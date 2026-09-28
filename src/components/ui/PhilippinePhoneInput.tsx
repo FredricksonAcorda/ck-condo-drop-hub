@@ -56,7 +56,7 @@ export function PhilippinePhoneInput({
           maxLength={16}
           className={`w-full font-mono transition-colors focus:outline-none ${
             isDark
-              ? "bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:border-brand-red focus:ring-1 focus:ring-brand-red/40"
+              ? "bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:border-brand-red focus:ring-1 focus:ring-brand-red/40"
               : "input text-sm border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 placeholder:opacity-50 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
           } ${error ? (isDark ? "border-red-500" : "!border-red-500") : ""} ${className}`}
         />

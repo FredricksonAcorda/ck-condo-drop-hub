@@ -11,14 +11,9 @@ export default function AuthLayout({
       <AuthHeader />
 
       {/* Centered Main Auth Card */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 pb-8 z-10">
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-4 pt-16 sm:pt-18 pb-3 z-10">
         {children}
       </main>
-
-      {/* Subtle Bottom Footer */}
-      <footer className="py-4 px-4 text-center text-[12px] text-zinc-500 font-medium z-10">
-        <p>© 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform</p>
-      </footer>
     </div>
   );
 }

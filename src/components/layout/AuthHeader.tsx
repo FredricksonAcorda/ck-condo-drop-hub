@@ -28,21 +28,8 @@ export default function AuthHeader() {
         {/* Home Navigation Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-[#07100D] hover:text-white bg-white hover:bg-brand-red border border-gray-200/80 hover:border-brand-red transition-all duration-300 shadow-2xs group cursor-pointer select-none"
+          className="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-[#07100D] hover:text-white bg-white hover:bg-brand-red border border-gray-200/80 hover:border-brand-red transition-all duration-300 shadow-2xs group cursor-pointer select-none"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
           <span>Home</span>
         </Link>
       </div>

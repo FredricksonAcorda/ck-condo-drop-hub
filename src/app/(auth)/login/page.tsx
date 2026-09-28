@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
@@ -92,35 +91,17 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative w-full max-w-[500px] sm:max-w-[520px] bg-[#141416] rounded-3xl border border-white/[0.08] p-8 sm:p-10 shadow-2xl overflow-hidden my-4">
-      {/* Top Red Glow Rim Light (matches reference styling) */}
+    <div className="relative w-full max-w-[460px] bg-[#141416] rounded-3xl border border-white/[0.08] p-6 sm:p-7 shadow-2xl overflow-hidden">
+      {/* Top Red Glow Rim Light */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[2px] bg-gradient-to-r from-transparent via-brand-red to-transparent" />
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-52 h-16 bg-brand-red/20 blur-xl rounded-full pointer-events-none" />
 
-      {/* Brand Header */}
+      {/* Title & Subtitle (Logo removed per request since it is already in the top nav) */}
       <div className="text-center">
-        <Link href="/" className="inline-block group">
-          <Image
-            src="/brand/logo-white.png"
-            alt="CK Condo Drop Hub"
-            width={240}
-            height={68}
-            unoptimized
-            priority
-            className="h-10 sm:h-11 w-auto mx-auto object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
-          />
-        </Link>
-        <p className="text-xs text-zinc-400 font-medium tracking-wide mt-1.5">
-          Buildersville Condominium Drop Hub
-        </p>
-      </div>
-
-      {/* Title & Subtitle */}
-      <div className="text-center mt-6">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Welcome Back
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed text-balance max-w-[320px] mx-auto">
+        <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-[320px] mx-auto">
           {role === "resident" ? (
             <>
               Sign in to access your packages, claim codes,<br className="hidden sm:inline" /> and delivery status
@@ -134,49 +115,50 @@ function LoginForm() {
       </div>
 
       {/* Role Switcher Pill (Resident vs Admin) */}
-      <div className="grid grid-cols-2 gap-1 bg-[#1c1c21] p-1 rounded-xl border border-white/5 my-5">
+      <div className="grid grid-cols-2 gap-1 bg-[#1c1c21] p-1 rounded-xl border border-white/5 my-3.5">
         <button
           type="button"
           onClick={() => handleSelectRole("resident")}
-          className={`py-2 text-xs font-bold rounded-lg transition-all ${role === "resident"
+          className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+            role === "resident"
               ? "bg-brand-red text-white shadow-md"
               : "text-zinc-400 hover:text-white"
-            }`}
+          }`}
         >
           Resident Portal
         </button>
         <button
           type="button"
           onClick={() => handleSelectRole("admin")}
-          className={`py-2 text-xs font-bold rounded-lg transition-all ${role === "admin"
+          className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+            role === "admin"
               ? "bg-brand-red text-white shadow-md"
               : "text-zinc-400 hover:text-white"
-            }`}
+          }`}
         >
           Staff Admin
         </button>
       </div>
 
-      {/* Error Alert Banner */}
+      {/* Error Alert Banner - Text only, strictly no icons paired with text */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-red-950/60 border border-red-800/60 text-red-200 text-xs animate-in fade-in"
+          className="mb-3 flex items-center justify-between p-2.5 rounded-xl bg-red-950/60 border border-red-800/60 text-red-200 text-xs animate-in fade-in"
         >
-          <span className="text-red-400 mt-0.5">⚠️</span>
           <div className="flex-1 leading-relaxed">{errorMessage}</div>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-red-400 hover:text-red-200 text-sm font-bold"
+            className="text-red-400 hover:text-red-200 text-xs font-semibold ml-2 cursor-pointer"
           >
-            ✕
+            Dismiss
           </button>
         </div>
       )}
 
       {/* Login Form */}
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {role === "resident" ? (
           <div className="space-y-2">
             <div className="flex gap-1 bg-[#18181b] p-1 rounded-xl border border-white/5">
@@ -238,7 +220,7 @@ function LoginForm() {
                 if (errorMessage) setErrorMessage(null);
               }}
               placeholder="e.g. admin@ckcondohub.com"
-              className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+              className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
               required
               disabled={isLoading}
             />
@@ -256,7 +238,7 @@ function LoginForm() {
               if (errorMessage) setErrorMessage(null);
             }}
             placeholder="Enter your password"
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 pr-11 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
             required
             disabled={isLoading}
           />
@@ -274,28 +256,18 @@ function LoginForm() {
           </button>
         </div>
 
-        {/* Red Submit Button */}
+        {/* Red Submit Button - Text only, strictly no icons paired with text */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full mt-2 py-3.5 rounded-xl bg-brand-red hover:bg-[#b30000] active:scale-[0.99] text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+          className="w-full mt-1.5 py-2.5 sm:py-3 rounded-xl bg-brand-red hover:bg-[#b30000] active:scale-[0.99] text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center cursor-pointer disabled:opacity-75"
         >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Signing in...</span>
-            </>
-          ) : (
-            <span>Sign In</span>
-          )}
+          {isLoading ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
       {/* Links Below Button - Centered in middle */}
-      <div className="text-center mt-5 space-y-2.5">
+      <div className="text-center mt-3.5 space-y-1.5">
         <div>
           <p className="text-xs text-zinc-400">
             Don&apos;t have an account?{" "}
@@ -310,15 +282,15 @@ function LoginForm() {
         <div>
           <Link
             href="/forgot-password"
-            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             Forgot password?
           </Link>
         </div>
       </div>
 
-      {/* Terms & Privacy Footer */}
-      <p className="text-[11.5px] text-zinc-500 text-center leading-relaxed mt-5">
+      {/* Terms & Privacy */}
+      <p className="text-[11px] text-zinc-500 text-center leading-relaxed mt-3">
         By signing in, you agree to our{" "}
         <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
           Terms of Service
@@ -328,6 +300,11 @@ function LoginForm() {
           Privacy Policy
         </Link>
         .
+      </p>
+
+      {/* Relocated Copyright - Inside the box below terms */}
+      <p className="text-[10.5px] text-zinc-600 text-center mt-2 font-medium">
+        © 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform
       </p>
     </div>
   );

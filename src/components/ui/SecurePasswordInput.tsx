@@ -135,13 +135,13 @@ export function SecurePasswordInput({
           placeholder={placeholder}
           required={required}
           disabled={disabled}
-          className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 pr-11 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+          className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
           aria-describedby={`${inputId}-requirements`}
         />
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
           aria-label={showPassword ? "Hide password" : "Show password"}
           tabIndex={-1}
         >
@@ -181,16 +181,16 @@ export function SecurePasswordInput({
 
       {/* Visual Strength Indicator & Checklist (visible when user has typed or focused) */}
       {(value.length > 0 || isFocused) && (
-        <div id={`${inputId}-requirements`} className="space-y-2 pt-1 animate-in fade-in duration-200">
+        <div id={`${inputId}-requirements`} className="space-y-1.5 pt-0.5 animate-in fade-in duration-200">
           {/* Progress Bar & Status Text */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px]">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[10.5px]">
               <span className="text-zinc-400 font-medium">Password Strength:</span>
               <span className={`font-semibold ${labelColor}`}>
                 {value.length === 0 ? "Enter password" : strengthLabel}
               </span>
             </div>
-            <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all duration-300 rounded-full ${barColor}`}
                 style={{ width: barWidth }}
@@ -198,50 +198,29 @@ export function SecurePasswordInput({
             </div>
           </div>
 
-          {/* Smart Suggestion Banner */}
+          {/* Smart Suggestion Text - strictly no icons/emojis paired with text */}
           {suggestion && (
-            <p className={`text-[11px] leading-relaxed transition-colors ${
+            <p className={`text-[10.5px] leading-tight transition-colors ${
               isValid ? "text-emerald-400 font-medium" : "text-amber-300/90"
             }`}>
-              💡 {suggestion}
+              {suggestion}
             </p>
           )}
 
-          {/* Dynamic Checklist */}
-          <div className="bg-[#18181c] border border-zinc-800/80 rounded-xl p-3 space-y-1.5 mt-2">
-            <p className="text-[10.5px] uppercase tracking-wider font-bold text-zinc-400 mb-1">
+          {/* Dynamic Checklist - Text only, strictly no icons paired with text */}
+          <div className="bg-[#18181c] border border-zinc-800/80 rounded-lg p-2 space-y-1">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">
               Complexity Requirements
             </p>
-            <ul className="space-y-1">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-0.5 text-[10.5px]">
               {checklist.map((item, idx) => (
                 <li
                   key={idx}
-                  className={`flex items-center gap-2 text-xs transition-colors duration-200 ${
-                    item.met ? "text-emerald-400 font-medium" : "text-zinc-500"
+                  className={`transition-colors duration-200 ${
+                    item.met ? "text-emerald-400 font-semibold" : "text-zinc-500"
                   }`}
                 >
-                  {item.met ? (
-                    <svg
-                      className="w-3.5 h-3.5 text-emerald-400 shrink-0"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-3.5 h-3.5 text-zinc-600 shrink-0"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <circle cx="10" cy="10" r="4" />
-                    </svg>
-                  )}
-                  <span>{item.label}</span>
+                  • {item.label}
                 </li>
               ))}
             </ul>

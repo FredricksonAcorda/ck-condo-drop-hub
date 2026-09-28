@@ -37,6 +37,9 @@
 25. [12 Multi-Branch Hub Network Dropdown Architecture](#25-12-multi-branch-hub-network-dropdown-architecture-modification--add)
 26. [3-Part Divided Unit Specification (Building #, Floor #, Unit #)](#26-3-part-divided-unit-specification-building--floor--unit--modification--add)
 27. [Dynamic Multi-Proxy Authorized Claimants Engine (Up to 3 Claimants)](#27-dynamic-multi-proxy-authorized-claimants-engine-up-to-3-claimants-add--modification)
+28. [Production Form Sanitization & Real-Time Secure Password Complexity Engine](#28-production-form-sanitization--real-time-secure-password-complexity-engine-fix--modification--add)
+29. [Wide Ergonomic Auth Layout, Non-Blocking Subscription Registration, and Floating Animated Header](#29-wide-ergonomic-auth-layout-non-blocking-subscription-registration-and-floating-animated-header-fix--modification--add)
+30. [Zero-Scroll Fixed Auth Pages, Card-Internal Copyright, Purge Icons Paired with Text & Modal Payment Activation](#30-zero-scroll-fixed-auth-pages-card-internal-copyright-purge-icons-paired-with-text--modal-payment-activation-fix--modification)
 
 ---
 
@@ -635,6 +638,38 @@
   Zero-scroll auth experience on standard displays, frictionless resident registration without forced payment blockers, accurate plan isolation, and cohesive animated navigation matching the home page.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Always allow top-of-funnel user registration to complete unhindered by deferring payment verification to asynchronous counter or admin confirmation workflows. Pair multi-section onboarding forms with 2-column wide grid containers on desktop to minimize page height and avoid vertical scroll fatigue.
+
+---
+
+## 30. Zero-Scroll Fixed Auth Pages, Card-Internal Copyright, Purge Icons Paired with Text & Modal Payment Activation (Fix / Modification)
+
+- **Current State**:
+  The Sign In (`/login`) and Sign Up (`/register`) cards were excessively tall due to redundant inner logo graphics, tall input heights, large vertical paddings, and an outer layout footer with copyright text. Furthermore, the UI contained emojis and SVG icons paired with text (`⚠️`, `💡`, `✨`, `✓`, `✕`, `📱`, `💵`, circled step numbers `1` and `2`, and the SVG home icon next to "Home"). On the sign up page, the payment selection was embedded in the main form column instead of popping up as an activation modal after resident details were validated.
+- **The Problem**:
+  Users on standard desktop and laptop screens (such as 1366x768 and 1440x900) had to scroll vertically to see form controls and submit buttons. Icons and emojis paired with text created visual clutter and deviated from the client's preferred clean typography aesthetic. The outer copyright footer took up valuable vertical viewport height, and the absence of a post-validation payment activation modal for paid tiers bypassed the standard registration flow.
+- **What to Do (Solution)**:
+  1. **Purged Inner Logos from Auth Boxes**:
+     - Removed redundant logo images and "Buildersville Condominium Drop Hub" text headings from inside the boxes on both `/login` and `/register`, relying exclusively on the floating `AuthHeader` pill navigation above.
+  2. **Relocated Copyright Inside the Box**:
+     - Moved `© 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform` directly inside the card containers, positioned neatly below the Terms of Service & Privacy Policy link.
+     - Removed the outer layout `<footer>` in `(auth)/layout.tsx` to eliminate extraneous page height.
+  3. **Zero-Scroll Height Optimization**:
+     - Standardized compact padding across both forms: `p-5 sm:p-6 lg:p-7` on register, `p-6 sm:p-7` on login, and `px-3.5 py-2 text-xs sm:text-sm` across all inputs (`GmailInput`, `PhilippinePhoneInput`, password, and unit fields).
+     - Both cards now fit 100% within standard laptop viewports with zero vertical scrolling needed.
+  4. **Strict Purge of Icons & Emojis Paired with Text**:
+     - Removed SVG home icon next to "Home" text in `AuthHeader.tsx`.
+     - Removed step badge icons (`1` and `2`) next to section titles in `/register`.
+     - Removed all emojis (`⚠️`, `💡`, `✨`, `✓`, `✕`, `📱`, `💵`) across alerts, helpers, and buttons.
+     - Redesigned password complexity checklist in `SecurePasswordInput.tsx` to use clean, icon-free typography in a compact 2-column format with green/gray color transitions.
+     - Converted loading states to plain text (`"Signing in..."`, `"Creating your account..."`) without spinning icons next to text.
+  5. **Post-Validation Payment Activation Modal**:
+     - Free Per-Parcel plan immediately registers with active status upon clicking "Create Resident Account".
+     - For paid plans (Regular or Premium), once resident profile inputs are validated, an activation modal pops up presenting **GCash QR Code (Recommended)** and **Cash at Counter** choices.
+     - Residents can scan the GCash QR code to pay immediately or settle anytime; in either case, clicking "Complete Registration" immediately creates the account with pending payment status so the user can access their account freely without being blocked.
+- **Result**:
+  100% fixed, zero-scroll Sign In and Sign Up experiences on standard desktop screens, clean typography with zero icons paired with text, integrated copyright placement, and a smooth post-validation payment activation modal.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Keep multi-step registration forms visually anchored within the single viewport height (zero-scroll) by offloading secondary workflows (like payment activation or address confirmation) to focused modal dialogs after primary inputs are validated. Strictly honor client visual design preferences regarding text-only labels versus icon-adorned buttons.
 
 ---
 
