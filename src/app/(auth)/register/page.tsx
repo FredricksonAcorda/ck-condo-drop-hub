@@ -37,6 +37,15 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState<number>(0);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyGcashNumber = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText("09932678000").catch(() => {});
+    }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const triggerError = (msg: string) => {
     setErrorMessage(msg);
@@ -613,34 +622,42 @@ export default function RegisterPage() {
         </div>
       </form>
 
-      {/* Payment Activation Modal Popup - Sized exactly to uploaded reference (max-w-2xl with large GCash QR Code card) */}
+      {/* Payment Activation Modal Popup - Combined Dark Glassmorphic with 1-Tap Copy & strictly no icons */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-[#141418] border border-white/10 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-4 text-left overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Top Red Rim Accent */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-[2px] bg-gradient-to-r from-transparent via-brand-red to-transparent" />
+
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase font-bold tracking-tight">
-                SWITCH TO {plan}
-              </h3>
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div>
+                <h3 className="font-[family-name:var(--font-heading)] text-xl sm:text-2xl text-white uppercase font-bold tracking-tight">
+                  ACTIVATE {plan} MEMBERSHIP
+                </h3>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Buildersville Lobby Drop Hub • Ground Floor Desk
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowPaymentModal(false)}
-                className="text-gray-400 hover:text-black p-1 rounded-lg hover:bg-gray-100 cursor-pointer text-lg leading-none"
+                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer text-lg leading-none"
                 aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            {/* Payment Method Switcher Tabs */}
+            {/* Payment Method Switcher Tabs - Strictly text-only, no icons */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setModalMethod("GCASH")}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
                   modalMethod === "GCASH"
-                    ? "bg-blue-50 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
-                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-[#005CEE] text-white border-[#005CEE] shadow-md"
+                    : "bg-[#1c1c22] text-zinc-400 hover:text-white border-zinc-800"
                 }`}
               >
                 GCash QR Code
@@ -648,58 +665,69 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setModalMethod("CASH_COUNTER")}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
                   modalMethod === "CASH_COUNTER"
-                    ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-600"
-                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-amber-600 text-white border-amber-600 shadow-md"
+                    : "bg-[#1c1c22] text-zinc-400 hover:text-white border-zinc-800"
                 }`}
               >
                 Cash at Counter
               </button>
             </div>
 
-            {/* GCash Form: Full-size QR image on left, details and activate button on right */}
+            {/* GCash View: Full-size QR Card with 1-Tap Copy on left, Subscription breakdown on right */}
             {modalMethod === "GCASH" ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
-                  {/* Left: Full QR Code Card Image */}
-                  <div className="flex items-center justify-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 items-stretch">
+                  {/* Left: Full QR Code Card Image + 1-Tap Copy Button */}
+                  <div className="rounded-2xl border border-zinc-800 p-3 sm:p-4 bg-white flex flex-col items-center justify-between shadow-lg space-y-3">
                     <Image
                       src="/images/gcash-official-qr.jpg"
                       alt="Official GCash QR Code"
                       width={562}
                       height={795}
-                      className="w-full h-auto rounded-2xl border border-gray-200 shadow-sm object-contain"
+                      className="w-full h-auto rounded-xl object-contain"
                       priority
                     />
+                    <button
+                      type="button"
+                      onClick={handleCopyGcashNumber}
+                      className="w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-bold tracking-wide transition-all border border-zinc-700 cursor-pointer text-center select-none"
+                    >
+                      {isCopied ? "GCash Number Copied!" : "Copy GCash Number"}
+                    </button>
                   </div>
 
                   {/* Right: Plan Breakdown, GCash Number Input, and Action Button */}
-                  <div className="flex flex-col justify-between space-y-4">
+                  <div className="flex flex-col justify-between space-y-3">
                     <div className="space-y-3">
-                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2 text-xs">
+                      {/* Subscription Summary Box */}
+                      <div className="bg-[#1a1a20] p-4 rounded-2xl border border-zinc-800 space-y-2 text-xs">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Plan:</span>
-                          <span className="font-bold text-gray-900 uppercase">
-                            {plan}
-                          </span>
+                          <span className="text-zinc-400">Plan:</span>
+                          <span className="font-bold text-white uppercase">{plan}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Duration:</span>
-                          <span className="font-bold text-gray-900">
+                          <span className="text-zinc-400">Duration:</span>
+                          <span className="font-bold text-white">
                             {plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center pt-2.5 border-t border-gray-200">
-                          <span className="font-bold text-gray-700">Total Due:</span>
-                          <span className="font-black text-xl text-emerald-600 font-[family-name:var(--font-heading)]">
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-400">Account Status:</span>
+                          <span className="font-semibold text-amber-400">Active (Pending Settle)</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2.5 border-t border-zinc-800">
+                          <span className="font-bold text-zinc-300">Total Due:</span>
+                          <span className="font-black text-xl text-emerald-400 font-[family-name:var(--font-heading)]">
                             {plan === "REGULAR" ? "₱149 / 15 DAYS" : "₱299 / 30 DAYS"}
                           </span>
                         </div>
                       </div>
 
+                      {/* GCash Number or Reference Input */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300 mb-1">
                           GCash Number (if QR can&apos;t be scanned)
                         </label>
                         <input
@@ -707,7 +735,7 @@ export default function RegisterPage() {
                           placeholder="Enter your GCash Mobile Number"
                           value={gcashRef}
                           onChange={(e) => setGcashRef(e.target.value)}
-                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#005CEE] focus:ring-1 focus:ring-[#005CEE]"
+                          className="w-full bg-[#1c1c21] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#005CEE] focus:ring-1 focus:ring-[#005CEE] transition-colors"
                         />
                         <div className="flex justify-end mt-1">
                           <button
@@ -719,6 +747,10 @@ export default function RegisterPage() {
                           </button>
                         </div>
                       </div>
+
+                      <p className="text-[11px] text-zinc-400 leading-tight">
+                        Your account is created immediately. Settle anytime and your membership plan will be verified by staff.
+                      </p>
                     </div>
 
                     <button
@@ -733,34 +765,34 @@ export default function RegisterPage() {
                 </div>
               </div>
             ) : (
-              /* Cash at Counter Form */
+              /* Cash at Counter Form - Dark Glassmorphic */
               <div className="space-y-4">
-                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3 text-xs text-gray-700">
-                  <div className="font-bold text-sm text-gray-900">Lobby Cashier Payment:</div>
-                  <p className="text-gray-600 leading-relaxed">
+                <div className="bg-[#1a1a20] p-5 rounded-2xl border border-zinc-800 space-y-3 text-xs text-zinc-300">
+                  <div className="font-bold text-sm text-white">Lobby Cashier Payment:</div>
+                  <p className="text-zinc-400 leading-relaxed">
                     Please bring cash payment to the Buildersville Lobby Drop Hub counter on the Ground Floor during package claim or your next lobby visit.
                   </p>
-                  <div className="p-3.5 bg-white rounded-xl border border-gray-200 space-y-2">
+                  <div className="p-3.5 bg-[#141418] rounded-xl border border-zinc-800/80 space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Resident Name:</span>
-                      <strong className="text-gray-900">{fullName || "Resident"}</strong>
+                      <span className="text-zinc-400">Resident Name:</span>
+                      <strong className="text-white">{fullName || "Resident"}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Plan:</span>
-                      <strong className="uppercase">{plan} Membership</strong>
+                      <span className="text-zinc-400">Plan:</span>
+                      <strong className="text-white uppercase">{plan} Membership</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Duration:</span>
-                      <strong>{plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}</strong>
+                      <span className="text-zinc-400">Duration:</span>
+                      <strong className="text-white">{plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}</strong>
                     </div>
-                    <div className="flex justify-between pt-1 border-t border-gray-100">
-                      <span className="text-gray-500">Amount Due:</span>
-                      <strong className="text-emerald-600 font-bold text-sm">
+                    <div className="flex justify-between pt-1 border-t border-zinc-800">
+                      <span className="text-zinc-400">Amount Due:</span>
+                      <strong className="text-emerald-400 font-bold text-sm">
                         {plan === "REGULAR" ? "₱149.00" : "₱299.00"}
                       </strong>
                     </div>
                   </div>
-                  <p className="text-amber-700 text-[11px] font-medium">
+                  <p className="text-amber-400 text-[11px] font-medium">
                     Your account will be created immediately. Your subscription plan will be marked active once confirmed by staff at the counter.
                   </p>
                 </div>
