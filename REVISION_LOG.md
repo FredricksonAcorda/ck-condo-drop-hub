@@ -45,6 +45,7 @@
 33. [Strict Firebase Auth Password Enforcement for Residents (Email & Phone) and Staff Admin](#33-strict-firebase-auth-password-enforcement-for-residents-email--phone-and-staff-admin-fix--modification)
 34. [Digital Resident Pass Live Preview & Symmetrical Zero-Scroll Sign-Up Layout](#34-digital-resident-pass-live-preview--symmetrical-zero-scroll-sign-up-layout-modification--ux-polish)
 35. [Dark Glassmorphic Payment Activation Modal with 1-Tap Mobile GCash Copy](#35-dark-glassmorphic-payment-activation-modal-with-1-tap-mobile-gcash-copy-modification--ux-polish)
+36. [Purge Functionless GCash Number Input & Validation Across Registration, Membership Renewal, and Dashboard Payment Modals](#36-purge-functionless-gcash-number-input--validation-across-registration-membership-renewal-and-dashboard-payment-modals-modification--ux-polish)
 
 ---
 
@@ -797,6 +798,30 @@
   A unified dark-mode payment activation modal where residents can easily scan the high-contrast QR code or copy the GCash number in one tap, with zero icons and seamless aesthetic integration.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When designing QR code checkout flows for responsive web apps, always provide a 1-tap clipboard copy action immediately below the QR code for single-device mobile users who cannot point a camera at their own screen. Keep the QR frame pure white for scanning sensors while matching the modal shell to the platform's overarching design system.
+
+---
+
+## 36. Purge Functionless GCash Number Input & Validation Across Registration, Membership Renewal, and Dashboard Payment Modals (Modification / UX Polish)
+
+- **Current State**:
+  The GCash payment activation and renewal modals across `/register`, `/membership`, and `/dashboard` displayed a manual text input field labeled `"GCash Number (if QR can't be scanned)"` alongside a helper link `"Fill Sample Number"`. In addition, submitting the modal previously enforced an 8-character reference validation block that prevented users from confirming without filling the field.
+- **The Problem**:
+  1. **Redundant & Functionless Input**: The input field did not connect to any payment gateway webhook or automated verification API. Since all GCash payments are settled via external QR scanning and verified manually by Staff Admin at the Lobby, requiring users to manually enter or generate sample mobile numbers was useless friction.
+  2. **Unnecessary Form Blockers**: In the Membership tab (`/membership`) when renewing or subscribing to a monthly plan, residents who transferred funds using the official GCash QR were blocked with `"Please enter a valid GCash reference number (min. 8 digits)"` if they left the field blank.
+  3. **Visual Clutter**: The extra input field and helper link crowded the right-hand column of the payment modal, detracting from the clean pricing breakdown and primary action buttons.
+- **What to Do (Solution)**:
+  1. **Purged GCash Number Input & Sample Fillers**:
+     - Removed the entire input field, label, and `"Fill Sample Number"` button from the payment modal in [`src/app/(auth)/register/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(auth)/register/page.tsx), [`src/app/(customer)/membership/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/membership/page.tsx), and [`src/app/(customer)/dashboard/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/dashboard/page.tsx).
+     - Replaced the input block with clear, concise payment instructions guiding residents to scan the QR code with GCash or use the 1-Tap Copy button.
+  2. **Eliminated Blocking 8-Digit Validation**:
+     - Removed the `!gcashRef.trim() || gcashRef.trim().length < 8` validation checks in `handleConfirmPlanPayment` and `handleActivatePayment`.
+     - Standardized background invoice recording with a clean system reference tag (`"GCASH-QR-SCAN"`).
+  3. **Added 1-Tap Copy to Membership & Dashboard Modals**:
+     - Added the zero-icon, text-only 1-Tap Copy button (`Copy GCash Number` / `GCash Number Copied!`) directly beneath the QR image in both Membership renewal and Dashboard settlement modals, ensuring mobile parity across all customer payment interfaces.
+- **Result**:
+  A frictionless, streamlined payment workflow where residents simply scan the QR code or copy the number, and immediately confirm activation or renewal without encountering non-functional inputs or blocking error popups.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Do not collect manual user inputs (such as phone numbers or manual reference strings) unless there is an automated reconciliation engine or strict manual auditing requirement that actually parses them. In manual verification workflows, eliminate placeholder inputs and replace them with clear action instructions to prevent conversion drop-offs.
 
 ---
 

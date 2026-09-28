@@ -12,24 +12,28 @@ export default function CustomerDashboardPage() {
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"GCASH" | "CASH_COUNTER">("GCASH");
-  const [gcashRef, setGcashRef] = useState("");
   const [isActivating, setIsActivating] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyGcashNumber = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText("09932678000").catch(() => {});
+    }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const handleActivatePayment = async () => {
     setIsActivating(true);
     setPaymentNotice(null);
     try {
       if (paymentMethod === "GCASH") {
-        if (!gcashRef.trim() || gcashRef.trim().length < 8) {
-          setPaymentNotice("Please enter a valid GCash reference number (min. 8 digits).");
-          setIsActivating(false);
-          return;
-        }
         await updateProfile({
-          planStatus: "ACTIVE",
+          planStatus: "PENDING_VERIFICATION",
+          pendingPlan: user?.plan,
           paymentMethod: "GCASH",
-          paymentReference: gcashRef.trim(),
+          paymentReference: "GCASH-QR-SCAN",
         });
       } else {
         await updateProfile({
@@ -314,25 +318,32 @@ export default function CustomerDashboardPage() {
             {paymentMethod === "GCASH" ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
-                  {/* Left: Full QR Code Card Image */}
-                  <div className="flex items-center justify-center">
+                  {/* Left: Full QR Code Card Image + 1-Tap Copy */}
+                  <div className="flex flex-col items-center justify-between space-y-3 p-3 bg-gray-50 rounded-2xl border border-gray-200">
                     <Image
                       src="/images/gcash-official-qr.jpg"
                       alt="Official GCash QR Code"
                       width={562}
                       height={795}
-                      className="w-full h-auto rounded-2xl border border-gray-200 shadow-sm object-contain"
+                      className="w-full h-auto rounded-xl border border-gray-200 shadow-sm object-contain"
                       priority
                     />
+                    <button
+                      type="button"
+                      onClick={handleCopyGcashNumber}
+                      className="w-full py-2.5 px-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-bold text-xs transition-colors cursor-pointer text-center shadow-sm"
+                    >
+                      {isCopied ? "GCash Number Copied!" : "Copy GCash Number"}
+                    </button>
                   </div>
 
-                  {/* Right: Plan Breakdown & GCash Number Input */}
+                  {/* Right: Plan Breakdown & Payment Instructions */}
                   <div className="flex flex-col justify-between space-y-4">
                     <div className="space-y-3">
                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2 text-xs">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-500">Plan:</span>
-                          <span className="font-bold text-gray-900">
+                          <span className="font-bold text-gray-900 uppercase">
                             {user?.plan?.replace("_", " ")}
                           </span>
                         </div>
@@ -350,26 +361,12 @@ export default function CustomerDashboardPage() {
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          GCash Number (if QR can&apos;t be scanned)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Enter your GCash Mobile Number"
-                          value={gcashRef}
-                          onChange={(e) => setGcashRef(e.target.value)}
-                          className="input w-full font-mono text-sm"
-                        />
-                        <div className="flex justify-end mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setGcashRef("0917 123 4567")}
-                            className="text-[11px] text-brand-red hover:underline cursor-pointer"
-                          >
-                            Fill Sample Number
-                          </button>
-                        </div>
+                      {/* Payment Instructions */}
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-1.5 text-xs">
+                        <div className="font-bold text-gray-900">Payment Instructions:</div>
+                        <p className="text-gray-600 text-[11px] leading-relaxed">
+                          Scan the QR code with your GCash app or tap Copy GCash Number to transfer payment. Click confirm below once transferred and Lobby Staff will verify your subscription.
+                        </p>
                       </div>
                     </div>
 

@@ -29,7 +29,6 @@ export default function RegisterPage() {
   // Payment Activation Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalMethod, setModalMethod] = useState<"GCASH" | "CASH_COUNTER">("GCASH");
-  const [gcashRef, setGcashRef] = useState("");
 
   // Password & Security
   const [password, setPassword] = useState("");
@@ -106,15 +105,7 @@ export default function RegisterPage() {
   };
 
   const handleModalConfirm = async () => {
-    if (modalMethod === "GCASH") {
-      if (gcashRef.trim()) {
-        await executeRegistration("PENDING_VERIFICATION", "GCASH", gcashRef.trim());
-      } else {
-        await executeRegistration("PENDING_PAYMENT", "GCASH", undefined);
-      }
-    } else {
-      await executeRegistration("PENDING_PAYMENT", "CASH_COUNTER", undefined);
-    }
+    await executeRegistration("PENDING_PAYMENT", modalMethod, undefined);
   };
 
   const executeRegistration = async (
@@ -725,32 +716,13 @@ export default function RegisterPage() {
                         </div>
                       </div>
 
-                      {/* GCash Number or Reference Input */}
-                      <div>
-                        <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                          GCash Number (if QR can&apos;t be scanned)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Enter your GCash Mobile Number"
-                          value={gcashRef}
-                          onChange={(e) => setGcashRef(e.target.value)}
-                          className="w-full bg-[#1c1c21] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#005CEE] focus:ring-1 focus:ring-[#005CEE] transition-colors"
-                        />
-                        <div className="flex justify-end mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setGcashRef("0917 123 4567")}
-                            className="text-[11px] text-brand-red hover:underline cursor-pointer"
-                          >
-                            Fill Sample Number
-                          </button>
-                        </div>
+                      {/* Payment Instructions */}
+                      <div className="bg-[#1a1a20] p-4 rounded-2xl border border-zinc-800 space-y-1.5 text-xs">
+                        <div className="font-semibold text-white">Payment Instructions:</div>
+                        <p className="text-zinc-400 text-[11px] leading-relaxed">
+                          Scan the QR code via your GCash app or tap Copy GCash Number to send payment. Your account is created immediately and your chosen plan will be confirmed by staff.
+                        </p>
                       </div>
-
-                      <p className="text-[11px] text-zinc-400 leading-tight">
-                        Your account is created immediately. Settle anytime and your membership plan will be verified by staff.
-                      </p>
                     </div>
 
                     <button
