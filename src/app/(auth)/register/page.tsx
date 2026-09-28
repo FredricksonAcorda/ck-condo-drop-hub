@@ -36,6 +36,12 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<number>(0);
+
+  const triggerError = (msg: string) => {
+    setErrorMessage(msg);
+    setErrorKey(Date.now());
+  };
 
   // Auto-dismiss error banner after 7 seconds
   useEffect(() => {
@@ -44,7 +50,7 @@ export default function RegisterPage() {
       setErrorMessage(null);
     }, 7000);
     return () => clearTimeout(timer);
-  }, [errorMessage]);
+  }, [errorMessage, errorKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,27 +64,27 @@ export default function RegisterPage() {
       !floorNumber.trim() ||
       !unitNumber.trim()
     ) {
-      setErrorMessage("Please complete all required resident fields (Building #, Floor #, Unit #).");
+      triggerError("Please complete all required resident fields (Building #, Floor #, Unit #).");
       return;
     }
 
     if (!isValidPhilippinePhone(phone)) {
-      setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+      triggerError("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
       return;
     }
 
     if (!email || !email.includes("@")) {
-      setErrorMessage("Please enter a valid email address (@gmail.com).");
+      triggerError("Please enter a valid email address (@gmail.com).");
       return;
     }
 
     if (!isPasswordStrongEnough(password)) {
-      setErrorMessage("Please ensure your password satisfies all 5 security complexity requirements.");
+      triggerError("Please ensure your password satisfies all 5 security complexity requirements.");
       return;
     }
 
     if (!agreeTerms) {
-      setErrorMessage("Please accept the condominium parcel holding terms to proceed.");
+      triggerError("Please accept the condominium parcel holding terms to proceed.");
       return;
     }
 
@@ -154,7 +160,7 @@ export default function RegisterPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to register account. Please try again.";
-      setErrorMessage(msg);
+      triggerError(msg);
       setShowPaymentModal(false);
     } finally {
       setIsLoading(false);
@@ -177,13 +183,22 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* Error Alert Banner - Text only, auto-dismisses after 7s, no dismiss button */}
+      {/* Error Alert Banner - Text only, auto-dismisses after 7s with visual countdown, no dismiss button */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-3 p-2.5 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed animate-in fade-in"
+          key={errorKey}
+          className="relative mb-3 p-3 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed overflow-hidden animate-in fade-in"
         >
-          {errorMessage}
+          <p>{errorMessage}</p>
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-900/40">
+            <div
+              className="h-full bg-red-500/80 transition-all ease-linear"
+              style={{
+                animation: "errorCountdown 7s linear forwards",
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -491,136 +506,166 @@ export default function RegisterPage() {
         </div>
       </form>
 
-      {/* Payment Activation Modal Popup */}
+      {/* Payment Activation Modal Popup - Sized exactly to uploaded reference (max-w-2xl with large GCash QR Code card) */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-[#16161a] border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-7 shadow-2xl border border-gray-200 space-y-5 text-left animate-in fade-in zoom-in-95">
             {/* Modal Header */}
-            <div className="text-center border-b border-zinc-800 pb-3">
-              <h3 className="text-base sm:text-lg font-bold text-white">
-                Membership Payment Activation
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="font-[family-name:var(--font-heading)] text-2xl text-gray-900 uppercase font-bold tracking-tight">
+                SWITCH TO {plan}
               </h3>
-              <p className="text-xs text-zinc-400 mt-1">
-                {plan === "PREMIUM" ? "Premium VIP Plan — ₱299 / month" : "Regular Plan — ₱149 / month"}
-              </p>
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="text-gray-400 hover:text-black p-1 rounded-lg hover:bg-gray-100 cursor-pointer text-lg leading-none"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
 
-            {/* Payment Method Switcher Tabs - strictly no icons paired with text */}
-            <div className="grid grid-cols-2 gap-1.5 bg-[#1f1f25] p-1 rounded-xl border border-zinc-800">
+            {/* Payment Method Switcher Tabs */}
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setModalMethod("GCASH")}
-                className={`py-2 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   modalMethod === "GCASH"
-                    ? "bg-[#005CEE] text-white shadow-md"
-                    : "text-zinc-400 hover:text-white"
+                    ? "bg-blue-50 border-[#005CEE] text-[#005CEE] ring-1 ring-[#005CEE]"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                GCash QR Code (Recommended)
+                GCash QR Code
               </button>
               <button
                 type="button"
                 onClick={() => setModalMethod("CASH_COUNTER")}
-                className={`py-2 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   modalMethod === "CASH_COUNTER"
-                    ? "bg-amber-600 text-white shadow-md"
-                    : "text-zinc-400 hover:text-white"
+                    ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-600"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 Cash at Counter
               </button>
             </div>
 
-            {/* Modal Body: GCash View */}
+            {/* GCash Form: Full-size QR image on left, details and activate button on right */}
             {modalMethod === "GCASH" ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 bg-[#1a1a20] p-3 rounded-xl border border-zinc-800">
-                  <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-zinc-700 bg-white p-1">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
+                  {/* Left: Full QR Code Card Image */}
+                  <div className="flex items-center justify-center">
                     <Image
                       src="/images/gcash-official-qr.jpg"
-                      alt="GCash Official QR Code"
-                      width={120}
-                      height={120}
-                      className="w-full h-full object-contain"
+                      alt="Official GCash QR Code"
+                      width={562}
+                      height={795}
+                      className="w-full h-auto rounded-2xl border border-gray-200 shadow-sm object-contain"
+                      priority
                     />
                   </div>
-                  <div className="space-y-1 text-xs text-zinc-300">
-                    <p className="font-bold text-white">Scan with GCash App</p>
-                    <p className="text-[11px] text-zinc-400">Account: CK CONDO DROP HUB</p>
-                    <p className="text-[11px] font-mono text-zinc-200">0917 888 9999</p>
-                    <p className="text-[10px] text-emerald-400">Scan to pay immediately</p>
+
+                  {/* Right: Plan Breakdown, GCash Number Input, and Action Button */}
+                  <div className="flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500">Plan:</span>
+                          <span className="font-bold text-gray-900 uppercase">
+                            {plan}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500">Duration:</span>
+                          <span className="font-bold text-gray-900">
+                            {plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2.5 border-t border-gray-200">
+                          <span className="font-bold text-gray-700">Total Due:</span>
+                          <span className="font-black text-xl text-emerald-600 font-[family-name:var(--font-heading)]">
+                            {plan === "REGULAR" ? "₱149 / 15 DAYS" : "₱299 / 30 DAYS"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          GCash Number (if QR can&apos;t be scanned)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter your GCash Mobile Number"
+                          value={gcashRef}
+                          onChange={(e) => setGcashRef(e.target.value)}
+                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#005CEE] focus:ring-1 focus:ring-[#005CEE]"
+                        />
+                        <div className="flex justify-end mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setGcashRef("0917 123 4567")}
+                            className="text-[11px] text-brand-red hover:underline cursor-pointer"
+                          >
+                            Fill Sample Number
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleModalConfirm}
+                      disabled={isLoading}
+                      className="w-full py-3.5 rounded-xl bg-brand-red hover:bg-[#b30000] text-white font-bold uppercase tracking-wider text-sm transition-all shadow-md cursor-pointer disabled:opacity-75"
+                    >
+                      {isLoading ? "CREATING ACCOUNT..." : "CONFIRM PAYMENT & ACTIVATE"}
+                    </button>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                    Reference Number (optional if paid immediately)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 12345678"
-                    value={gcashRef}
-                    onChange={(e) => setGcashRef(e.target.value)}
-                    className="w-full bg-[#1c1c21] border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red"
-                  />
-                </div>
-
-                <p className="text-[11px] text-zinc-400 leading-tight">
-                  Your account is created immediately. Settle anytime and your membership plan will be verified by staff.
-                </p>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowPaymentModal(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-xs font-bold text-zinc-400 hover:text-white hover:border-zinc-500 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={handleModalConfirm}
-                    className="flex-1 py-2.5 rounded-xl bg-brand-red hover:bg-[#b30000] text-white text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-75"
-                  >
-                    {isLoading ? "Creating account..." : "Complete Registration"}
-                  </button>
                 </div>
               </div>
             ) : (
-              /* Modal Body: Cash at Counter View */
-              <div className="space-y-3">
-                <div className="bg-[#1a1a20] p-3.5 rounded-xl border border-zinc-800 space-y-1.5 text-xs">
-                  <p className="font-bold text-white">Pay at Buildersville Lobby Drop Hub</p>
-                  <p className="text-zinc-400 text-[11.5px] leading-relaxed">
-                    Settle your {plan === "PREMIUM" ? "₱299" : "₱149"} subscription directly at the lobby counter during package claim or your next lobby visit.
+              /* Cash at Counter Form */
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3 text-xs text-gray-700">
+                  <div className="font-bold text-sm text-gray-900">Lobby Cashier Payment:</div>
+                  <p className="text-gray-600 leading-relaxed">
+                    Please bring cash payment to the Buildersville Lobby Drop Hub counter on the Ground Floor during package claim or your next lobby visit.
                   </p>
-                  <p className="text-amber-400 text-[11px] font-medium pt-1">
-                    Your account is active immediately for parcel receipts.
+                  <div className="p-3.5 bg-white rounded-xl border border-gray-200 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Resident Name:</span>
+                      <strong className="text-gray-900">{fullName || "Resident"}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Plan:</span>
+                      <strong className="uppercase">{plan} Membership</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Duration:</span>
+                      <strong>{plan === "REGULAR" ? "15 Days Unlimited" : "30 Days Unlimited"}</strong>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-gray-100">
+                      <span className="text-gray-500">Amount Due:</span>
+                      <strong className="text-emerald-600 font-bold text-sm">
+                        {plan === "REGULAR" ? "₱149.00" : "₱299.00"}
+                      </strong>
+                    </div>
+                  </div>
+                  <p className="text-amber-700 text-[11px] font-medium">
+                    Your account will be created immediately. Your subscription plan will be marked active once confirmed by staff at the counter.
                   </p>
                 </div>
 
-                <p className="text-[11px] text-zinc-400 leading-tight">
-                  Staff admin will mark your membership plan as active once paid at the counter.
-                </p>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowPaymentModal(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-xs font-bold text-zinc-400 hover:text-white hover:border-zinc-500 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={handleModalConfirm}
-                    className="flex-1 py-2.5 rounded-xl bg-brand-red hover:bg-[#b30000] text-white text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-75"
-                  >
-                    {isLoading ? "Creating account..." : "Complete Registration"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleModalConfirm}
+                  disabled={isLoading}
+                  className="w-full py-3.5 rounded-xl bg-brand-red hover:bg-[#b30000] text-white font-bold uppercase tracking-wider text-sm transition-all shadow-md cursor-pointer disabled:opacity-75"
+                >
+                  {isLoading ? "CREATING ACCOUNT..." : "CONFIRM PAYMENT & ACTIVATE"}
+                </button>
               </div>
             )}
           </div>

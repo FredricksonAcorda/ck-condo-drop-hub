@@ -41,6 +41,7 @@
 29. [Wide Ergonomic Auth Layout, Non-Blocking Subscription Registration, and Floating Animated Header](#29-wide-ergonomic-auth-layout-non-blocking-subscription-registration-and-floating-animated-header-fix--modification--add)
 30. [Zero-Scroll Fixed Auth Pages, Card-Internal Copyright, Purge Icons Paired with Text & Modal Payment Activation](#30-zero-scroll-fixed-auth-pages-card-internal-copyright-purge-icons-paired-with-text--modal-payment-activation-fix--modification)
 31. [Firestore Undefined Payload Stripping, Orphaned Firebase Auth Auto-Healing & 7-Second Auto-Dismiss Alerts](#31-firestore-undefined-payload-stripping-orphaned-firebase-auth-auto-healing--7-second-auto-dismiss-alerts-bug--fix--modification)
+32. [Full-Size Side-by-Side Payment Activation Modal & Visual 7-Second Error Countdown Bar](#32-full-size-side-by-side-payment-activation-modal--visual-7-second-error-countdown-bar-fix--modification)
 
 ---
 
@@ -698,6 +699,29 @@
 
 ---
 
+## 32. Full-Size Side-by-Side Payment Activation Modal & Visual 7-Second Error Countdown Bar (Fix / Modification)
+
+- **Current State**:
+  The Membership Payment Activation modal on the registration page (`/register`) was constrained to a small single-column popup (`max-w-md`) with a miniaturized QR code preview (`w-24 h-24`). In addition, error banners across auth pages relied on a single timeout without a unique mount key or animated countdown indicator, which could prevent visual reset if multiple errors triggered in succession.
+- **The Problem**:
+  Residents could not clearly scan the tiny QR code with their mobile banking/GCash camera or comfortably view plan summary breakdowns side-by-side before finalizing their account. Furthermore, users lacked a clear visual indicator showing that an error message was actively auto-dismissing across a 7-second duration.
+- **What to Do (Solution)**:
+  1. **Enlarged Side-by-Side Payment Modal (`max-w-2xl`)**:
+     - Modeled the modal directly from the high-resolution client reference design (`src/app/(customer)/membership/page.tsx`).
+     - Expanded width to `max-w-2xl` with a crisp white card styling (`bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-gray-200`).
+     - Displayed the full official GCash QR card image (`/images/gcash-official-qr.jpg`, 562x795) filling the left column inside a clean rounded frame.
+     - Positioned the plan summary breakdown (Plan name, 15/30 Days Unlimited duration, and vibrant green Total Due ₱149/₱299), GCash mobile number input with "Fill Sample Number" helper, and full-width red `CONFIRM PAYMENT & ACTIVATE` button on the right column.
+     - Added clean tab switching between `GCash QR Code` and `Cash at Counter` with zero icons paired with text.
+  2. **Visual 7-Second Auto-Dismiss Countdown Engine**:
+     - Introduced an explicit `errorKey = Date.now()` timestamp on every `triggerError()` invocation across `/login`, `/register`, and `/forgot-password`, guaranteeing that React remounts the alert banner and resets the 7-second timer even if an identical error message fires repeatedly.
+     - Added `@keyframes errorCountdown` in `src/app/globals.css` animating a thin 2px progress bar from 100% to 0% over exactly 7 seconds, providing an intuitive visual countdown while maintaining zero clickable dismiss buttons and zero emojis.
+- **Result**:
+  A spacious, premium payment activation modal where residents can easily scan the full-sized GCash QR code, coupled with a completely reliable, visually animated 7-second auto-dismissing error notification across all authentication screens.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  For checkout and payment activation modals, never shrink QR codes or payment instructions into cramped mobile dialogs; use a responsive two-column grid (`grid-cols-1 sm:grid-cols-2`) that gives QR codes full fidelity on desktop while stacking smoothly on mobile. For auto-dismissing feedback notifications, always tie the component's `key` to a timestamp to ensure animation and timer reconciliation in React.
+
+---
+
 ## Autonomous Agent Instructions for Future Updates
 
 Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **Modification**, or **Add**:
@@ -708,6 +732,7 @@ Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **
    - **What to Do (Solution)**
    - **Result**
 3. Include the cross-project transferable insight so that the pattern can be reapplied to other client codebases.
+
 
 
 

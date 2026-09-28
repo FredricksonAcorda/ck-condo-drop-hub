@@ -24,8 +24,14 @@ function LoginForm() {
   const [adminEmail, setAdminEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const triggerError = (msg: string) => {
+    setErrorMessage(msg);
+    setErrorKey(Date.now());
+  };
 
   // Auto-dismiss error banner after 7 seconds
   useEffect(() => {
@@ -34,7 +40,7 @@ function LoginForm() {
       setErrorMessage(null);
     }, 7000);
     return () => clearTimeout(timer);
-  }, [errorMessage]);
+  }, [errorMessage, errorKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +52,13 @@ function LoginForm() {
     } else {
       if (residentMethod === "phone") {
         if (!isValidPhilippinePhone(phoneValue)) {
-          setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+          triggerError("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
           return;
         }
         identifier = phoneValue.trim();
       } else {
         if (!emailValue.trim() || !emailValue.includes("@")) {
-          setErrorMessage("Please enter your Gmail username.");
+          triggerError("Please enter your Gmail username.");
           return;
         }
         identifier = emailValue.trim();
@@ -60,7 +66,7 @@ function LoginForm() {
     }
 
     if (!identifier || !password.trim()) {
-      setErrorMessage("Please enter both your credentials and password.");
+      triggerError("Please enter both your credentials and password.");
       return;
     }
 
@@ -79,7 +85,7 @@ function LoginForm() {
         router.push("/parcels");
       }
     } catch (err: unknown) {
-      setErrorMessage(
+      triggerError(
         err instanceof Error ? err.message : "Failed to sign in. Please check your credentials."
       );
     } finally {
@@ -149,13 +155,22 @@ function LoginForm() {
         </button>
       </div>
 
-      {/* Error Alert Banner - Text only, auto-dismisses after 7s, no dismiss button */}
+      {/* Error Alert Banner - Text only, auto-dismisses after 7s with visual countdown, no dismiss button */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-3 p-2.5 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed animate-in fade-in"
+          key={errorKey}
+          className="relative mb-3 p-3 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed overflow-hidden animate-in fade-in"
         >
-          {errorMessage}
+          <p>{errorMessage}</p>
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-900/40">
+            <div
+              className="h-full bg-red-500/80 transition-all ease-linear"
+              style={{
+                animation: "errorCountdown 7s linear forwards",
+              }}
+            />
+          </div>
         </div>
       )}
 

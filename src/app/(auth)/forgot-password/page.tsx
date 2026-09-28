@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 
@@ -14,6 +14,21 @@ export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<number>(0);
+
+  const triggerError = (msg: string) => {
+    setErrorMessage(msg);
+    setErrorKey(Date.now());
+  };
+
+  // Auto-dismiss error banner after 7 seconds
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => {
+      setErrorMessage(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [errorMessage, errorKey]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +37,13 @@ export default function ForgotPasswordPage() {
     let target = "";
     if (method === "phone") {
       if (!isValidPhilippinePhone(phoneValue)) {
-        setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+        triggerError("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
         return;
       }
       target = phoneValue.trim();
     } else {
       if (!emailValue.trim() || !emailValue.includes("@")) {
-        setErrorMessage("Please enter your Gmail username.");
+        triggerError("Please enter your Gmail username.");
         return;
       }
       target = emailValue.trim();
@@ -77,21 +92,22 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      {/* Error Alert Banner */}
+      {/* Error Alert Banner - Text only, auto-dismisses after 7s with visual countdown, no dismiss button */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-red-950/60 border border-red-800/60 text-red-200 text-xs animate-in fade-in"
+          key={errorKey}
+          className="relative mb-4 p-3 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed overflow-hidden animate-in fade-in"
         >
-          <span className="text-red-400 mt-0.5">⚠️</span>
-          <div className="flex-1 leading-relaxed">{errorMessage}</div>
-          <button
-            type="button"
-            onClick={() => setErrorMessage(null)}
-            className="text-red-400 hover:text-red-200 text-sm font-bold"
-          >
-            ✕
-          </button>
+          <p>{errorMessage}</p>
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-900/40">
+            <div
+              className="h-full bg-red-500/80 transition-all ease-linear"
+              style={{
+                animation: "errorCountdown 7s linear forwards",
+              }}
+            />
+          </div>
         </div>
       )}
 

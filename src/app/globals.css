@@ -377,3 +377,14 @@ textarea.input {
     scroll-behavior: auto !important;
   }
 }
+
+/* 7-Second Error Message Countdown */
+@keyframes errorCountdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
