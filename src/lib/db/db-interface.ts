@@ -24,6 +24,7 @@ export interface IDatabaseService {
   // Activity & SMS Logs
   getActivityLogs(): Promise<ActivityLogItem[]>;
   getSmsLogs(): Promise<SmsLogItem[]>;
+  recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem>;
   sendTestSms(recipientPhone: string, recipientName: string, message: string): Promise<SmsLogItem>;
 
   // Desk Inquiries

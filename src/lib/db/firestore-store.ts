@@ -1,5 +1,29 @@
 import { IDatabaseService } from "./db-interface";
-import { Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
+import {
+  Parcel,
+  CreateParcelInput,
+  ResidentProfile,
+  AuthUser,
+  ActivityLogItem,
+  SmsLogItem,
+  HubSettings,
+  DeskInquiry,
+  InquiryStatus,
+} from "@/types";
+import { firestore } from "../firebase/config";
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 import {
   SEED_PARCELS,
   SEED_RESIDENTS,
@@ -10,70 +34,99 @@ import {
   SEED_INQUIRIES,
 } from "./seed-data";
 
-const STORAGE_KEYS = {
-  PARCELS: "ck_hub_parcels_v1",
-  RESIDENTS: "ck_hub_residents_v1",
-  USERS: "ck_hub_users_v1",
-  ACTIVITY: "ck_hub_activity_logs_v1",
-  SMS: "ck_hub_sms_logs_v1",
-  SETTINGS: "ck_hub_settings_v1",
-  INQUIRIES: "ck_hub_desk_inquiries_v1",
-};
+export class FirestoreDatabaseService implements IDatabaseService {
+  private seeded = false;
 
-export class LocalDatabaseService implements IDatabaseService {
-  private inMemoryParcels: Parcel[] = [...SEED_PARCELS];
-  private inMemoryResidents: ResidentProfile[] = [...SEED_RESIDENTS];
-  private inMemoryUsers: AuthUser[] = [...SEED_USERS];
-  private inMemoryActivity: ActivityLogItem[] = [...SEED_ACTIVITY_LOGS];
-  private inMemorySms: SmsLogItem[] = [...SEED_SMS_LOGS];
-  private inMemoryInquiries: DeskInquiry[] = [...SEED_INQUIRIES];
-  private inMemorySettings: HubSettings = { ...DEFAULT_HUB_SETTINGS };
-
-  private isClient(): boolean {
-    return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-  }
-
-  private load<T>(key: string, fallback: T): T {
-    if (!this.isClient()) return fallback;
+  private async ensureSeeded(): Promise<void> {
+    if (!firestore || this.seeded) return;
     try {
-      const item = window.localStorage.getItem(key);
-      if (!item) {
-        window.localStorage.setItem(key, JSON.stringify(fallback));
-        return fallback;
+      // Check if parcels collection exists
+      const parcelsSnap = await getDocs(query(collection(firestore, "parcels"), limit(1)));
+      if (parcelsSnap.empty) {
+        // Seed Parcels
+        for (const p of SEED_PARCELS) {
+          await setDoc(doc(firestore, "parcels", p.id), p);
+        }
       }
-      return JSON.parse(item) as T;
-    } catch {
-      return fallback;
-    }
-  }
 
-  private save<T>(key: string, data: T): void {
-    if (!this.isClient()) return;
-    try {
-      window.localStorage.setItem(key, JSON.stringify(data));
-      window.dispatchEvent(new CustomEvent("ck_db_updated", { detail: { key } }));
+      // Check residents collection
+      const residentsSnap = await getDocs(query(collection(firestore, "residents"), limit(1)));
+      if (residentsSnap.empty) {
+        for (const r of SEED_RESIDENTS) {
+          await setDoc(doc(firestore, "residents", r.id), r);
+        }
+      }
+
+      // Check users collection
+      const usersSnap = await getDocs(query(collection(firestore, "users"), limit(1)));
+      if (usersSnap.empty) {
+        for (const u of SEED_USERS) {
+          await setDoc(doc(firestore, "users", u.id), u);
+        }
+      }
+
+      // Check settings doc
+      const settingsDoc = await getDoc(doc(firestore, "settings", "default"));
+      if (!settingsDoc.exists()) {
+        await setDoc(doc(firestore, "settings", "default"), DEFAULT_HUB_SETTINGS);
+      }
+
+      // Check activity logs
+      const actSnap = await getDocs(query(collection(firestore, "activity_logs"), limit(1)));
+      if (actSnap.empty) {
+        for (const a of SEED_ACTIVITY_LOGS) {
+          await setDoc(doc(firestore, "activity_logs", a.id), a);
+        }
+      }
+
+      // Check SMS logs
+      const smsSnap = await getDocs(query(collection(firestore, "sms_logs"), limit(1)));
+      if (smsSnap.empty) {
+        for (const s of SEED_SMS_LOGS) {
+          await setDoc(doc(firestore, "sms_logs", s.id), s);
+        }
+      }
+
+      // Check inquiries
+      const inqSnap = await getDocs(query(collection(firestore, "inquiries"), limit(1)));
+      if (inqSnap.empty) {
+        for (const i of SEED_INQUIRIES) {
+          await setDoc(doc(firestore, "inquiries", i.id), i);
+        }
+      }
+
+      this.seeded = true;
     } catch (err) {
-      console.error("Local storage save error:", err);
+      console.warn("Firestore auto-seed notice (may already exist or offline):", err);
     }
   }
 
   // --- Parcels ---
 
   async getAllParcels(): Promise<Parcel[]> {
-    const loaded = this.load<Parcel[]>(STORAGE_KEYS.PARCELS, this.inMemoryParcels);
-    const existingIds = new Set(loaded.map((p) => p.id));
-    const missingSeeds = SEED_PARCELS.filter((p) => !existingIds.has(p.id));
-    if (missingSeeds.length > 0) {
-      const merged = [...loaded, ...missingSeeds];
-      this.save(STORAGE_KEYS.PARCELS, merged);
-      return merged;
+    if (!firestore) return SEED_PARCELS;
+    await this.ensureSeeded();
+    try {
+      const snap = await getDocs(collection(firestore, "parcels"));
+      if (snap.empty) return SEED_PARCELS;
+      return snap.docs.map((d) => d.data() as Parcel);
+    } catch (err) {
+      console.error("Error fetching parcels from Firestore:", err);
+      return SEED_PARCELS;
     }
-    return loaded;
   }
 
   async getParcelsByResident(residentId: string): Promise<Parcel[]> {
-    const all = await this.getAllParcels();
-    return all.filter((p) => p.residentId === residentId);
+    if (!firestore) return SEED_PARCELS.filter((p) => p.residentId === residentId);
+    await this.ensureSeeded();
+    try {
+      const q = query(collection(firestore, "parcels"), where("residentId", "==", residentId));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => d.data() as Parcel);
+    } catch (err) {
+      console.error("Error fetching resident parcels:", err);
+      return (await this.getAllParcels()).filter((p) => p.residentId === residentId);
+    }
   }
 
   async getParcelByTracking(trackingNumber: string): Promise<Parcel | null> {
@@ -83,12 +136,10 @@ export class LocalDatabaseService implements IDatabaseService {
   }
 
   async createParcel(input: CreateParcelInput): Promise<Parcel> {
-    const all = await this.getAllParcels();
     const residents = await this.getAllResidents();
     const resident = residents.find((r) => r.id === input.residentId);
     const settings = await this.getHubSettings();
 
-    // Pick courier color (official list + other)
     const courierColors: Record<string, string> = {
       "SPX Express": "#EE4D2D",
       "Flash Express": "#FFB800",
@@ -102,18 +153,10 @@ export class LocalDatabaseService implements IDatabaseService {
     const courierColor = courierColors[input.courier] || "#6B7280";
     const now = new Date();
     const dateArrivedStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
+      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
       " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-    // Calculate free holding deadline based on resident plan & hub settings
     const freeDays = resident?.plan === "PREMIUM" ? settings.freeDaysPremium : settings.freeDaysRegular;
     const deadlineDate = new Date(now.getTime() + freeDays * 24 * 60 * 60 * 1000);
     const deadlineStr = deadlineDate.toLocaleDateString("en-US", {
@@ -122,7 +165,6 @@ export class LocalDatabaseService implements IDatabaseService {
       year: "numeric",
     });
 
-    // Generate 4-digit unique claim code
     const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
     const claimCode = `CK-${randomSuffix}`;
 
@@ -144,10 +186,10 @@ export class LocalDatabaseService implements IDatabaseService {
       notes: input.notes,
     };
 
-    all.unshift(newParcel);
-    this.save(STORAGE_KEYS.PARCELS, all);
+    if (firestore) {
+      await setDoc(doc(firestore, "parcels", newParcel.id), newParcel);
+    }
 
-    // Update resident parcel metrics
     if (resident) {
       await this.updateResidentProfile(resident.id, {
         activeParcelsCount: (resident.activeParcelsCount || 0) + 1,
@@ -155,7 +197,6 @@ export class LocalDatabaseService implements IDatabaseService {
       });
     }
 
-    // Record Activity Log
     await this.recordActivity({
       type: "PARCEL_INGESTED",
       title: `Parcel Ingested: ${newParcel.trackingNumber}`,
@@ -166,7 +207,6 @@ export class LocalDatabaseService implements IDatabaseService {
       badgeColor: "bg-orange-500",
     });
 
-    // Automatically dispatch SMS notification record if resident has phone and enabled SMS alerts
     const wantsSms = resident?.notifications?.smsArrival ?? true;
     if (resident?.phone && wantsSms) {
       const smsMessage = `${settings.hubName}: Package ${newParcel.trackingNumber} from ${newParcel.courier} has arrived at ${newParcel.shelf}. Claim passcode: ${newParcel.claimCode}. Free holding until ${newParcel.deadline}.`;
@@ -204,35 +244,33 @@ export class LocalDatabaseService implements IDatabaseService {
 
   async releaseParcel(parcelId: string, claimedBy: string): Promise<Parcel> {
     const all = await this.getAllParcels();
-    const index = all.findIndex((p) => p.id === parcelId);
-    if (index === -1) throw new Error("Parcel not found");
+    const target = all.find((p) => p.id === parcelId);
+    if (!target) throw new Error("Parcel not found");
 
     const settings = await this.getHubSettings();
     const now = new Date();
     const claimedAtStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
+      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
       " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
     const updated: Parcel = {
-      ...all[index],
+      ...target,
       status: "PICKED_UP",
       shelf: "Archived (Released)",
       claimedAt: claimedAtStr,
       claimedBy: claimedBy.trim() || "Resident",
     };
 
-    all[index] = updated;
-    this.save(STORAGE_KEYS.PARCELS, all);
+    if (firestore) {
+      await updateDoc(doc(firestore, "parcels", parcelId), {
+        status: "PICKED_UP",
+        shelf: "Archived (Released)",
+        claimedAt: claimedAtStr,
+        claimedBy: updated.claimedBy,
+      });
+    }
 
-    // Decrement resident active parcel count
     const residents = await this.getAllResidents();
     const resident = residents.find((r) => r.id === updated.residentId);
     if (resident && resident.activeParcelsCount > 0) {
@@ -241,7 +279,6 @@ export class LocalDatabaseService implements IDatabaseService {
       });
     }
 
-    // Record Activity Log
     await this.recordActivity({
       type: "PARCEL_RELEASED",
       title: `Parcel Released: ${updated.trackingNumber}`,
@@ -251,7 +288,6 @@ export class LocalDatabaseService implements IDatabaseService {
       badgeColor: "bg-green-600",
     });
 
-    // Record SMS pickup confirmation
     if (resident?.phone) {
       const smsMessage = `${settings.hubName}: Package ${updated.trackingNumber} has been successfully released to ${updated.claimedBy}. Thank you!`;
       await this.recordSms({
@@ -268,31 +304,47 @@ export class LocalDatabaseService implements IDatabaseService {
   }
 
   async updateParcel(parcelId: string, updates: Partial<Parcel>): Promise<Parcel> {
+    if (firestore) {
+      await updateDoc(doc(firestore, "parcels", parcelId), updates);
+    }
     const all = await this.getAllParcels();
-    const index = all.findIndex((p) => p.id === parcelId);
-    if (index === -1) throw new Error("Parcel not found");
-
-    const updated = { ...all[index], ...updates };
-    all[index] = updated;
-    this.save(STORAGE_KEYS.PARCELS, all);
-    return updated;
+    const target = all.find((p) => p.id === parcelId);
+    if (!target) throw new Error("Parcel not found");
+    return { ...target, ...updates };
   }
 
   async deleteParcel(parcelId: string): Promise<boolean> {
-    const all = await this.getAllParcels();
-    const filtered = all.filter((p) => p.id !== parcelId);
-    if (filtered.length === all.length) return false;
-    this.save(STORAGE_KEYS.PARCELS, filtered);
-    return true;
+    if (firestore) {
+      await deleteDoc(doc(firestore, "parcels", parcelId));
+      return true;
+    }
+    return false;
   }
 
   // --- Residents ---
 
   async getAllResidents(): Promise<ResidentProfile[]> {
-    return this.load<ResidentProfile[]>(STORAGE_KEYS.RESIDENTS, this.inMemoryResidents);
+    if (!firestore) return SEED_RESIDENTS;
+    await this.ensureSeeded();
+    try {
+      const snap = await getDocs(collection(firestore, "residents"));
+      if (snap.empty) return SEED_RESIDENTS;
+      return snap.docs.map((d) => d.data() as ResidentProfile);
+    } catch (err) {
+      console.error("Error fetching residents from Firestore:", err);
+      return SEED_RESIDENTS;
+    }
   }
 
   async getResidentById(id: string): Promise<ResidentProfile | null> {
+    if (firestore) {
+      try {
+        const snap = await getDoc(doc(firestore, "residents", id));
+        if (snap.exists()) return snap.data() as ResidentProfile;
+      } catch (err) {
+        console.error("Error fetching resident by id:", err);
+      }
+    }
     const all = await this.getAllResidents();
     return all.find((r) => r.id === id) || null;
   }
@@ -312,7 +364,6 @@ export class LocalDatabaseService implements IDatabaseService {
   async createResident(
     profile: Omit<ResidentProfile, "id" | "createdAt" | "activeParcelsCount" | "totalParcelsReceived">
   ): Promise<ResidentProfile> {
-    const all = await this.getAllResidents();
     const id = `usr-resident-${Date.now()}`;
     const newResident: ResidentProfile = {
       ...profile,
@@ -321,8 +372,10 @@ export class LocalDatabaseService implements IDatabaseService {
       totalParcelsReceived: 0,
       createdAt: new Date().toISOString(),
     };
-    all.push(newResident);
-    this.save(STORAGE_KEYS.RESIDENTS, all);
+
+    if (firestore) {
+      await setDoc(doc(firestore, "residents", id), newResident);
+    }
 
     await this.recordActivity({
       type: "RESIDENT_REGISTERED",
@@ -337,17 +390,15 @@ export class LocalDatabaseService implements IDatabaseService {
   }
 
   async updateResidentProfile(id: string, updates: Partial<ResidentProfile>): Promise<ResidentProfile> {
-    const all = await this.getAllResidents();
-    const index = all.findIndex((r) => r.id === id);
-    if (index === -1) throw new Error("Resident not found");
-
-    const updated = { ...all[index], ...updates };
-    all[index] = updated;
-    this.save(STORAGE_KEYS.RESIDENTS, all);
-    return updated;
+    if (firestore) {
+      await updateDoc(doc(firestore, "residents", id), updates);
+    }
+    const target = await this.getResidentById(id);
+    if (!target) throw new Error("Resident not found");
+    return { ...target, ...updates };
   }
 
-  // --- Users ---
+  // --- Users & Credentials ---
 
   async findUserByCredentials(emailOrPhone: string): Promise<AuthUser | null> {
     const clean = emailOrPhone.trim().toLowerCase();
@@ -364,13 +415,21 @@ export class LocalDatabaseService implements IDatabaseService {
       return false;
     };
 
-    const users = this.load<AuthUser[]>(STORAGE_KEYS.USERS, this.inMemoryUsers);
+    let users: AuthUser[] = SEED_USERS;
+    if (firestore) {
+      try {
+        const snap = await getDocs(collection(firestore, "users"));
+        if (!snap.empty) {
+          users = snap.docs.map((d) => d.data() as AuthUser);
+        }
+      } catch (err) {
+        console.error("Error finding user:", err);
+      }
+    }
 
-    // Check staff match
     const userMatch = users.find((u) => matchIdentifier(u.email, u.phone));
     if (userMatch) return userMatch;
 
-    // Check resident match
     const residents = await this.getAllResidents();
     const residentMatch = residents.find((r) => matchIdentifier(r.email, r.phone));
     if (residentMatch) {
@@ -406,23 +465,24 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- Activity Logs ---
 
   async getActivityLogs(): Promise<ActivityLogItem[]> {
-    return this.load<ActivityLogItem[]>(STORAGE_KEYS.ACTIVITY, this.inMemoryActivity);
+    if (!firestore) return SEED_ACTIVITY_LOGS;
+    await this.ensureSeeded();
+    try {
+      const snap = await getDocs(collection(firestore, "activity_logs"));
+      if (snap.empty) return SEED_ACTIVITY_LOGS;
+      return snap.docs.map((d) => d.data() as ActivityLogItem);
+    } catch (err) {
+      console.error("Error fetching activity logs:", err);
+      return SEED_ACTIVITY_LOGS;
+    }
   }
 
   async recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem> {
-    const logs = await this.getActivityLogs();
     const now = new Date();
     const timestampStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
+      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
       " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
     const newLog: ActivityLogItem = {
       ...item,
@@ -430,31 +490,34 @@ export class LocalDatabaseService implements IDatabaseService {
       timestamp: timestampStr,
     };
 
-    logs.unshift(newLog);
-    this.save(STORAGE_KEYS.ACTIVITY, logs);
+    if (firestore) {
+      await setDoc(doc(firestore, "activity_logs", newLog.id), newLog);
+    }
+
     return newLog;
   }
 
   // --- SMS Logs ---
 
   async getSmsLogs(): Promise<SmsLogItem[]> {
-    return this.load<SmsLogItem[]>(STORAGE_KEYS.SMS, this.inMemorySms);
+    if (!firestore) return SEED_SMS_LOGS;
+    await this.ensureSeeded();
+    try {
+      const snap = await getDocs(collection(firestore, "sms_logs"));
+      if (snap.empty) return SEED_SMS_LOGS;
+      return snap.docs.map((d) => d.data() as SmsLogItem);
+    } catch (err) {
+      console.error("Error fetching sms logs:", err);
+      return SEED_SMS_LOGS;
+    }
   }
 
   private async recordSms(item: Omit<SmsLogItem, "id" | "timestamp">): Promise<SmsLogItem> {
-    const logs = await this.getSmsLogs();
     const now = new Date();
     const timestampStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
+      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
       " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
     const newSms: SmsLogItem = {
       ...item,
@@ -462,8 +525,10 @@ export class LocalDatabaseService implements IDatabaseService {
       timestamp: timestampStr,
     };
 
-    logs.unshift(newSms);
-    this.save(STORAGE_KEYS.SMS, logs);
+    if (firestore) {
+      await setDoc(doc(firestore, "sms_logs", newSms.id), newSms);
+    }
+
     return newSms;
   }
 
@@ -491,53 +556,41 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- Desk Inquiries ---
 
   async getInquiries(): Promise<DeskInquiry[]> {
-    return this.load<DeskInquiry[]>(STORAGE_KEYS.INQUIRIES, this.inMemoryInquiries);
+    if (!firestore) return SEED_INQUIRIES;
+    await this.ensureSeeded();
+    try {
+      const snap = await getDocs(collection(firestore, "inquiries"));
+      if (snap.empty) return SEED_INQUIRIES;
+      return snap.docs.map((d) => d.data() as DeskInquiry);
+    } catch (err) {
+      console.error("Error fetching inquiries:", err);
+      return SEED_INQUIRIES;
+    }
   }
 
   async createInquiry(input: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry> {
-    const inquiries = await this.getInquiries();
     const now = new Date();
     const timestampStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
+      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
       " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-    // If creating a new door delivery request, supersede any older pending requests for this resident
-    if (input.category.toLowerCase().includes("door") || input.category.toLowerCase().includes("delivery")) {
-      inquiries.forEach((item) => {
-        if (
-          item.residentId === input.residentId &&
-          (item.category.toLowerCase().includes("door") || item.category.toLowerCase().includes("delivery")) &&
-          (item.status === "NEW" || item.status === "IN_PROGRESS")
-        ) {
-          item.status = "RESOLVED";
-          item.updatedAt = timestampStr;
-        }
-      });
-    }
+      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
     const newInquiry: DeskInquiry = {
       ...input,
-      id: `inq-${Date.now()}`,
-      status: "NEW",
+      id: `inq-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       createdAt: timestampStr,
+      status: "NEW",
     };
 
-    inquiries.unshift(newInquiry);
-    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
+    if (firestore) {
+      await setDoc(doc(firestore, "inquiries", newInquiry.id), newInquiry);
+    }
 
     await this.recordActivity({
       type: "INQUIRY_RECEIVED",
-      title: `Desk Inquiry from ${input.residentName} (${input.residentUnit})`,
-      description: `Category: ${input.category}${input.trackingNumber ? ` • Ref: ${input.trackingNumber}` : ""}`,
-      actor: input.residentName,
+      title: `Desk Inquiry from ${newInquiry.residentName} (${newInquiry.residentUnit})`,
+      description: `Category: ${newInquiry.category}${newInquiry.trackingNumber ? ` • Ref: ${newInquiry.trackingNumber}` : ""}`,
+      actor: newInquiry.residentName,
       badgeColor: "bg-purple-600",
     });
 
@@ -545,147 +598,80 @@ export class LocalDatabaseService implements IDatabaseService {
   }
 
   async updateInquiry(id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry> {
-    const inquiries = await this.getInquiries();
-    const index = inquiries.findIndex((i) => i.id === id);
-    if (index === -1) {
-      throw new Error(`Inquiry with ID ${id} not found.`);
+    if (firestore) {
+      await updateDoc(doc(firestore, "inquiries", id), updates);
     }
-
-    const now = new Date();
-    const timestampStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
-      " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-    const current = inquiries[index];
-    const updated: DeskInquiry = {
-      ...current,
-      ...updates,
-      updatedAt: timestampStr,
-    };
-
-    inquiries[index] = updated;
-    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
-
-    await this.recordActivity({
-      type: "INQUIRY_RESPONDED",
-      title: `Inquiry #${id.slice(-4)} updated by ${current.residentName}`,
-      description: `Delivery request parameters / message updated.`,
-      actor: current.residentName,
-      badgeColor: "bg-blue-600",
-    });
-
-    return updated;
+    const all = await this.getInquiries();
+    const target = all.find((i) => i.id === id);
+    if (!target) throw new Error("Inquiry not found");
+    return { ...target, ...updates };
   }
 
   async updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> {
-    const inquiries = await this.getInquiries();
-    const index = inquiries.findIndex((i) => i.id === id);
-    if (index === -1) {
-      throw new Error(`Inquiry with ID ${id} not found.`);
-    }
+    const all = await this.getInquiries();
+    const target = all.find((i) => i.id === id);
+    if (!target) throw new Error("Inquiry not found");
 
-    const now = new Date();
-    const timestampStr =
-      now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
-      " • " +
-      now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-    const current = inquiries[index];
-    const isDoorDelivery =
-      current.category.toLowerCase().includes("door") || current.category.toLowerCase().includes("delivery");
-
-    const updated: DeskInquiry = {
-      ...current,
+    const updates: Partial<DeskInquiry> = {
       status,
-      adminReply: adminReply !== undefined ? adminReply : current.adminReply,
-      updatedAt: timestampStr,
+      ...(adminReply ? { adminReply, repliedAt: new Date().toISOString() } : {}),
     };
 
-    inquiries[index] = updated;
-
-    // If resolving a door delivery request, also mark any duplicate pending door requests for the same resident as RESOLVED
-    if (status === "RESOLVED" && isDoorDelivery) {
-      inquiries.forEach((item, idx) => {
-        if (
-          idx !== index &&
-          item.residentId === current.residentId &&
-          (item.category.toLowerCase().includes("door") || item.category.toLowerCase().includes("delivery")) &&
-          (item.status === "NEW" || item.status === "IN_PROGRESS")
-        ) {
-          item.status = "RESOLVED";
-          item.updatedAt = timestampStr;
-          if (!item.adminReply && adminReply) {
-            item.adminReply = adminReply;
-          }
-        }
-      });
+    if (firestore) {
+      await updateDoc(doc(firestore, "inquiries", id), updates);
     }
-
-    this.save(STORAGE_KEYS.INQUIRIES, inquiries);
 
     await this.recordActivity({
       type: "INQUIRY_RESPONDED",
-      title: `Inquiry #${id.slice(-4)} marked ${status}`,
-      description: `Resident: ${current.residentName} (${current.residentUnit})${adminReply ? ` • Reply: "${adminReply.slice(0, 40)}..."` : ""}`,
-      actor: "Lobby Staff Admin",
-      badgeColor: status === "RESOLVED" ? "bg-emerald-600" : "bg-amber-600",
+      title: `Inquiry #${id.slice(-4)} updated: ${status}`,
+      description: `Status changed to ${status} for ${target.residentName} (${target.residentUnit}).`,
+      actor: "Staff Admin",
+      badgeColor: status === "RESOLVED" ? "bg-green-600" : "bg-blue-600",
     });
 
-    return updated;
+    return { ...target, ...updates };
   }
 
   async deleteInquiry(id: string): Promise<boolean> {
-    const inquiries = await this.getInquiries();
-    const filtered = inquiries.filter((i) => i.id !== id);
-    if (filtered.length === inquiries.length) return false;
-
-    this.save(STORAGE_KEYS.INQUIRIES, filtered);
-    await this.recordActivity({
-      type: "INQUIRY_RESPONDED",
-      title: `Inquiry #${id.slice(-4)} cancelled`,
-      description: `Pending request removed by resident.`,
-      actor: "Resident Portal",
-      badgeColor: "bg-gray-500",
-    });
-
-    return true;
+    if (firestore) {
+      await deleteDoc(doc(firestore, "inquiries", id));
+      return true;
+    }
+    return false;
   }
 
   // --- Hub Settings ---
 
   async getHubSettings(): Promise<HubSettings> {
-    const loaded = this.load<HubSettings>(STORAGE_KEYS.SETTINGS, this.inMemorySettings);
-    return {
-      ...DEFAULT_HUB_SETTINGS,
-      ...loaded,
-      contactPhone: loaded.contactPhone || DEFAULT_HUB_SETTINGS.contactPhone,
-      contactEmail: loaded.contactEmail || DEFAULT_HUB_SETTINGS.contactEmail,
-      contactAddress: loaded.contactAddress || DEFAULT_HUB_SETTINGS.contactAddress,
-      homeFaqs: loaded.homeFaqs && loaded.homeFaqs.length > 0 ? loaded.homeFaqs : DEFAULT_HUB_SETTINGS.homeFaqs,
-      residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
-      communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
-    };
+    if (firestore) {
+      try {
+        const snap = await getDoc(doc(firestore, "settings", "default"));
+        if (snap.exists()) {
+          const loaded = snap.data() as HubSettings;
+          return {
+            ...DEFAULT_HUB_SETTINGS,
+            ...loaded,
+            contactPhone: loaded.contactPhone || DEFAULT_HUB_SETTINGS.contactPhone,
+            contactEmail: loaded.contactEmail || DEFAULT_HUB_SETTINGS.contactEmail,
+            contactAddress: loaded.contactAddress || DEFAULT_HUB_SETTINGS.contactAddress,
+            homeFaqs: loaded.homeFaqs && loaded.homeFaqs.length > 0 ? loaded.homeFaqs : DEFAULT_HUB_SETTINGS.homeFaqs,
+            residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
+            communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
+          };
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    }
+    return DEFAULT_HUB_SETTINGS;
   }
 
   async updateHubSettings(updates: Partial<HubSettings>): Promise<HubSettings> {
     const current = await this.getHubSettings();
     const updated = { ...current, ...updates };
-    this.save(STORAGE_KEYS.SETTINGS, updated);
+    if (firestore) {
+      await setDoc(doc(firestore, "settings", "default"), updated);
+    }
 
     await this.recordActivity({
       type: "SETTINGS_UPDATED",
@@ -698,11 +684,3 @@ export class LocalDatabaseService implements IDatabaseService {
     return updated;
   }
 }
-
-import { isFirebaseConfigured } from "../firebase/config";
-import { FirestoreDatabaseService } from "./firestore-store";
-
-export const db: IDatabaseService = isFirebaseConfigured()
-  ? new FirestoreDatabaseService()
-  : new LocalDatabaseService();
-

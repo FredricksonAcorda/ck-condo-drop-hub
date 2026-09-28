@@ -1,6 +1,8 @@
 import { AuthUser, LoginCredentials, RegisterData, ResidentProfile } from "@/types";
 import { db } from "../db/local-store";
 import { SEED_USERS } from "../db/seed-data";
+import { auth } from "../firebase/config";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 const SESSION_KEY = "ck_hub_session_v1";
 
@@ -68,6 +70,15 @@ class AuthService {
       return { user: adminUser, token: "mock-jwt-admin-token" };
     }
 
+    // Attempt Firebase Auth sign-in if email provided and auth configured
+    if (auth && cleanInput.includes("@")) {
+      try {
+        await signInWithEmailAndPassword(auth, cleanInput, password);
+      } catch (fbErr) {
+        console.warn("Firebase Auth sign-in notice:", fbErr);
+      }
+    }
+
     // Check existing users / residents in database
     const user = await db.findUserByCredentials(cleanInput);
 
@@ -89,6 +100,19 @@ class AuthService {
     const existing = await db.getResidentByEmailOrPhone(data.email);
     if (existing) {
       throw new Error("An account with this email or phone number already exists.");
+    }
+
+    // Register in Firebase Auth if available and email is valid
+    if (auth && data.email.includes("@")) {
+      try {
+        await createUserWithEmailAndPassword(auth, data.email, data.password);
+      } catch (fbErr: unknown) {
+        const error = fbErr as { code?: string };
+        if (error?.code === "auth/email-already-in-use") {
+          throw new Error("An account with this email already exists in Firebase Auth.");
+        }
+        console.warn("Firebase Auth registration notice:", fbErr);
+      }
     }
 
     // Generate resident code: CK-000XXX
@@ -157,6 +181,9 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
+    if (auth) {
+      await signOut(auth).catch(() => {});
+    }
     this.setSession(null);
   }
 
