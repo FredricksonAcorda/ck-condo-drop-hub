@@ -6,16 +6,16 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-white sm:bg-slate-100/70 text-zinc-900 flex flex-col justify-between selection:bg-brand-red selection:text-white font-sans antialiased relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0c] text-white flex flex-col justify-between selection:bg-brand-red selection:text-white font-sans antialiased relative overflow-x-hidden">
       {/* Top Navigation Bar with Home Link */}
       <header className="w-full max-w-xl mx-auto px-6 pt-6 sm:pt-8 flex items-center justify-start z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-zinc-600 hover:text-black bg-white/90 hover:bg-white px-3.5 py-1.5 rounded-full border border-gray-200 shadow-xs text-sm font-semibold transition-all group"
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-medium transition-colors group"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4 text-zinc-500 group-hover:text-brand-red transition-colors"
+            className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -36,7 +36,7 @@ export default function AuthLayout({
       </main>
 
       {/* Subtle Bottom Footer */}
-      <footer className="py-4 px-4 text-center text-[12px] text-zinc-500 font-medium z-10">
+      <footer className="py-4 px-4 text-center text-[11px] text-zinc-600 z-10">
         <p>© 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform</p>
       </footer>
     </div>

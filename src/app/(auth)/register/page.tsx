@@ -8,7 +8,6 @@ import { useAuth } from "@/context";
 import { recordInvoice } from "@/lib/db/invoices";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
-import { BRANCHES } from "@/constants";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,10 +15,8 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [branch, setBranch] = useState<string>("Malinta Branch");
-  const [buildingNumber, setBuildingNumber] = useState("");
-  const [floorNumber, setFloorNumber] = useState("");
-  const [unitNumber, setUnitNumber] = useState("");
+  const [unit, setUnit] = useState("");
+  const [tower, setTower] = useState("Tower A");
   const [plan, setPlan] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM">("PREMIUM");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,15 +33,8 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (
-      !fullName.trim() ||
-      !phone.trim() ||
-      !email.trim() ||
-      !buildingNumber.trim() ||
-      !floorNumber.trim() ||
-      !unitNumber.trim()
-    ) {
-      setErrorMessage("Please complete all required resident fields (Building #, Floor #, Unit #).");
+    if (!fullName.trim() || !phone.trim() || !email.trim() || !unit.trim()) {
+      setErrorMessage("Please complete all required resident fields.");
       return;
     }
 
@@ -86,19 +76,13 @@ export default function RegisterPage() {
     setIsLoading(true);
     setPaymentError(null);
 
-    const fullUnitString = `Bldg ${buildingNumber.trim()} • Flr ${floorNumber.trim()} • Unit ${unitNumber.trim()}`;
-
     try {
       const registeredUser = await register({
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim(),
-        unit: fullUnitString,
-        tower: branch,
-        branch,
-        buildingNumber: buildingNumber.trim(),
-        floorNumber: floorNumber.trim(),
-        unitNumber: unitNumber.trim(),
+        unit: unit.trim(),
+        tower,
         plan,
         pendingPlan: plan !== "PER_PARCEL" ? plan : undefined,
         planStatus,
@@ -112,8 +96,8 @@ export default function RegisterPage() {
           residentId: registeredUser.id,
           residentName: registeredUser.name,
           residentCode: registeredUser.residentCode || "CK-000123",
-          unit: registeredUser.unit || fullUnitString,
-          tower: registeredUser.tower || branch,
+          unit: registeredUser.unit || unit.trim(),
+          tower: registeredUser.tower || tower,
           date: "Today",
           plan: `${plan.replace("_", " ")} Membership`,
           pendingPlan: plan,
@@ -157,10 +141,8 @@ export default function RegisterPage() {
     setFullName("Juan Dela Cruz");
     setPhone("+63 917 123 4567");
     setEmail(`juan.${Date.now().toString().slice(-4)}@gmail.com`);
-    setBranch("Malinta Branch");
-    setBuildingNumber("1");
-    setFloorNumber("2");
-    setUnitNumber("204");
+    setTower("Tower A");
+    setUnit("Unit 204");
     setPlan("PREMIUM");
     setPassword("password123");
   };
@@ -263,74 +245,34 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Branch Selection */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 px-0.5">
-            Condo Drop Hub Branch
-          </label>
+        {/* Tower & Unit */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <select
-            value={branch}
-            onChange={(e) => setBranch(e.target.value)}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors cursor-pointer"
+            value={tower}
+            onChange={(e) => setTower(e.target.value)}
+            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors cursor-pointer"
             disabled={isLoading}
           >
-            {BRANCHES.map((b) => (
-              <option key={b} value={b} className="bg-[#1c1c21] text-white">
-                {b}
-              </option>
-            ))}
+            <option value="Tower A">Tower A</option>
+            <option value="Tower B">Tower B</option>
+            <option value="Tower C">Tower C</option>
+            <option value="Tower 1">Tower 1</option>
+            <option value="Tower 2">Tower 2</option>
+            <option value="Tower 3">Tower 3</option>
           </select>
-        </div>
 
-        {/* 3 Divided Unit Input Fields (Building #, Floor #, Unit #) */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 px-0.5">
-            Unit Details (Building #, Floor #, Unit #)
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <input
-                type="text"
-                placeholder="Building #"
-                value={buildingNumber}
-                onChange={(e) => {
-                  setBuildingNumber(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                placeholder="Floor #"
-                value={floorNumber}
-                onChange={(e) => {
-                  setFloorNumber(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                placeholder="Unit #"
-                value={unitNumber}
-                onChange={(e) => {
-                  setUnitNumber(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+          <input
+            type="text"
+            placeholder="Unit (e.g. Unit 304)"
+            value={unit}
+            onChange={(e) => {
+              setUnit(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
+            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+            required
+            disabled={isLoading}
+          />
         </div>
 
         {/* Membership Tier Cards */}
@@ -367,11 +309,10 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setPlan(p.id)}
                   disabled={isLoading}
-                  className={`p-2 rounded-xl border text-center transition-all relative cursor-pointer ${
-                    isSelected
+                  className={`p-2 rounded-xl border text-center transition-all relative cursor-pointer ${isSelected
                       ? "border-brand-red bg-red-950/40 text-white ring-1 ring-brand-red"
                       : "border-zinc-800 bg-[#1c1c21] text-zinc-400 hover:text-white hover:bg-[#222228]"
-                  }`}
+                    }`}
                 >
                   {p.popular && (
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-brand-red text-white text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full tracking-wider">
@@ -412,9 +353,9 @@ export default function RegisterPage() {
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" x2="22" y1="2" y2="22" /></svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
             )}
           </button>
         </div>
@@ -541,11 +482,10 @@ export default function RegisterPage() {
                   setPaymentMethod("GCASH");
                   setPaymentError(null);
                 }}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  paymentMethod === "GCASH"
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${paymentMethod === "GCASH"
                     ? "bg-[#005CEE]/20 border-[#005CEE] text-white ring-1 ring-[#005CEE]"
                     : "bg-[#1c1c21] border-zinc-800 text-zinc-400 hover:text-white hover:bg-[#222228]"
-                }`}
+                  }`}
               >
                 <span>📱</span>
                 <span>GCash QR (Instant)</span>
@@ -556,11 +496,10 @@ export default function RegisterPage() {
                   setPaymentMethod("CASH_COUNTER");
                   setPaymentError(null);
                 }}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  paymentMethod === "CASH_COUNTER"
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${paymentMethod === "CASH_COUNTER"
                     ? "bg-amber-500/20 border-amber-500 text-white ring-1 ring-amber-500"
                     : "bg-[#1c1c21] border-zinc-800 text-zinc-400 hover:text-white hover:bg-[#222228]"
-                }`}
+                  }`}
               >
                 <span>🏢</span>
                 <span>Cash at Counter</span>

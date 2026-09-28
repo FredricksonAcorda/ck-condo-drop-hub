@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import { useAuth, useParcels } from "@/context";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { formatPhilippinePhone, isValidPhilippinePhone } from "@/lib/utils/phone-email";
-import { BRANCHES } from "@/constants";
-import { AuthorizedClaimant } from "@/types";
 
 export default function MyAccountPage() {
   const { user, updateProfile } = useAuth();
@@ -25,20 +23,11 @@ export default function MyAccountPage() {
   const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
   const [email, setEmail] = useState(user?.email || "juan.delacruz@gmail.com");
   const [phone, setPhone] = useState(formatPhilippinePhone(user?.phone || "0917 123 4567"));
-  const [branch, setBranch] = useState(user?.branch || "Malinta Branch");
-  const [buildingNumber, setBuildingNumber] = useState(user?.buildingNumber || "1");
-  const [floorNumber, setFloorNumber] = useState(user?.floorNumber || "1");
-  const [unitNumber, setUnitNumber] = useState(user?.unitNumber || "101");
+  const [unit, setUnit] = useState(user?.unit || "Unit 101");
+  const [tower, setTower] = useState(user?.tower || "Tower A");
   const building = "CK Buildersville Condominium";
-
-  // Authorized claimants (up to 3 total)
-  const initialClaimants: AuthorizedClaimant[] =
-    user?.authorizedClaimants && user.authorizedClaimants.length > 0
-      ? user.authorizedClaimants
-      : user?.authorizedClaimant
-      ? [{ name: user.authorizedClaimant, phone: user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "" }]
-      : [{ name: "", phone: "" }];
-  const [claimants, setClaimants] = useState<AuthorizedClaimant[]>(initialClaimants);
+  const [authorizedClaimant, setAuthorizedClaimant] = useState(user?.authorizedClaimant || "");
+  const [claimantPhone, setClaimantPhone] = useState(user?.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
 
   // Notifications
   const [smsArrival, setSmsArrival] = useState(true);
@@ -142,29 +131,10 @@ export default function MyAccountPage() {
       setFullName(user.name || "");
       setEmail(user.email || "");
       setPhone(formatPhilippinePhone(user.phone || ""));
-      if (user.branch) setBranch(user.branch);
-      if (user.buildingNumber) setBuildingNumber(user.buildingNumber);
-      if (user.floorNumber) setFloorNumber(user.floorNumber);
-      if (user.unitNumber) setUnitNumber(user.unitNumber);
-      if (user.authorizedClaimants && user.authorizedClaimants.length > 0) {
-        setClaimants(
-          user.authorizedClaimants.map((c) => ({
-            name: c.name || "",
-            phone: c.phone ? formatPhilippinePhone(c.phone) : "",
-            relationship: c.relationship || "",
-          }))
-        );
-      } else if (user.authorizedClaimant) {
-        setClaimants([
-          {
-            name: user.authorizedClaimant,
-            phone: user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "",
-            relationship: "",
-          },
-        ]);
-      } else {
-        setClaimants([{ name: "", phone: "" }]);
-      }
+      if (user.unit) setUnit(user.unit);
+      if (user.tower) setTower(user.tower);
+      setAuthorizedClaimant(user.authorizedClaimant || "");
+      setClaimantPhone(user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
     }
   }, [user]);
 
@@ -184,31 +154,11 @@ export default function MyAccountPage() {
       return;
     }
 
-    // Validate unit fields
-    if (!buildingNumber.trim() || !floorNumber.trim() || !unitNumber.trim()) {
-      setSaveError("Please enter Building #, Floor #, and Unit #.");
+    // Validate claimant phone if claimant name is provided
+    if (authorizedClaimant.trim() && claimantPhone.trim() && !isValidPhilippinePhone(claimantPhone)) {
+      setSaveError("Please enter a valid Philippine mobile number for the authorized claimant (+63 9XX XXX XXXX).");
       return;
     }
-
-    // Validate claimant phones if claimant name is provided
-    for (let i = 0; i < claimants.length; i++) {
-      const c = claimants[i];
-      if (c.name.trim() && c.phone.trim() && !isValidPhilippinePhone(c.phone)) {
-        setSaveError(
-          `Please enter a valid Philippine mobile number (+63 9XX XXX XXXX) for claimant #${i + 1} (${c.name}).`
-        );
-        return;
-      }
-    }
-
-    const fullUnitString = `Bldg ${buildingNumber.trim()} • Flr ${floorNumber.trim()} • Unit ${unitNumber.trim()}`;
-    const cleanClaimants = claimants
-      .map((c) => ({
-        name: c.name.trim(),
-        phone: c.phone.trim(),
-        relationship: c.relationship?.trim() || "",
-      }))
-      .filter((c) => c.name !== "");
 
     setIsSaving(true);
 
@@ -217,15 +167,10 @@ export default function MyAccountPage() {
         name: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
-        unit: fullUnitString,
-        tower: branch,
-        branch,
-        buildingNumber: buildingNumber.trim(),
-        floorNumber: floorNumber.trim(),
-        unitNumber: unitNumber.trim(),
-        authorizedClaimants: cleanClaimants,
-        authorizedClaimant: cleanClaimants[0]?.name || "",
-        claimantPhone: cleanClaimants[0]?.phone || "",
+        unit: unit.trim(),
+        tower: tower.trim(),
+        authorizedClaimant: authorizedClaimant.trim(),
+        claimantPhone: claimantPhone.trim(),
         preferredDeliveryWindow: preferredWindow,
         deliveryInstructions: deliveryInstructions.trim(),
         notifications: {
@@ -291,576 +236,493 @@ export default function MyAccountPage() {
       {/* Main Settings Card */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         {/* Tabs Navigation */}
-            <div className="flex border-b border-gray-200 overflow-x-auto bg-gray-50">
+        <div className="flex border-b border-gray-200 overflow-x-auto bg-gray-50">
+          {[
+            { id: "details", label: "Account Details" },
+            { id: "password", label: "Change Password" },
+            { id: "notifications", label: "Notifications" },
+            { id: "delivery", label: "Door Delivery" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap cursor-pointer ${activeTab === tab.id
+                  ? "border-brand-red text-brand-red bg-white"
+                  : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-white/50"
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Account Details */}
+        {activeTab === "details" && (
+          <form onSubmit={handleSave} className="p-6 space-y-6">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="input w-full"
+                    required
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Mobile Phone (for SMS pickup alerts)
+                  </label>
+                  <PhilippinePhoneInput
+                    value={phone}
+                    onChange={(fmt) => {
+                      setPhone(fmt);
+                      if (saveError) setSaveError(null);
+                    }}
+                    disabled={isSaving}
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <GmailInput
+                    value={email}
+                    onChange={(full) => {
+                      setEmail(full);
+                      if (saveError) setSaveError(null);
+                    }}
+                    disabled={isSaving}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
+                Condominium Unit Address
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Unit Number
+                  </label>
+                  <input
+                    type="text"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="input w-full"
+                    required
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Tower / Cluster
+                  </label>
+                  <input
+                    type="text"
+                    value={tower}
+                    onChange={(e) => setTower(e.target.value)}
+                    className="input w-full"
+                    required
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Resident Code
+                  </label>
+                  <input
+                    type="text"
+                    value={user?.residentCode || "CK-000123"}
+                    disabled
+                    className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed font-mono"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Condominium Property
+                  </label>
+                  <input
+                    type="text"
+                    value={building}
+                    disabled
+                    className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-1">
+                Authorized Parcel Claimants
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Allow family members or housemates to claim parcels on your behalf with their ID.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Authorized Person & Relationship
+                  </label>
+                  <input
+                    type="text"
+                    value={authorizedClaimant}
+                    onChange={(e) => setAuthorizedClaimant(e.target.value)}
+                    placeholder="Type roommate's name"
+                    className="input w-full placeholder:text-gray-400 placeholder:opacity-50"
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Claimant Mobile Number
+                  </label>
+                  <PhilippinePhoneInput
+                    value={claimantPhone}
+                    onChange={(fmt) => setClaimantPhone(fmt)}
+                    placeholder="+63 9XX XXX XXXX"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="btn btn-primary btn-sm font-bold uppercase cursor-pointer w-auto"
+              >
+                {isSaving ? "Saving Changes..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Tab 2: Change Password */}
+        {activeTab === "password" && (
+          <form onSubmit={handleSave} className="p-6 space-y-4 max-w-md">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Current Password
+              </label>
+              <input type="password" placeholder="••••••••" className="input w-full" required />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                New Password
+              </label>
+              <input type="password" placeholder="At least 8 characters" className="input w-full" required />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Confirm New Password
+              </label>
+              <input type="password" placeholder="Repeat new password" className="input w-full" required />
+            </div>
+            <div className="pt-3">
+              <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
+                Update Password
+              </button>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 mt-4">
+              <span className="font-bold text-gray-900 block">Forgot your current password?</span>
+              <p className="leading-relaxed">
+                If you don't remember your current password,{" "}
+                <Link href="/forgot-password" className="text-brand-red font-bold hover:underline">
+                  Click here
+                </Link>{" "}
+                to request a secure recovery code via SMS/Email, or visit the <strong>Lobby</strong> with a valid resident ID for instant Staff Admin assistance.
+              </p>
+            </div>
+          </form>
+        )}
+
+        {/* Tab 3: Notifications */}
+        {activeTab === "notifications" && (
+          <div className="p-6 space-y-5">
+            <div className="space-y-4">
               {[
-                { id: "details", label: "Account Details" },
-                { id: "password", label: "Change Password" },
-                { id: "notifications", label: "Notifications" },
-                { id: "delivery", label: "Door Delivery" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`px-5 py-3.5 text-xs sm:text-sm font-bold tracking-wide transition-colors border-b-2 whitespace-nowrap cursor-pointer ${
-                    activeTab === tab.id
-                      ? "border-brand-red text-brand-red bg-white"
-                      : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-white/50"
-                  }`}
-                >
-                  {tab.label}
-                </button>
+                {
+                  title: "SMS Parcel Arrival Alert",
+                  desc: "Instant text message whenever a courier drops off a parcel for your unit.",
+                  checked: smsArrival,
+                  setter: setSmsArrival,
+                },
+                {
+                  title: "Pickup Deadline Reminder",
+                  desc: "Alert 24 hours before the free holding period expires to avoid fees.",
+                  checked: smsReminder,
+                  setter: setSmsReminder,
+                },
+                {
+                  title: "Weekly Email Digest",
+                  desc: "Summary of all claimed and delivered packages over the past 7 days.",
+                  checked: emailDigest,
+                  setter: setEmailDigest,
+                },
+                {
+                  title: "Hub Announcements & Promos",
+                  desc: "Updates on holiday operating hours, plan discounts, and courier promos.",
+                  checked: promoUpdates,
+                  setter: setPromoUpdates,
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-start justify-between gap-4 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">{item.title}</div>
+                    <div className="text-xs text-gray-500">{item.desc}</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={(e) => item.setter(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                  </label>
+                </div>
               ))}
             </div>
 
-            {/* Tab 1: Account Details */}
-            {activeTab === "details" && (
-              <form onSubmit={handleSave} className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
-                    Personal Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="input w-full"
-                        required
-                        disabled={isSaving}
-                      />
+            <div className="pt-2 flex justify-end">
+              <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Door Delivery */}
+        {activeTab === "delivery" && (
+          <div className="p-6 space-y-4">
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <h4 className="font-bold text-sm text-gray-900 mb-1">
+                DOORSTEP DELIVERY PREFERENCES & REQUESTS
+              </h4>
+              <p className="text-xs text-gray-500">
+                Configure instructions for Staff Admin and dispatch unit delivery requests directly to the Lobby.
+              </p>
+            </div>
+
+            {deliveryFeedback && (
+              <div className="p-3.5 bg-green-50 border border-green-200 text-green-900 text-xs rounded-xl flex items-center justify-between animate-in fade-in shadow-2xs">
+                <span>{deliveryFeedback}</span>
+                <button onClick={() => setDeliveryFeedback(null)} className="text-green-700 hover:text-green-900 font-bold ml-2">
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Plan Quota Badge */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="font-bold text-amber-950 block text-sm">
+                  {user?.plan === "PREMIUM"
+                    ? "FREE DOOR TO DOOR DELIVERY"
+                    : user?.plan === "REGULAR"
+                      ? "Door Delivery isn't available for Regular Plan"
+                      : "Door Delivery isn't available for Per Parcel"}
+                </span>
+                {user?.plan === "PREMIUM" && (
+                  <span className="text-amber-800 text-xs">
+                    Includes 1 free door delivery per month. You have {user?.deliveryCreditsLeft ?? 0} free delivery remaining.
+                  </span>
+                )}
+              </div>
+              {user?.plan === "PREMIUM" && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
+                    {`${user?.deliveryCreditsLeft ?? 0} of 1 Left`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* If Not Premium: Door delivery is NOT available; residents cannot send request to lobby */}
+            {user?.plan !== "PREMIUM" ? (
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center">
+                <p className="text-xs sm:text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">
+                  {user?.plan === "REGULAR"
+                    ? "Your Regular Plan includes 15 days of unlimited parcel storage at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."
+                    : "Per Parcel accounts are self-pickup at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."}
+                </p>
+              </div>
+            ) : (
+              /* Premium Tier Only: Active Pending Request Card OR Dispatch Form */
+              <>
+                {activePendingDelivery && !isEditingRequest ? (
+                  <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="font-bold text-sm text-amber-950">
+                          Active Door Delivery Request Pending at Lobby
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 self-start sm:self-auto uppercase tracking-wide">
+                        {activePendingDelivery.status === "IN_PROGRESS" ? "In Progress" : "Pending Lobby Action"}
+                      </span>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Mobile Phone (for SMS pickup alerts)
-                      </label>
-                      <PhilippinePhoneInput
-                        value={phone}
-                        onChange={(fmt) => {
-                          setPhone(fmt);
-                          if (saveError) setSaveError(null);
-                        }}
-                        disabled={isSaving}
-                        required
-                      />
+
+                    <div className="space-y-1 text-xs">
+                      <span className="text-amber-900 font-bold block text-[11px] uppercase tracking-wider">
+                        Current Request Details:
+                      </span>
+                      <p className="bg-white p-3 rounded-xl border border-amber-200 font-mono text-gray-800 leading-relaxed">
+                        {activePendingDelivery.message}
+                      </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Email Address
-                      </label>
-                      <GmailInput
-                        value={email}
-                        onChange={(full) => {
-                          setEmail(full);
-                          if (saveError) setSaveError(null);
-                        }}
-                        disabled={isSaving}
-                        required
-                      />
+
+                    {activePendingDelivery.adminReply && (
+                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
+                        <span className="font-bold text-emerald-800 block text-[11px]">✓ Lobby Confirmation:</span>
+                        <p>{activePendingDelivery.adminReply}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <span className="text-[11px] text-gray-500">
+                        Dispatched: {activePendingDelivery.createdAt}
+                      </span>
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={handleCancelDoorDelivery}
+                          disabled={isDispatchingDelivery}
+                          className="btn btn-outline btn-sm text-xs font-bold uppercase text-red-600 !border-red-200 hover:!bg-red-50 cursor-pointer"
+                        >
+                          Cancel Request ✕
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingRequest(true)}
+                          className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
+                        >
+                          Edit Request ✏️
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* Form: Shown when no pending request OR when editing active request */
+                  <div className="space-y-4">
+                    {!isEditingRequest && latestDelivery?.status === "RESOLVED" && (
+                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
+                        <div className="flex items-center justify-between font-bold text-emerald-950">
+                          <span className="flex items-center gap-1.5">
+                            <span>✓</span> Last Doorstep Delivery Completed by Lobby
+                          </span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-normal">
+                            {latestDelivery.updatedAt || latestDelivery.createdAt}
+                          </span>
+                        </div>
+                        {latestDelivery.adminReply && (
+                          <p className="text-[11px] text-emerald-800">
+                            Lobby Note: "{latestDelivery.adminReply}"
+                          </p>
+                        )}
+                        <p className="text-[11px] text-emerald-700 pt-0.5">
+                          Need another package brought to your door? Choose your preferred window below and dispatch a new request.
+                        </p>
+                      </div>
+                    )}
 
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
-                    Condominium Unit Address
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="md:col-span-3">
+                    {isEditingRequest && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
+                        <span>Editing your active pending request. Adjust your time window or notes and click <strong>Update Request</strong>.</span>
+                      </div>
+                    )}
+
+                    <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Branch
+                        Preferred Delivery Window
                       </label>
                       <select
-                        value={branch}
-                        onChange={(e) => setBranch(e.target.value)}
-                        className="input w-full cursor-pointer bg-white"
-                        disabled={isSaving}
+                        value={preferredWindow}
+                        onChange={(e) => setPreferredWindow(e.target.value)}
+                        className="input w-full cursor-pointer"
                       >
-                        {BRANCHES.map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
+                        <option>Morning (10:00 AM - 12:00 PM)</option>
+                        <option>Afternoon (2:00 PM - 5:00 PM)</option>
+                        <option>Evening (6:00 PM - 8:30 PM)</option>
                       </select>
                     </div>
 
-                    {/* 3 Divided Unit Input Fields */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Building #
+                        Drop-off Instructions (Saved for Lobby Staff Admin)
                       </label>
-                      <input
-                        type="text"
-                        value={buildingNumber}
-                        onChange={(e) => setBuildingNumber(e.target.value)}
-                        placeholder="e.g. Bldg 1"
-                        className="input w-full text-center font-medium"
-                        required
-                        disabled={isSaving}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Floor #
-                      </label>
-                      <input
-                        type="text"
-                        value={floorNumber}
-                        onChange={(e) => setFloorNumber(e.target.value)}
-                        placeholder="e.g. 3rd Flr"
-                        className="input w-full text-center font-medium"
-                        required
-                        disabled={isSaving}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Unit #
-                      </label>
-                      <input
-                        type="text"
-                        value={unitNumber}
-                        onChange={(e) => setUnitNumber(e.target.value)}
-                        placeholder="e.g. Unit 304"
-                        className="input w-full text-center font-medium"
-                        required
-                        disabled={isSaving}
+                      <textarea
+                        rows={3}
+                        value={deliveryInstructions}
+                        onChange={(e) => setDeliveryInstructions(e.target.value)}
+                        placeholder="e.g. Please ring doorbell and place parcels on the shoe rack outside the unit..."
+                        className="input w-full"
                       />
                     </div>
 
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Condominium Property
-                      </label>
-                      <input
-                        type="text"
-                        value={building}
-                        disabled
-                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Resident Code
-                      </label>
-                      <input
-                        type="text"
-                        value={user?.residentCode || "CK-000123"}
-                        disabled
-                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed font-mono text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
-                        Authorized Parcel Claimants
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Allow family members or housemates to claim parcels on your behalf with their ID. You can register up to 3 authorized claimants.
-                      </p>
-                    </div>
-                    {claimants.length < 3 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (claimants.length < 3) {
-                            setClaimants([...claimants, { name: "", phone: "", relationship: "" }]);
-                          }
-                        }}
-                        className="btn btn-outline text-xs text-brand-red border-brand-red/30 hover:bg-brand-red/10 py-1.5 px-3 rounded-lg w-auto cursor-pointer font-bold shrink-0"
-                      >
-                        + Add Another Claimant ({3 - claimants.length} left)
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    {claimants.map((claimant, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-gray-50/60 relative">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-brand-text-muted">
-                            Claimant #{idx + 1} {idx === 0 ? "(Primary)" : "(Additional)"}
-                          </span>
-                          {idx > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setClaimants(claimants.filter((_, i) => i !== idx));
-                              }}
-                              className="text-red-500 hover:text-red-700 text-xs font-semibold cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              Authorized Person & Relationship
-                            </label>
-                            <input
-                              type="text"
-                              value={claimant.name}
-                              onChange={(e) => {
-                                const updated = [...claimants];
-                                updated[idx].name = e.target.value;
-                                setClaimants(updated);
-                              }}
-                              placeholder="Type roommate or family member's name"
-                              className="input w-full placeholder:text-gray-400 placeholder:opacity-50 bg-white"
-                              disabled={isSaving}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              Claimant Mobile Number
-                            </label>
-                            <PhilippinePhoneInput
-                              value={claimant.phone}
-                              onChange={(fmt) => {
-                                const updated = [...claimants];
-                                updated[idx].phone = fmt;
-                                setClaimants(updated);
-                              }}
-                              placeholder="+63 9XX XXX XXXX"
-                              disabled={isSaving}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="btn btn-primary btn-sm font-bold uppercase cursor-pointer w-auto"
-                  >
-                    {isSaving ? "Saving Changes..." : "Save Changes"}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Tab 2: Change Password */}
-            {activeTab === "password" && (
-              <form onSubmit={handleSave} className="p-6 space-y-4 max-w-md">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Current Password
-                  </label>
-                  <input type="password" placeholder="••••••••" className="input w-full" required />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    New Password
-                  </label>
-                  <input type="password" placeholder="At least 8 characters" className="input w-full" required />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Confirm New Password
-                  </label>
-                  <input type="password" placeholder="Repeat new password" className="input w-full" required />
-                </div>
-                <div className="pt-3">
-                  <button type="submit" disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
-                    Update Password
-                  </button>
-                </div>
-
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-600 space-y-1 mt-4">
-                  <span className="font-bold text-gray-900 block">Forgot your current password?</span>
-                  <p className="leading-relaxed">
-                    If you don't remember your current password,{" "}
-                    <Link href="/forgot-password" className="text-brand-red font-bold hover:underline">
-                      Click here
-                    </Link>{" "}
-                    to request a secure recovery code via SMS/Email, or visit the <strong>Lobby</strong> with a valid resident ID for instant Staff Admin assistance.
-                  </p>
-                </div>
-              </form>
-            )}
-
-            {/* Tab 3: Notifications */}
-            {activeTab === "notifications" && (
-              <div className="p-6 space-y-5">
-                <div className="space-y-4">
-                  {[
-                    {
-                      title: "SMS Parcel Arrival Alert",
-                      desc: "Instant text message whenever a courier drops off a parcel for your unit.",
-                      checked: smsArrival,
-                      setter: setSmsArrival,
-                    },
-                    {
-                      title: "Pickup Deadline Reminder",
-                      desc: "Alert 24 hours before the free holding period expires to avoid fees.",
-                      checked: smsReminder,
-                      setter: setSmsReminder,
-                    },
-                    {
-                      title: "Weekly Email Digest",
-                      desc: "Summary of all claimed and delivered packages over the past 7 days.",
-                      checked: emailDigest,
-                      setter: setEmailDigest,
-                    },
-                    {
-                      title: "Hub Announcements & Promos",
-                      desc: "Updates on holiday operating hours, plan discounts, and courier promos.",
-                      checked: promoUpdates,
-                      setter: setPromoUpdates,
-                    },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-start justify-between gap-4 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">{item.title}</div>
-                        <div className="text-xs text-gray-500">{item.desc}</div>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                        <input
-                          type="checkbox"
-                          checked={item.checked}
-                          onChange={(e) => item.setter(e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button onClick={handleSave} disabled={isSaving} className="btn btn-primary btn-sm font-bold uppercase cursor-pointer">
-                    Save Preferences
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 4: Door Delivery */}
-            {activeTab === "delivery" && (
-              <div className="p-6 space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  <h4 className="font-bold text-sm text-gray-900 mb-1">
-                    DOORSTEP DELIVERY PREFERENCES & REQUESTS
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    Configure instructions for Staff Admin and dispatch unit delivery requests directly to the Lobby.
-                  </p>
-                </div>
-
-                {deliveryFeedback && (
-                  <div className="p-3.5 bg-green-50 border border-green-200 text-green-900 text-xs rounded-xl flex items-center justify-between animate-in fade-in shadow-2xs">
-                    <span>{deliveryFeedback}</span>
-                    <button onClick={() => setDeliveryFeedback(null)} className="text-green-700 hover:text-green-900 font-bold ml-2">
-                      ✕
-                    </button>
-                  </div>
-                )}
-
-                {/* Plan Quota Badge */}
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-amber-950 block text-sm">
-                      {user?.plan === "PREMIUM"
-                        ? "FREE DOOR TO DOOR DELIVERY"
-                        : user?.plan === "REGULAR"
-                        ? "Door Delivery isn't available for Regular Plan"
-                        : "Door Delivery isn't available for Per Parcel"}
-                    </span>
-                    {user?.plan === "PREMIUM" && (
-                      <span className="text-amber-800 text-xs">
-                        Includes 1 free door delivery per month. You have {user?.deliveryCreditsLeft ?? 0} free delivery remaining.
-                      </span>
-                    )}
-                  </div>
-                  {user?.plan === "PREMIUM" && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="font-mono font-bold text-xs bg-white px-3 py-1.5 rounded-lg border border-amber-300 text-amber-900 shadow-2xs">
-                        {`${user?.deliveryCreditsLeft ?? 0} of 1 Left`}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* If Not Premium: Door delivery is NOT available; residents cannot send request to lobby */}
-                {user?.plan !== "PREMIUM" ? (
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center">
-                    <p className="text-xs sm:text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">
-                      {user?.plan === "REGULAR"
-                        ? "Your Regular Plan includes 15 days of unlimited parcel storage at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."
-                        : "Per Parcel accounts are self-pickup at the Lobby. Door-to-door delivery is exclusively reserved for Premium VIP subscribers."}
-                    </p>
-                  </div>
-                ) : (
-                  /* Premium Tier Only: Active Pending Request Card OR Dispatch Form */
-                  <>
-                    {activePendingDelivery && !isEditingRequest ? (
-                      <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-5 space-y-3.5 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 pb-3">
-                          <div className="flex items-center gap-2.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                            <span className="font-bold text-sm text-amber-950">
-                              Active Door Delivery Request Pending at Lobby
-                            </span>
-                          </div>
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 self-start sm:self-auto uppercase tracking-wide">
-                            {activePendingDelivery.status === "IN_PROGRESS" ? "In Progress" : "Pending Lobby Action"}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1 text-xs">
-                          <span className="text-amber-900 font-bold block text-[11px] uppercase tracking-wider">
-                            Current Request Details:
-                          </span>
-                          <p className="bg-white p-3 rounded-xl border border-amber-200 font-mono text-gray-800 leading-relaxed">
-                            {activePendingDelivery.message}
-                          </p>
-                        </div>
-
-                        {activePendingDelivery.adminReply && (
-                          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
-                            <span className="font-bold text-emerald-800 block text-[11px]">✓ Lobby Confirmation:</span>
-                            <p>{activePendingDelivery.adminReply}</p>
-                          </div>
-                        )}
-
-                        <div className="pt-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                          <span className="text-[11px] text-gray-500">
-                            Dispatched: {activePendingDelivery.createdAt}
-                          </span>
-                          <div className="flex items-center gap-2 self-end sm:self-auto">
-                            <button
-                              type="button"
-                              onClick={handleCancelDoorDelivery}
-                              disabled={isDispatchingDelivery}
-                              className="btn btn-outline btn-sm text-xs font-bold uppercase text-red-600 !border-red-200 hover:!bg-red-50 cursor-pointer"
-                            >
-                              Cancel Request ✕
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsEditingRequest(true)}
-                              className="btn btn-primary btn-sm text-xs font-bold uppercase cursor-pointer"
-                            >
-                              Edit Request ✏️
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Form: Shown when no pending request OR when editing active request */
-                      <div className="space-y-4">
-                        {!isEditingRequest && latestDelivery?.status === "RESOLVED" && (
-                          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
-                            <div className="flex items-center justify-between font-bold text-emerald-950">
-                              <span className="flex items-center gap-1.5">
-                                <span>✓</span> Last Doorstep Delivery Completed by Lobby
-                              </span>
-                              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-normal">
-                                {latestDelivery.updatedAt || latestDelivery.createdAt}
-                              </span>
-                            </div>
-                            {latestDelivery.adminReply && (
-                              <p className="text-[11px] text-emerald-800">
-                                Lobby Note: "{latestDelivery.adminReply}"
-                              </p>
-                            )}
-                            <p className="text-[11px] text-emerald-700 pt-0.5">
-                              Need another package brought to your door? Choose your preferred window below and dispatch a new request.
-                            </p>
-                          </div>
-                        )}
-
-                        {isEditingRequest && (
-                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
-                            <span>Editing your active pending request. Adjust your time window or notes and click <strong>Update Request</strong>.</span>
-                          </div>
-                        )}
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Preferred Delivery Window
-                          </label>
-                          <select
-                            value={preferredWindow}
-                            onChange={(e) => setPreferredWindow(e.target.value)}
-                            className="input w-full cursor-pointer"
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                      {isEditingRequest ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingRequest(false)}
+                            disabled={isDispatchingDelivery}
+                            className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
                           >
-                            <option>Morning (10:00 AM - 12:00 PM)</option>
-                            <option>Afternoon (2:00 PM - 5:00 PM)</option>
-                            <option>Evening (6:00 PM - 8:30 PM)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Drop-off Instructions (Saved for Lobby Staff Admin)
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={deliveryInstructions}
-                            onChange={(e) => setDeliveryInstructions(e.target.value)}
-                            placeholder="e.g. Please ring doorbell and place parcels on the shoe rack outside the unit..."
-                            className="input w-full"
-                          />
-                        </div>
-
-                        <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
-                          {isEditingRequest ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => setIsEditingRequest(false)}
-                                disabled={isDispatchingDelivery}
-                                className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
-                              >
-                                Cancel Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleUpdateDoorDelivery}
-                                disabled={isDispatchingDelivery}
-                                className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
-                              >
-                                {isDispatchingDelivery ? "Updating Request..." : "Update Request ✓"}
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={handleSave}
-                                disabled={isSaving || isDispatchingDelivery}
-                                className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
-                              >
-                                {isSaving ? "Saving..." : "Save Preferences"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleDispatchDoorDelivery}
-                                disabled={isSaving || isDispatchingDelivery}
-                                className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
-                              >
-                                {isDispatchingDelivery ? "Dispatching to Lobby..." : "Request Lobby Door Run"}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </>
+                            Cancel Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleUpdateDoorDelivery}
+                            disabled={isDispatchingDelivery}
+                            className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
+                          >
+                            {isDispatchingDelivery ? "Updating Request..." : "Update Request ✓"}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={isSaving || isDispatchingDelivery}
+                            className="btn btn-outline btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer"
+                          >
+                            {isSaving ? "Saving..." : "Save Preferences"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDispatchDoorDelivery}
+                            disabled={isSaving || isDispatchingDelivery}
+                            className="btn btn-primary btn-sm w-full sm:w-auto font-bold uppercase cursor-pointer shadow-md"
+                          >
+                            {isDispatchingDelivery ? "Dispatching to Lobby..." : "Request Lobby Door Run"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </div>
+              </>
             )}
+          </div>
+        )}
       </div>
     </div>
   );

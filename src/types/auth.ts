@@ -2,12 +2,6 @@ export type UserRole = "resident" | "admin";
 export type PlanStatus = "ACTIVE" | "PENDING_PAYMENT" | "PENDING_VERIFICATION";
 export type PaymentMethod = "GCASH" | "CASH_COUNTER";
 
-export interface AuthorizedClaimant {
-  name: string;
-  phone: string;
-  relationship?: string;
-}
-
 export interface AuthUser {
   id: string;
   email: string;
@@ -16,10 +10,6 @@ export interface AuthUser {
   role: UserRole;
   unit?: string;
   tower?: string;
-  branch?: string;
-  buildingNumber?: string;
-  floorNumber?: string;
-  unitNumber?: string;
   plan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   pendingPlan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   planStatus?: PlanStatus;
@@ -28,7 +18,6 @@ export interface AuthUser {
   residentCode?: string;
   authorizedClaimant?: string;
   claimantPhone?: string;
-  authorizedClaimants?: AuthorizedClaimant[];
   deliveryCreditsLeft?: number;
   subscriptionExpiry?: string;
   pendingSubmittedAt?: string;
@@ -42,10 +31,6 @@ export interface ResidentProfile {
   phone: string;
   unit: string;
   tower: string;
-  branch?: string;
-  buildingNumber?: string;
-  floorNumber?: string;
-  unitNumber?: string;
   building: string;
   plan: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   pendingPlan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
@@ -55,7 +40,6 @@ export interface ResidentProfile {
   residentCode: string;
   authorizedClaimant?: string;
   claimantPhone?: string;
-  authorizedClaimants?: AuthorizedClaimant[];
   notifications: {
     smsArrival: boolean;
     smsReminder: boolean;
@@ -84,11 +68,7 @@ export interface RegisterData {
   phone: string;
   email: string;
   unit: string;
-  tower?: string;
-  branch?: string;
-  buildingNumber?: string;
-  floorNumber?: string;
-  unitNumber?: string;
+  tower: string;
   plan: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   pendingPlan?: "PER_PARCEL" | "REGULAR" | "PREMIUM";
   planStatus?: PlanStatus;
