@@ -362,146 +362,253 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Membership Plan Selection & Actions */}
-          <div className="lg:col-span-5 space-y-3">
-            <div className="border-b border-zinc-800/80 pb-1.5">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                Choose Membership Plan
-              </h2>
-            </div>
+          {/* RIGHT COLUMN: Digital Resident Pass & Membership Selection (Layout 3) */}
+          <div className="lg:col-span-5 space-y-2.5 flex flex-col justify-between">
+            <div>
+              <div className="border-b border-zinc-800/80 pb-1.5 mb-2.5 flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                  Choose Membership Plan
+                </h2>
+                <span className="text-[10px] text-zinc-500 font-mono">Live Pass Preview</span>
+              </div>
 
-            {/* Plan Cards Stack */}
-            <div className="space-y-2">
-              {[
-                {
-                  id: "PER_PARCEL" as const,
-                  name: "Per Parcel Plan",
-                  price: "₱15",
-                  cycle: "/ claim",
-                  badge: "Free Initial",
-                  badgeColor: "bg-zinc-700 text-zinc-300",
-                  desc: "₱0 monthly fee. Pay only ₱15 when receiving packages at the lobby desk.",
-                },
-                {
-                  id: "REGULAR" as const,
-                  name: "Regular Plan",
-                  price: "₱149",
-                  cycle: "/ month",
-                  badge: "15 Days Unlimited",
-                  badgeColor: "bg-blue-600/30 text-blue-300 border border-blue-500/40",
-                  desc: "Unlimited package intake, 3 days free holding, priority SMS alert dispatch.",
-                },
-                {
-                  id: "PREMIUM" as const,
-                  name: "Premium VIP",
-                  price: "₱299",
-                  cycle: "/ month",
-                  badge: "Best Value",
-                  badgeColor: "bg-brand-red text-white font-bold",
-                  desc: "7 days free holding, priority shelf slot, plus 1 free door delivery credit.",
-                },
-              ].map((tier) => {
-                const isSelected = plan === tier.id;
-                return (
-                  <div
-                    key={tier.id}
-                    onClick={() => setPlan(tier.id)}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer select-none relative ${
-                      isSelected
-                        ? "border-brand-red bg-red-950/30 ring-1 ring-brand-red shadow-sm"
-                        : "border-zinc-800 bg-[#18181c] hover:border-zinc-700 hover:bg-[#1f1f25]"
+              {/* Segmented 3-Pill Plan Switcher */}
+              <div className="grid grid-cols-3 gap-1 bg-[#1c1c21] p-1 rounded-xl border border-zinc-800/80 mb-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPlan("PER_PARCEL")}
+                  className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                    plan === "PER_PARCEL"
+                      ? "bg-zinc-700 text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Per Parcel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlan("REGULAR")}
+                  className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                    plan === "REGULAR"
+                      ? "bg-[#005CEE] text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Regular
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlan("PREMIUM")}
+                  className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                    plan === "PREMIUM"
+                      ? "bg-brand-red text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Premium VIP
+                </button>
+              </div>
+
+              {/* Digital Resident Pass Card Preview */}
+              <div className="relative rounded-2xl bg-gradient-to-br from-[#1c1c22] via-[#16161b] to-[#111115] border border-white/10 p-3.5 shadow-lg overflow-hidden space-y-2.5">
+                {/* Top Subtle Gradient Rim */}
+                <div
+                  className={`absolute top-0 left-0 right-0 h-[2px] transition-colors ${
+                    plan === "PREMIUM"
+                      ? "bg-gradient-to-r from-brand-red via-amber-400 to-brand-red"
+                      : plan === "REGULAR"
+                      ? "bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-500"
+                      : "bg-gradient-to-r from-zinc-600 via-zinc-400 to-zinc-600"
+                  }`}
+                />
+
+                {/* Pass Header */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className={`w-2 h-2 rounded-full animate-pulse ${
+                        plan === "PREMIUM"
+                          ? "bg-amber-400"
+                          : plan === "REGULAR"
+                          ? "bg-blue-400"
+                          : "bg-zinc-400"
+                      }`}
+                    />
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
+                      CK Resident Pass
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[9.5px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                      plan === "PREMIUM"
+                        ? "bg-brand-red/20 text-brand-red border border-brand-red/30"
+                        : plan === "REGULAR"
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-400/30"
+                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                            isSelected ? "border-brand-red bg-brand-red" : "border-zinc-600"
-                          }`}
-                        >
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </div>
-                        <span className="text-xs font-bold text-white">{tier.name}</span>
-                      </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tier.badgeColor}`}>
-                        {tier.badge}
-                      </span>
-                    </div>
+                    {plan === "PREMIUM"
+                      ? "VIP Member"
+                      : plan === "REGULAR"
+                      ? "15-Day Pass"
+                      : "Pay Per Claim"}
+                  </span>
+                </div>
 
-                    <div className="flex items-baseline gap-1 mt-0.5 pl-5.5">
-                      <span className="text-sm sm:text-base font-black text-white">{tier.price}</span>
-                      <span className="text-[10.5px] text-zinc-400">{tier.cycle}</span>
-                    </div>
-
-                    <p className="text-[10.5px] text-zinc-400 mt-0.5 pl-5.5 leading-tight">
-                      {tier.desc}
-                    </p>
+                {/* Resident Identity Live Display */}
+                <div className="bg-[#121216]/80 rounded-xl p-2.5 border border-white/5 space-y-1">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[10px] text-zinc-500 font-medium">Cardholder:</span>
+                    <span className="text-xs font-bold text-white truncate max-w-[180px]">
+                      {fullName.trim() || "Your Name"}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[10px] text-zinc-500 font-medium">Unit:</span>
+                    <span className="text-[11px] font-mono text-zinc-300">
+                      {buildingNumber.trim() || floorNumber.trim() || unitNumber.trim()
+                        ? `Bldg ${buildingNumber.trim() || "—"} • Flr ${floorNumber.trim() || "—"} • Unit ${unitNumber.trim() || "—"}`
+                        : "Unit Not Set"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[10px] text-zinc-500 font-medium">Branch:</span>
+                    <span className="text-[10.5px] text-zinc-400 truncate max-w-[180px]">
+                      {branch}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Plan Note */}
-            <p className="text-[11px] text-zinc-400 leading-tight">
-              {plan === "PER_PARCEL"
-                ? "Free initial registration. No payment required today."
-                : "Payment activation will pop up next. Settle via GCash QR or Cash at Counter."}
-            </p>
+                {/* Dynamic Tier Benefits */}
+                <div className="space-y-1 text-[10.5px] text-zinc-300 px-0.5">
+                  {plan === "PER_PARCEL" && (
+                    <>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>₱0 monthly fee — pay ₱15 only when claiming</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>24/7 lobby drop-off intake & security holding</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>Instant SMS parcel arrival alerts</span>
+                      </div>
+                    </>
+                  )}
+                  {plan === "REGULAR" && (
+                    <>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-blue-400 font-bold">✓</span>
+                        <span>15 Days unlimited parcel deliveries</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-blue-400 font-bold">✓</span>
+                        <span>3 Days free storage holding window</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-blue-400 font-bold">✓</span>
+                        <span>Priority SMS arrival notifications</span>
+                      </div>
+                    </>
+                  )}
+                  {plan === "PREMIUM" && (
+                    <>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-amber-400 font-bold">✓</span>
+                        <span>30 Days unlimited parcel intake & VIP shelf</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-amber-400 font-bold">✓</span>
+                        <span>7 Days extended free holding period</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <span className="text-amber-400 font-bold">✓</span>
+                        <span>1 Free monthly door-to-door delivery credit</span>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-            {/* Terms agreement checkbox */}
-            <label className="flex items-start gap-2 text-xs text-zinc-400 cursor-pointer select-none pt-0.5">
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-0.5 rounded border-zinc-700 bg-zinc-800 text-brand-red focus:ring-brand-red w-3.5 h-3.5 cursor-pointer"
-                required
-                disabled={isLoading}
-              />
-              <span className="leading-tight">
-                I agree to the Condominium Parcel Holding Policy and SMS notifications.
-              </span>
-            </label>
+                {/* Total Due Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <span className="text-[11px] text-zinc-400 font-medium">Total Due Today:</span>
+                  <span className="text-sm font-black text-emerald-400 font-[family-name:var(--font-heading)]">
+                    {plan === "PER_PARCEL"
+                      ? "₱0.00 (Free Sign Up)"
+                      : plan === "REGULAR"
+                      ? "₱149 / 15 Days"
+                      : "₱299 / Month"}
+                  </span>
+                </div>
+              </div>
 
-            {/* Submit Red Button - Text only, strictly no icons paired with text */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 sm:py-3 rounded-xl bg-brand-red hover:bg-[#b30000] active:scale-[0.99] text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center cursor-pointer disabled:opacity-75"
-            >
-              {isLoading ? "Creating your account..." : "Create Resident Account"}
-            </button>
-
-            {/* Centered Sign In Link */}
-            <div className="text-center pt-0.5">
-              <p className="text-xs text-zinc-400">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-brand-red hover:underline font-semibold transition-colors"
-                >
-                  Sign In
-                </Link>
+              {/* Plan Activation Subtext */}
+              <p className="text-[10.5px] text-zinc-400 leading-tight mt-2">
+                {plan === "PER_PARCEL"
+                  ? "Free immediate registration. Pay ₱15 per package during desk pickup."
+                  : "Payment activation will pop up next. Settle via GCash QR or Cash at Counter."}
               </p>
             </div>
 
-            {/* Terms & Privacy */}
-            <p className="text-[11px] text-zinc-500 text-center leading-relaxed mt-2">
-              By signing in, you agree to our{" "}
-              <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
-                Privacy Policy
-              </Link>
-              .
-            </p>
+            {/* Bottom Actions */}
+            <div className="space-y-2 pt-1">
+              {/* Terms Checkbox */}
+              <label className="flex items-start gap-2 text-[11px] text-zinc-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="mt-0.5 rounded border-zinc-700 bg-zinc-800 text-brand-red focus:ring-brand-red w-3.5 h-3.5 cursor-pointer"
+                  required
+                  disabled={isLoading}
+                />
+                <span className="leading-tight">
+                  I agree to the Condominium Parcel Holding Policy and SMS notifications.
+                </span>
+              </label>
 
-            {/* Relocated Copyright - Inside the box below terms */}
-            <p className="text-[10px] sm:text-[10.5px] text-zinc-600 text-center mt-1.5 font-medium">
-              © 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform
-            </p>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2.5 sm:py-3 rounded-xl bg-brand-red hover:bg-[#b30000] active:scale-[0.99] text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-lg shadow-brand-red/25 flex items-center justify-center cursor-pointer disabled:opacity-75"
+              >
+                {isLoading ? "Creating your account..." : "Create Resident Account"}
+              </button>
+
+              {/* Centered Sign In Link */}
+              <div className="text-center">
+                <p className="text-xs text-zinc-400">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="text-brand-red hover:underline font-semibold transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                </p>
+              </div>
+
+              {/* Terms & Privacy */}
+              <p className="text-[10px] sm:text-[10.5px] text-zinc-500 text-center leading-tight">
+                By signing in, you agree to our{" "}
+                <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+
+              {/* Copyright */}
+              <p className="text-[9.5px] sm:text-[10px] text-zinc-600 text-center font-medium">
+                © 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform
+              </p>
+            </div>
           </div>
         </div>
       </form>

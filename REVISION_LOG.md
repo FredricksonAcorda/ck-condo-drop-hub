@@ -43,6 +43,7 @@
 31. [Firestore Undefined Payload Stripping, Orphaned Firebase Auth Auto-Healing & 7-Second Auto-Dismiss Alerts](#31-firestore-undefined-payload-stripping-orphaned-firebase-auth-auto-healing--7-second-auto-dismiss-alerts-bug--fix--modification)
 32. [Full-Size Side-by-Side Payment Activation Modal & Visual 7-Second Error Countdown Bar](#32-full-size-side-by-side-payment-activation-modal--visual-7-second-error-countdown-bar-fix--modification)
 33. [Strict Firebase Auth Password Enforcement for Residents (Email & Phone) and Staff Admin](#33-strict-firebase-auth-password-enforcement-for-residents-email--phone-and-staff-admin-fix--modification)
+34. [Digital Resident Pass Live Preview & Symmetrical Zero-Scroll Sign-Up Layout](#34-digital-resident-pass-live-preview--symmetrical-zero-scroll-sign-up-layout-modification--ux-polish)
 
 ---
 
@@ -746,6 +747,30 @@
   100% strict password enforcement across resident portal (both email and phone login) and staff admin dashboard. Only the exact password registered during sign-up or admin initialization can authenticate into the application.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Never allow fallback database document lookups to proceed when an authentication provider (Firebase Auth, Supabase Auth, Auth0) throws an invalid credential error. For dual-identifier authentication (email or phone), always resolve the user's canonical identity first and verify credentials through the central auth provider before granting session tokens.
+
+---
+
+## 34. Digital Resident Pass Live Preview & Symmetrical Zero-Scroll Sign-Up Layout (Modification / UX Polish)
+
+- **Current State**:
+  The sign-up page (`/register`) stacked 3 tall, text-heavy vertical membership plan cards on the right column. This layout created vertical height asymmetry between the left form inputs and the right plan section, pushing the Terms checkbox, `Create Resident Account` CTA button, and footer links down so users had to scroll on standard laptop screens.
+- **The Problem**:
+  Users experienced cognitive overload viewing 10+ form fields and 3 full pricing cards simultaneously. The vertical overflow degraded ergonomics, created awkward empty whitespace beneath form inputs, and reduced conversion visibility on laptops and tablets.
+- **What to Do (Solution)**:
+  1. **Segmented 3-Pill Plan Switcher**:
+     - Replaced the bulky vertical card stack with an ergonomic 3-button segmented selector (`Per Parcel` | `Regular` | `Premium VIP`).
+     - Applied distinctive high-contrast color fills for active states (Zinc for Per Parcel, Vibrant Blue for Regular, Brand Red for Premium VIP).
+  2. **Interactive "CK Resident Pass" Live Preview Card**:
+     - Built a high-tech digital card container (`bg-gradient-to-br from-[#1c1c22] via-[#16161b] to-[#111115] border border-white/10`) featuring dynamic real-time data binding.
+     - Live-syncs the resident's cardholder name (`fullName`), unit number (`buildingNumber`, `floorNumber`, `unitNumber`), and branch as they type.
+     - Displays dynamic tier badge (`VIP Member`, `15-Day Pass`, `Pay Per Claim`) with animated status beacon.
+     - Shows plan-specific perks with clear green/blue/amber checkmarks and a prominent `Total Due Today` calculation (`₱0.00`, `₱149`, `₱299`).
+  3. **Zero-Scroll Symmetrical Rhythm**:
+     - Perfectly balanced the vertical height of both columns (~450px each), ensuring the primary submit button, terms agreement, and sign-in link sit comfortably above the fold on all standard 1080p and 768p displays without requiring scrolling.
+- **Result**:
+  A modern, high-engagement sign-up box where residents see their personalized digital pass update live before activating, with perfect 2-column symmetry and zero scrolling.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Instead of rendering repetitive full-length pricing cards inside complex registration forms, use a compact segmented tier switcher paired with an interactive "Identity Pass / Order Summary" card. Real-time visual feedback reduces cognitive load, keeps the viewport compact, and gives users a tangible sense of value before conversion.
 
 ---
 
