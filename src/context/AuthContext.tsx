@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "admin",
         createdAt: "2026-07-01T08:00:00Z",
       };
-      await authService.login({ emailOrPhone: adminUser.email, password: "demo", role: "admin" });
+      authService.setSessionDirect(adminUser);
       setUser(adminUser);
       return;
     }
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscriptionExpiry: resident.subscriptionExpiry,
         createdAt: resident.createdAt,
       };
-      await authService.login({ emailOrPhone: resident.email, password: "demo", role: "resident" });
+      authService.setSessionDirect(authUser);
       setUser(authUser);
     }
   };

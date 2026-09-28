@@ -42,6 +42,7 @@
 30. [Zero-Scroll Fixed Auth Pages, Card-Internal Copyright, Purge Icons Paired with Text & Modal Payment Activation](#30-zero-scroll-fixed-auth-pages-card-internal-copyright-purge-icons-paired-with-text--modal-payment-activation-fix--modification)
 31. [Firestore Undefined Payload Stripping, Orphaned Firebase Auth Auto-Healing & 7-Second Auto-Dismiss Alerts](#31-firestore-undefined-payload-stripping-orphaned-firebase-auth-auto-healing--7-second-auto-dismiss-alerts-bug--fix--modification)
 32. [Full-Size Side-by-Side Payment Activation Modal & Visual 7-Second Error Countdown Bar](#32-full-size-side-by-side-payment-activation-modal--visual-7-second-error-countdown-bar-fix--modification)
+33. [Strict Firebase Auth Password Enforcement for Residents (Email & Phone) and Staff Admin](#33-strict-firebase-auth-password-enforcement-for-residents-email--phone-and-staff-admin-fix--modification)
 
 ---
 
@@ -719,6 +720,32 @@
   A spacious, premium payment activation modal where residents can easily scan the full-sized GCash QR code, coupled with a completely reliable, visually animated 7-second auto-dismissing error notification across all authentication screens.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   For checkout and payment activation modals, never shrink QR codes or payment instructions into cramped mobile dialogs; use a responsive two-column grid (`grid-cols-1 sm:grid-cols-2`) that gives QR codes full fidelity on desktop while stacking smoothly on mobile. For auto-dismissing feedback notifications, always tie the component's `key` to a timestamp to ensure animation and timer reconciliation in React.
+
+---
+
+## 33. Strict Firebase Auth Password Enforcement for Residents (Email & Phone) and Staff Admin (Fix / Modification)
+
+- **Current State**:
+  During login, any password typed into the resident portal or staff admin terminal resulted in a successful session. Furthermore, first-time visitors to the site were automatically assigned an active session as "Juan Dela Cruz" even before logging in.
+- **The Problem**:
+  1. **Suppressed Firebase Auth Rejections**: In `src/lib/auth/auth-service.ts`, `signInWithEmailAndPassword` was enclosed in a `try...catch` block where Firebase Auth credential rejection errors were caught with `console.warn` and execution continued. The function then queried Firestore by email, found the user record, and established a session—effectively bypassing password validation.
+  2. **Phone Login Bypassed Auth Provider**: When residents signed in using their Philippine mobile number (`+63 9XX XXX XXXX`), the condition `cleanInput.includes("@")` was false, bypassing Firebase Auth entirely and logging them in on phone number matching alone.
+  3. **Staff Admin Hardcoded Bypass**: For `role === "admin"` or `admin@ckcondohub.com`, the login method returned an admin session immediately without inspecting or validating the password parameter.
+  4. **Demo Visitor Auto-Login**: `getCurrentSession()` contained legacy prototyping fallback logic `if (!raw) return SEED_USERS[0]`, granting immediate session access without authentication.
+- **What to Do (Solution)**:
+  1. **Strict Resident Password Validation (Email & Phone)**:
+     - For email logins, `signInWithEmailAndPassword(auth, targetEmail, password)` must resolve successfully; any `auth/wrong-password` or `auth/invalid-credential` error immediately halts execution and throws `"Incorrect password. Please verify the password you used during sign up."`
+     - For phone number logins, the system first resolves the resident's registered email from Firestore, then delegates password verification to `signInWithEmailAndPassword(auth, resident.email, password)`. If the password is wrong, login is rejected.
+  2. **Staff Admin Password Verification & Bootstrapping**:
+     - Staff admin login now strictly authenticates against Firebase Auth via `signInWithEmailAndPassword(auth, adminEmail, password)`.
+     - If the admin user has not yet been registered in Firebase Auth, it securely bootstraps the account with the provided password. Once created, any subsequent login attempt with an incorrect password is confirmed by Firebase Auth throwing `auth/email-already-in-use` during retry, rejecting the login with `"Incorrect staff admin password. Please enter the valid admin password."`
+  3. **Purge Demo Visitor Fallback**:
+     - Updated `getCurrentSession()` to return `null` when no session exists in `localStorage`, guaranteeing users must authenticate with valid credentials.
+     - Decoupled `switchDemoUser` in `AuthContext` to use `authService.setSessionDirect` rather than calling `login` with mock passwords.
+- **Result**:
+  100% strict password enforcement across resident portal (both email and phone login) and staff admin dashboard. Only the exact password registered during sign-up or admin initialization can authenticate into the application.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never allow fallback database document lookups to proceed when an authentication provider (Firebase Auth, Supabase Auth, Auth0) throws an invalid credential error. For dual-identifier authentication (email or phone), always resolve the user's canonical identity first and verify credentials through the central auth provider before granting session tokens.
 
 ---
 

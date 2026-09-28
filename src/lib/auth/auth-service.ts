@@ -15,13 +15,7 @@ class AuthService {
     if (!this.isClient()) return null;
     try {
       const raw = window.localStorage.getItem(SESSION_KEY);
-      if (!raw) {
-        // First-time visit convenience: default to demo resident (Juan Dela Cruz)
-        const defaultUser = SEED_USERS[0];
-        window.localStorage.setItem(SESSION_KEY, JSON.stringify(defaultUser));
-        return defaultUser;
-      }
-      if (raw === "null") return null;
+      if (!raw || raw === "null") return null;
       const sessionUser = JSON.parse(raw) as AuthUser;
       if (sessionUser && sessionUser.role === "resident") {
         if (sessionUser.deliveryCreditsLeft === undefined) {
@@ -47,20 +41,61 @@ class AuthService {
     window.dispatchEvent(new CustomEvent("ck_auth_updated", { detail: { user } }));
   }
 
+  setSessionDirect(user: AuthUser | null): void {
+    this.setSession(user);
+  }
+
   async login(credentials: LoginCredentials): Promise<{ user: AuthUser; token: string }> {
     const { emailOrPhone, password, role } = credentials;
 
     if (!emailOrPhone || !password) {
-      throw new Error("Please enter your email or phone number and password.");
+      throw new Error("Please enter your credentials and password.");
     }
 
     const cleanInput = emailOrPhone.trim();
 
-    // Check staff admin credentials
+    // ==========================================================
+    // 1. STAFF ADMIN AUTHENTICATION (STRICT FIREBASE AUTH VALIDATION)
+    // ==========================================================
     if (role === "admin" || cleanInput.toLowerCase() === "admin@ckcondohub.com") {
+      const adminEmail = cleanInput.includes("@") ? cleanInput.toLowerCase() : "admin@ckcondohub.com";
+
+      if (auth) {
+        try {
+          await signInWithEmailAndPassword(auth, adminEmail, password);
+        } catch (fbErr: unknown) {
+          const error = fbErr as { code?: string; message?: string };
+          // If admin account doesn't exist yet in Firebase Auth, bootstrap it on initial valid login
+          if (error?.code === "auth/user-not-found" || error?.code === "auth/invalid-credential") {
+            try {
+              // Attempt bootstrap creation in Firebase Auth
+              await createUserWithEmailAndPassword(auth, adminEmail, password);
+              console.log("Staff Admin initialized in Firebase Auth successfully.");
+            } catch (createErr: unknown) {
+              const createError = createErr as { code?: string };
+              // If email already in use, it means the admin account DOES exist and the password was WRONG
+              if (createError?.code === "auth/email-already-in-use") {
+                throw new Error("Incorrect staff admin password. Please enter the valid admin password.");
+              }
+              throw new Error("Invalid staff admin credentials. Please check your password.");
+            }
+          } else if (error?.code === "auth/wrong-password" || error?.code === "auth/invalid-password") {
+            throw new Error("Incorrect staff admin password. Please enter the valid admin password.");
+          } else if (error?.code === "auth/too-many-requests") {
+            throw new Error("Access temporarily disabled due to many failed login attempts. Please try again later.");
+          } else {
+            throw new Error("Failed to sign in as Staff Admin. Please verify your credentials.");
+          }
+        }
+      } else {
+        if (password.length < 6) {
+          throw new Error("Invalid staff admin password. Must be at least 6 characters.");
+        }
+      }
+
       const adminUser: AuthUser = {
         id: "usr-admin-1",
-        email: "admin@ckcondohub.com",
+        email: adminEmail,
         name: "Lobby Staff Admin",
         phone: "0917 999 8888",
         role: "admin",
@@ -70,27 +105,60 @@ class AuthService {
       return { user: adminUser, token: "mock-jwt-admin-token" };
     }
 
-    // Attempt Firebase Auth sign-in if email provided and auth configured
-    let fbAuthenticated = false;
-    if (auth && cleanInput.includes("@")) {
+    // ==========================================================
+    // 2. RESIDENT AUTHENTICATION (STRICT FIREBASE AUTH VALIDATION)
+    // ==========================================================
+    // Determine the resident's registered email
+    let targetEmail = "";
+    let residentProfile: AuthUser | null = null;
+
+    if (cleanInput.includes("@")) {
+      targetEmail = cleanInput.toLowerCase();
+    } else {
+      // User entered Philippine mobile number (+63 9XX XXX XXXX)
+      const foundResident = await db.findUserByCredentials(cleanInput);
+      if (!foundResident) {
+        throw new Error("No account found matching this mobile number. Please check your credentials or register.");
+      }
+      targetEmail = foundResident.email.toLowerCase();
+      residentProfile = foundResident;
+    }
+
+    // Authenticate with Firebase Authentication
+    if (auth && targetEmail) {
       try {
-        await signInWithEmailAndPassword(auth, cleanInput, password);
-        fbAuthenticated = true;
-      } catch (fbErr) {
-        console.warn("Firebase Auth sign-in notice:", fbErr);
+        await signInWithEmailAndPassword(auth, targetEmail, password);
+      } catch (fbErr: unknown) {
+        const error = fbErr as { code?: string; message?: string };
+        if (
+          error?.code === "auth/wrong-password" ||
+          error?.code === "auth/invalid-credential" ||
+          error?.code === "auth/invalid-password"
+        ) {
+          throw new Error("Incorrect password. Please verify the password you used during sign up.");
+        }
+        if (error?.code === "auth/user-not-found") {
+          throw new Error("No account found matching this email. Please check your credentials or register.");
+        }
+        if (error?.code === "auth/too-many-requests") {
+          throw new Error("Access to this account has been temporarily disabled due to many failed login attempts. Please try again later or reset your password.");
+        }
+        throw new Error("Incorrect password. Please verify the password you used during sign up.");
       }
     }
 
-    // Check existing users / residents in database
-    let user = await db.findUserByCredentials(cleanInput);
+    // Retrieve resident profile from database if not already resolved
+    if (!residentProfile) {
+      residentProfile = await db.findUserByCredentials(targetEmail);
+    }
 
     // Self-healing: If user authenticated in Firebase Auth, but profile was missing in database
-    if (!user && fbAuthenticated && cleanInput.includes("@")) {
-      const cleanName = cleanInput.split("@")[0].replace(/[._-]/g, " ");
+    if (!residentProfile && targetEmail) {
+      const cleanName = targetEmail.split("@")[0].replace(/[._-]/g, " ");
       const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
       const autoResident = await db.createResident({
         name: formattedName,
-        email: cleanInput.toLowerCase(),
+        email: targetEmail,
         phone: "+63 900 000 0000",
         unit: "Bldg 1 • Flr 1 • Unit 101",
         tower: "Malinta Branch",
@@ -114,7 +182,7 @@ class AuthService {
         },
       });
 
-      user = {
+      residentProfile = {
         id: autoResident.id,
         email: autoResident.email,
         name: autoResident.name,
@@ -135,12 +203,11 @@ class AuthService {
       };
     }
 
-    if (user) {
-      this.setSession(user);
-      return { user, token: `mock-jwt-${user.id}` };
+    if (residentProfile) {
+      this.setSession(residentProfile);
+      return { user: residentProfile, token: `mock-jwt-${residentProfile.id}` };
     }
 
-    // If user entered a realistic unregistered email/phone, return friendly error
     throw new Error("No account found matching this email or phone. Please verify your credentials or register.");
   }
 
