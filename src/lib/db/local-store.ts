@@ -351,23 +351,28 @@ class LocalDatabaseService implements IDatabaseService {
 
   async findUserByCredentials(emailOrPhone: string): Promise<AuthUser | null> {
     const clean = emailOrPhone.trim().toLowerCase();
+    const cleanDigits = clean.replace(/\D/g, "").replace(/^63/, "0");
+    const cleanUser = clean.split("@")[0];
+
+    const matchIdentifier = (email: string, phone: string) => {
+      const emailLower = email.toLowerCase();
+      const phoneDigits = phone.replace(/\D/g, "").replace(/^63/, "0");
+      if (emailLower === clean) return true;
+      if (cleanDigits && phoneDigits === cleanDigits) return true;
+      if (clean.includes("@") && emailLower.split("@")[0] === cleanUser) return true;
+      if (!clean.includes("@") && !clean.startsWith("+") && emailLower.split("@")[0] === clean) return true;
+      return false;
+    };
+
     const users = this.load<AuthUser[]>(STORAGE_KEYS.USERS, this.inMemoryUsers);
 
     // Check staff match
-    const userMatch = users.find(
-      (u) =>
-        u.email.toLowerCase() === clean ||
-        u.phone.replace(/\s+/g, "") === clean.replace(/\s+/g, "")
-    );
+    const userMatch = users.find((u) => matchIdentifier(u.email, u.phone));
     if (userMatch) return userMatch;
 
     // Check resident match
     const residents = await this.getAllResidents();
-    const residentMatch = residents.find(
-      (r) =>
-        r.email.toLowerCase() === clean ||
-        r.phone.replace(/\s+/g, "") === clean.replace(/\s+/g, "")
-    );
+    const residentMatch = residents.find((r) => matchIdentifier(r.email, r.phone));
     if (residentMatch) {
       return {
         id: residentMatch.id,
@@ -382,6 +387,8 @@ class LocalDatabaseService implements IDatabaseService {
         paymentMethod: residentMatch.paymentMethod,
         paymentReference: residentMatch.paymentReference,
         residentCode: residentMatch.residentCode,
+        authorizedClaimant: residentMatch.authorizedClaimant,
+        claimantPhone: residentMatch.claimantPhone,
         deliveryCreditsLeft: residentMatch.deliveryCreditsLeft,
         subscriptionExpiry: residentMatch.subscriptionExpiry,
         createdAt: residentMatch.createdAt,

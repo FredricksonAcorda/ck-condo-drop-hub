@@ -165,6 +165,8 @@ class AuthService {
       paymentMethod: updatedResident.paymentMethod,
       paymentReference: updatedResident.paymentReference,
       residentCode: updatedResident.residentCode,
+      authorizedClaimant: updatedResident.authorizedClaimant,
+      claimantPhone: updatedResident.claimantPhone,
       deliveryCreditsLeft: updatedResident.deliveryCreditsLeft,
       subscriptionExpiry: updatedResident.subscriptionExpiry,
       createdAt: updatedResident.createdAt,

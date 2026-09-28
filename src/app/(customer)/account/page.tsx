@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth, useParcels } from "@/context";
+import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
+import { formatPhilippinePhone, isValidPhilippinePhone } from "@/lib/utils/phone-email";
 
 export default function MyAccountPage() {
   const { user, updateProfile } = useAuth();
@@ -19,13 +21,13 @@ export default function MyAccountPage() {
 
   // Form states
   const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
-  const [email, setEmail] = useState(user?.email || "juan.delacruz@example.com");
-  const [phone, setPhone] = useState(user?.phone || "0917 123 4567");
+  const [email, setEmail] = useState(user?.email || "juan.delacruz@gmail.com");
+  const [phone, setPhone] = useState(formatPhilippinePhone(user?.phone || "0917 123 4567"));
   const [unit, setUnit] = useState(user?.unit || "Unit 101");
   const [tower, setTower] = useState(user?.tower || "Tower A");
   const building = "CK Buildersville Condominium";
-  const [authorizedClaimant, setAuthorizedClaimant] = useState("Maria Dela Cruz (Spouse)");
-  const [claimantPhone, setClaimantPhone] = useState("0918 987 6543");
+  const [authorizedClaimant, setAuthorizedClaimant] = useState(user?.authorizedClaimant || "");
+  const [claimantPhone, setClaimantPhone] = useState(user?.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
 
   // Notifications
   const [smsArrival, setSmsArrival] = useState(true);
@@ -55,9 +57,11 @@ export default function MyAccountPage() {
     if (!user) return;
     setIsDispatchingDelivery(true);
     try {
+      const remainingCredits = Math.max(0, (user.deliveryCreditsLeft ?? 1) - 1);
       await updateProfile({
         preferredDeliveryWindow: preferredWindow,
         deliveryInstructions: deliveryInstructions.trim(),
+        deliveryCreditsLeft: remainingCredits,
       });
 
       await sendInquiry({
@@ -107,6 +111,10 @@ export default function MyAccountPage() {
     setIsDispatchingDelivery(true);
     try {
       await deleteInquiry(activePendingDelivery.id);
+      const restoredCredits = Math.min(1, (user?.deliveryCreditsLeft ?? 0) + 1);
+      await updateProfile({
+        deliveryCreditsLeft: restoredCredits,
+      });
       setDeliveryFeedback("✓ Active door delivery request cancelled. Lobby has been updated.");
       setIsEditingRequest(false);
       setTimeout(() => setDeliveryFeedback(null), 5000);
@@ -120,17 +128,38 @@ export default function MyAccountPage() {
   // Synchronize when active user changes (e.g. via demo switcher)
   useEffect(() => {
     if (user) {
-      setFullName(user.name);
-      setEmail(user.email);
-      setPhone(user.phone);
+      setFullName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(formatPhilippinePhone(user.phone || ""));
       if (user.unit) setUnit(user.unit);
       if (user.tower) setTower(user.tower);
+      setAuthorizedClaimant(user.authorizedClaimant || "");
+      setClaimantPhone(user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
     }
   }, [user]);
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSaveError(null);
+
+    // Validate Philippine mobile phone
+    if (!isValidPhilippinePhone(phone)) {
+      setSaveError("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+      return;
+    }
+
+    // Validate email
+    if (!email || !email.includes("@")) {
+      setSaveError("Please enter a valid email address (@gmail.com).");
+      return;
+    }
+
+    // Validate claimant phone if claimant name is provided
+    if (authorizedClaimant.trim() && claimantPhone.trim() && !isValidPhilippinePhone(claimantPhone)) {
+      setSaveError("Please enter a valid Philippine mobile number for the authorized claimant (+63 9XX XXX XXXX).");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -253,26 +282,28 @@ export default function MyAccountPage() {
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Mobile Phone (for SMS pickup alerts)
                       </label>
-                      <input
-                        type="tel"
+                      <PhilippinePhoneInput
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="input w-full"
-                        required
+                        onChange={(fmt) => {
+                          setPhone(fmt);
+                          if (saveError) setSaveError(null);
+                        }}
                         disabled={isSaving}
+                        required
                       />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Email Address
                       </label>
-                      <input
-                        type="email"
+                      <GmailInput
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="input w-full"
-                        required
+                        onChange={(full) => {
+                          setEmail(full);
+                          if (saveError) setSaveError(null);
+                        }}
                         disabled={isSaving}
+                        required
                       />
                     </div>
                   </div>
@@ -350,7 +381,8 @@ export default function MyAccountPage() {
                         type="text"
                         value={authorizedClaimant}
                         onChange={(e) => setAuthorizedClaimant(e.target.value)}
-                        className="input w-full"
+                        placeholder="Type roommate's name"
+                        className="input w-full placeholder:text-gray-400 placeholder:opacity-50"
                         disabled={isSaving}
                       />
                     </div>
@@ -358,11 +390,10 @@ export default function MyAccountPage() {
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Claimant Mobile Number
                       </label>
-                      <input
-                        type="tel"
+                      <PhilippinePhoneInput
                         value={claimantPhone}
-                        onChange={(e) => setClaimantPhone(e.target.value)}
-                        className="input w-full"
+                        onChange={(fmt) => setClaimantPhone(fmt)}
+                        placeholder="+63 9XX XXX XXXX"
                         disabled={isSaving}
                       />
                     </div>
@@ -373,7 +404,7 @@ export default function MyAccountPage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="btn btn-primary btn-sm font-bold uppercase cursor-pointer"
+                    className="btn btn-primary btn-sm font-bold uppercase cursor-pointer w-auto"
                   >
                     {isSaving ? "Saving Changes..." : "Save Changes"}
                   </button>
@@ -503,7 +534,7 @@ export default function MyAccountPage() {
                   <div>
                     <span className="font-bold text-amber-950 block text-sm">
                       {user?.plan === "PREMIUM"
-                        ? "Premium Door Delivery Benefit"
+                        ? "FREE DOOR TO DOOR DELIVERY"
                         : user?.plan === "REGULAR"
                         ? "Door Delivery isn't available for Regular Plan"
                         : "Door Delivery isn't available for Per Parcel"}

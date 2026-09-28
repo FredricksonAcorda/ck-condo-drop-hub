@@ -269,7 +269,7 @@ export default function AdminCustomersPage() {
                 placeholder="Search by name, unit number, or CK-code..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-8 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
 
@@ -479,7 +479,7 @@ export default function AdminCustomersPage() {
                 placeholder="Search invoice #, resident name, or unit..."
                 value={invoiceSearch}
                 onChange={(e) => setInvoiceSearch(e.target.value)}
-                className="input pl-8 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
 

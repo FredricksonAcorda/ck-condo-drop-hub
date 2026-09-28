@@ -40,7 +40,7 @@ export default function MembershipPage() {
   const doorCredits: Record<string, string> = {
     PER_PARCEL: "Not available",
     REGULAR: "Not available for Regular Plans",
-    PREMIUM: `1 Free Delivery/mo (${user?.deliveryCreditsLeft ?? 0} Left)`,
+    PREMIUM: `1 Free Delivery/mo (${user?.deliveryCreditsLeft ?? 0} of 1 Left)`,
   };
 
   // Subscription expiration and renewal calculation
@@ -304,7 +304,7 @@ export default function MembershipPage() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs font-bold text-amber-800 bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
-              ⏳ Awaiting Admin Approval
+              Awaiting Admin Approval
             </span>
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function MembershipPage() {
                   </span>
                 ) : isExpiringSoon ? (
                   <span className="bg-amber-500 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs animate-pulse">
-                    <span>⏳</span> EXPIRING IN {daysLeft} DAY{daysLeft === 1 ? "" : "S"}
+                    EXPIRING IN {daysLeft} DAY{daysLeft === 1 ? "" : "S"}
                   </span>
                 ) : (
                   <span className="bg-green-100 text-green-800 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1">
@@ -407,25 +407,24 @@ export default function MembershipPage() {
                   <span className="font-bold text-gray-900 text-sm">{holdingDays[currentPlan]} Days</span>
                 </div>
                 <div className="bg-white/80 border border-gray-200 rounded-xl p-2.5 text-xs">
-                  <span className="text-gray-500 block text-[11px]">Door Deliveries Left</span>
+                  <span className="text-gray-500 block text-[11px] uppercase font-semibold">FREE DOOR TO DOOR DELIVERY</span>
                   <span className="font-bold text-brand-red text-sm">
-                    {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} Free Runs` : "Not Available"}
+                    {currentPlan === "PREMIUM" ? `${user?.deliveryCreditsLeft ?? 0} of 1 Left` : "Not Available"}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Action CTA */}
-            <div className="shrink-0 flex flex-col gap-2.5 sm:min-w-[220px]">
+            <div className="shrink-0 flex flex-col gap-2.5 sm:items-end">
               <button
                 type="button"
                 onClick={handleOpenRenewModal}
-                className="btn btn-primary w-full py-3 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                className="btn btn-primary w-auto py-3 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                <span>🔄</span>
                 {isExpired ? "Reactivate Subscription" : isExpiringSoon ? "Renew Subscription Now" : "Extend / Renew Ahead"}
               </button>
-              <p className="text-[11px] text-center text-gray-500">
+              <p className="text-[11px] text-center sm:text-right text-gray-500">
                 {planPrices[currentPlan]} via GCash QR or Cash at Lobby
               </p>
             </div>

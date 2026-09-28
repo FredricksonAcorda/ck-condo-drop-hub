@@ -174,7 +174,7 @@ input, select, textarea {
    Utility Component Styles
    ============================================================ */
 
-/* Buttons */
+/* Buttons - Dynamic width based on label text */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -188,6 +188,8 @@ input, select, textarea {
   border: 2px solid transparent;
   line-height: 1.4;
   white-space: nowrap;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .btn-primary {
@@ -223,11 +225,13 @@ input, select, textarea {
 .btn-sm {
   padding: 6px 16px;
   font-size: var(--font-size-sm);
+  width: fit-content;
 }
 
 .btn-lg {
   padding: 14px 32px;
   font-size: var(--font-size-md);
+  width: fit-content;
 }
 
 /* Form Inputs & Selects */
@@ -254,6 +258,29 @@ input, select, textarea {
   background-color: var(--color-brand-surface);
   color: var(--color-brand-text-muted);
   cursor: not-allowed;
+}
+
+/* Low-opacity placeholder text across all input fields */
+::placeholder,
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #9CA3AF !important;
+  opacity: 0.45 !important;
+}
+
+/* Prevent native number spinners from overlapping badges or placeholders */
+input[type="number"].no-spinner::-webkit-outer-spin-button,
+input[type="number"].no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"].no-spinner,
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 select.input {

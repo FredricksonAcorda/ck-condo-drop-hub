@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { useAuth } from "@/context";
+import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
+import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,9 +19,10 @@ function LoginForm() {
   const [role, setRole] = useState<"resident" | "admin">(
     isInitialStaff ? "admin" : "resident"
   );
-  const [emailOrPhone, setEmailOrPhone] = useState(
-    isInitialStaff ? "admin@ckcondohub.com" : "juan.delacruz@example.com"
-  );
+  const [residentMethod, setResidentMethod] = useState<"email" | "phone">("email");
+  const [emailValue, setEmailValue] = useState("juan.delacruz@gmail.com");
+  const [phoneValue, setPhoneValue] = useState("+63 917 123 4567");
+  const [adminEmail, setAdminEmail] = useState("admin@ckcondohub.com");
   const [password, setPassword] = useState(
     isInitialStaff ? "adminpassword" : "password123"
   );
@@ -31,8 +34,27 @@ function LoginForm() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!emailOrPhone.trim() || !password.trim()) {
-      setErrorMessage("Please enter both your email/phone and password.");
+    let identifier = "";
+    if (role === "admin") {
+      identifier = adminEmail.trim();
+    } else {
+      if (residentMethod === "phone") {
+        if (!isValidPhilippinePhone(phoneValue)) {
+          setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+          return;
+        }
+        identifier = phoneValue.trim();
+      } else {
+        if (!emailValue.trim() || !emailValue.includes("@")) {
+          setErrorMessage("Please enter your Gmail username.");
+          return;
+        }
+        identifier = emailValue.trim();
+      }
+    }
+
+    if (!identifier || !password.trim()) {
+      setErrorMessage("Please enter both your credentials and password.");
       return;
     }
 
@@ -40,7 +62,7 @@ function LoginForm() {
 
     try {
       const authUser = await login({
-        emailOrPhone: emailOrPhone.trim(),
+        emailOrPhone: identifier,
         password: password.trim(),
         role,
       });
@@ -63,10 +85,9 @@ function LoginForm() {
     setRole(newRole);
     setErrorMessage(null);
     if (newRole === "resident") {
-      setEmailOrPhone("juan.delacruz@example.com");
       setPassword("password123");
     } else {
-      setEmailOrPhone("admin@ckcondohub.com");
+      setAdminEmail("admin@ckcondohub.com");
       setPassword("adminpassword");
     }
   };
@@ -175,27 +196,73 @@ function LoginForm() {
 
       {/* Login Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5">
-        <div>
-          <input
-            type="text"
-            name="emailOrPhone"
-            autoComplete="username"
-            inputMode={role === "resident" ? "text" : "email"}
-            value={emailOrPhone}
-            onChange={(e) => {
-              setEmailOrPhone(e.target.value);
-              if (errorMessage) setErrorMessage(null);
-            }}
-            placeholder={
-              role === "resident"
-                ? "Email address or Mobile number"
-                : "Staff email address"
-            }
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
-            required
-            disabled={isLoading}
-          />
-        </div>
+        {role === "resident" ? (
+          <div className="space-y-2">
+            <div className="flex gap-1 bg-[#18181b] p-1 rounded-xl border border-white/5">
+              <button
+                type="button"
+                onClick={() => setResidentMethod("email")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  residentMethod === "email" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Email (@gmail.com)
+              </button>
+              <button
+                type="button"
+                onClick={() => setResidentMethod("phone")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  residentMethod === "phone" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Mobile (+63)
+              </button>
+            </div>
+
+            {residentMethod === "email" ? (
+              <GmailInput
+                value={emailValue}
+                onChange={(full) => {
+                  setEmailValue(full);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                theme="dark"
+                placeholder="username"
+                required
+                disabled={isLoading}
+              />
+            ) : (
+              <PhilippinePhoneInput
+                value={phoneValue}
+                onChange={(fmt) => {
+                  setPhoneValue(fmt);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                theme="dark"
+                placeholder="+63 9XX XXX XXXX"
+                required
+                disabled={isLoading}
+              />
+            )}
+          </div>
+        ) : (
+          <div>
+            <input
+              type="email"
+              name="adminEmail"
+              autoComplete="email"
+              value={adminEmail}
+              onChange={(e) => {
+                setAdminEmail(e.target.value);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              placeholder="Staff email address"
+              className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+              required
+              disabled={isLoading}
+            />
+          </div>
+        )}
 
         <div className="relative">
           <input

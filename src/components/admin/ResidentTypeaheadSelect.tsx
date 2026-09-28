@@ -188,7 +188,7 @@ export default function ResidentTypeaheadSelect({
             if (!isOpen) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          className={`input pl-9 pr-14 text-xs w-full cursor-text border font-medium h-11 transition-all ${
+          className={`input pl-10 pr-14 text-xs w-full cursor-text border font-medium h-11 transition-all ${
             isOpen
               ? "border-brand-red ring-2 ring-brand-red/20 bg-white"
               : selectedResident

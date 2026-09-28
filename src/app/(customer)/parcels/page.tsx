@@ -259,13 +259,13 @@ export default function MyParcelsPage() {
           {/* Lobby Pickup Guideline & Door Delivery Quota */}
           <div className="bg-emerald-50 px-5 sm:px-6 py-2.5 border-b border-emerald-100 text-xs text-emerald-950 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              🔒 <strong>Pickup Verification:</strong> Present your <strong>Claim Passcode</strong> (e.g. {readyParcels[0]?.claimCode || "CK-XXXX"}) at the Lobby to claim your packages. Parcels will not be released without this matching code. Free holding: <strong>{freeHoldingDays} days</strong>.
+              <strong>Pickup Verification:</strong> Present your <strong>Claim Passcode</strong> (e.g. {readyParcels[0]?.claimCode || "CK-XXXX"}) at the Lobby to claim your packages. Parcels will not be released without this matching code. Free holding: <strong>{freeHoldingDays} days</strong>.
             </div>
             <div className="flex items-center gap-1.5 text-xs shrink-0">
-              <span className="text-emerald-800 font-semibold">Door Delivery:</span>
+              <span className="text-emerald-800 font-semibold uppercase">Free Door to Door Delivery:</span>
               <span className="font-mono font-bold px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-900 text-[11px] shadow-2xs">
                 {user?.plan === "PREMIUM"
-                  ? `${user?.deliveryCreditsLeft ?? 0} of 1 Free Left`
+                  ? `${user?.deliveryCreditsLeft ?? 0} of 1 Left`
                   : user?.plan === "REGULAR"
                   ? "Not available for Regular Plans"
                   : "Not available for Per Parcel"}

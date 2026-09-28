@@ -3,9 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
+import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 
 export default function ForgotPasswordPage() {
-  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [method, setMethod] = useState<"email" | "phone">("email");
+  const [emailValue, setEmailValue] = useState("");
+  const [phoneValue, setPhoneValue] = useState("");
+  const [submittedTarget, setSubmittedTarget] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -14,12 +19,23 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!emailOrPhone.trim()) {
-      setErrorMessage("Please enter your registered email address or mobile number.");
-      return;
+    let target = "";
+    if (method === "phone") {
+      if (!isValidPhilippinePhone(phoneValue)) {
+        setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+        return;
+      }
+      target = phoneValue.trim();
+    } else {
+      if (!emailValue.trim() || !emailValue.includes("@")) {
+        setErrorMessage("Please enter your Gmail username.");
+        return;
+      }
+      target = emailValue.trim();
     }
 
     setIsLoading(true);
+    setSubmittedTarget(target);
 
     setTimeout(() => {
       setIsLoading(false);
@@ -87,7 +103,7 @@ export default function ForgotPasswordPage() {
           <div>
             <h3 className="font-bold text-base text-white">Recovery Link Dispatched</h3>
             <p className="text-xs text-zinc-400 leading-relaxed mt-1.5">
-              If <strong className="text-white">{emailOrPhone}</strong> is registered to a condo unit, you will receive password reset instructions via SMS or email shortly.
+              If <strong className="text-white">{submittedTarget}</strong> is registered to a condo unit, you will receive password reset instructions via SMS or email shortly.
             </p>
           </div>
           <div className="pt-2 space-y-2">
@@ -108,21 +124,53 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              name="emailOrPhone"
-              autoComplete="username"
-              placeholder="Email address or Mobile number"
-              value={emailOrPhone}
-              onChange={(e) => {
-                setEmailOrPhone(e.target.value);
-                if (errorMessage) setErrorMessage(null);
-              }}
-              className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
-              required
-              disabled={isLoading}
-            />
+          <div className="space-y-2">
+            <div className="flex gap-1 bg-[#18181b] p-1 rounded-xl border border-white/5">
+              <button
+                type="button"
+                onClick={() => setMethod("email")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  method === "email" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Email (@gmail.com)
+              </button>
+              <button
+                type="button"
+                onClick={() => setMethod("phone")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  method === "phone" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Mobile (+63)
+              </button>
+            </div>
+
+            {method === "email" ? (
+              <GmailInput
+                value={emailValue}
+                onChange={(full) => {
+                  setEmailValue(full);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                theme="dark"
+                placeholder="username"
+                required
+                disabled={isLoading}
+              />
+            ) : (
+              <PhilippinePhoneInput
+                value={phoneValue}
+                onChange={(fmt) => {
+                  setPhoneValue(fmt);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                theme="dark"
+                placeholder="+63 9XX XXX XXXX"
+                required
+                disabled={isLoading}
+              />
+            )}
           </div>
 
           <button

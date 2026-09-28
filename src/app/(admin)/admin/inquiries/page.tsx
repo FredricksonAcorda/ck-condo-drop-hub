@@ -111,7 +111,6 @@ export default function AdminInquiriesPage() {
         <div className="flex items-center gap-2 text-xs">
           <span className="text-gray-500 font-medium">Lobby Counter</span>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-bold text-gray-900">Live Inbox</span>
         </div>
       </div>
 
@@ -201,14 +200,18 @@ export default function AdminInquiriesPage() {
         {/* Search & Filter Toolbar */}
         <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
           <div className="relative w-full sm:w-96">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
             <input
               type="text"
               placeholder="Search resident, unit, tracking #, or message..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input w-full text-xs pl-9"
+              className="input w-full text-xs pl-10 placeholder:text-gray-400 placeholder:opacity-50"
             />
-            <span className="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -263,7 +266,7 @@ export default function AdminInquiriesPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {inq.category.includes("Doorstep") ? (
                       <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                        <span>🚪</span> Doorstep Concierge Request
+                        Doorstep Concierge Request
                       </span>
                     ) : (
                       <span className="text-xs font-semibold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded">

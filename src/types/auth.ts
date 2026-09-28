@@ -16,6 +16,8 @@ export interface AuthUser {
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
   residentCode?: string;
+  authorizedClaimant?: string;
+  claimantPhone?: string;
   deliveryCreditsLeft?: number;
   subscriptionExpiry?: string;
   pendingSubmittedAt?: string;

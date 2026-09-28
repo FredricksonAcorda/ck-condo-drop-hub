@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context";
 import { recordInvoice } from "@/lib/db/invoices";
+import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
+import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -33,6 +35,16 @@ export default function RegisterPage() {
 
     if (!fullName.trim() || !phone.trim() || !email.trim() || !unit.trim()) {
       setErrorMessage("Please complete all required resident fields.");
+      return;
+    }
+
+    if (!isValidPhilippinePhone(phone)) {
+      setErrorMessage("Please enter a valid Philippine mobile number (+63 9XX XXX XXXX).");
+      return;
+    }
+
+    if (!email || !email.includes("@")) {
+      setErrorMessage("Please enter a valid email address (@gmail.com).");
       return;
     }
 
@@ -127,8 +139,8 @@ export default function RegisterPage() {
 
   const handlePrefillDemo = () => {
     setFullName("Juan Dela Cruz");
-    setPhone("0917 123 4567");
-    setEmail(`juan.${Date.now().toString().slice(-4)}@example.com`);
+    setPhone("+63 917 123 4567");
+    setEmail(`juan.${Date.now().toString().slice(-4)}@gmail.com`);
     setTower("Tower A");
     setUnit("Unit 204");
     setPlan("PREMIUM");
@@ -209,33 +221,25 @@ export default function RegisterPage() {
 
         {/* Mobile Number & Email */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <input
-            type="tel"
-            name="phone"
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="Mobile (0917 123 4567)"
+          <PhilippinePhoneInput
             value={phone}
-            onChange={(e) => {
-              setPhone(e.target.value);
+            onChange={(formatted) => {
+              setPhone(formatted);
               if (errorMessage) setErrorMessage(null);
             }}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+            theme="dark"
+            placeholder="+63 9XX XXX XXXX"
             required
             disabled={isLoading}
           />
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            inputMode="email"
-            placeholder="Email address"
+          <GmailInput
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
+            onChange={(full) => {
+              setEmail(full);
               if (errorMessage) setErrorMessage(null);
             }}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
+            theme="dark"
+            placeholder="username"
             required
             disabled={isLoading}
           />

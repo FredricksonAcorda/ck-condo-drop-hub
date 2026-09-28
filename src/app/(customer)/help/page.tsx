@@ -253,7 +253,7 @@ export default function HelpCenterPage() {
             <button
               type="submit"
               disabled={isSending}
-              className="btn btn-primary btn-sm w-full font-bold uppercase cursor-pointer"
+              className="btn btn-primary btn-sm w-auto font-bold uppercase cursor-pointer"
             >
               {isSending ? "Sending to Lobby..." : "Send Message to Lobby"}
             </button>

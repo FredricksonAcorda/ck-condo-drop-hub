@@ -75,7 +75,7 @@ function TrackParcelContent() {
           <button
             type="submit"
             disabled={isSearching}
-            className="btn btn-primary sm:w-44 py-3 font-bold uppercase cursor-pointer flex items-center justify-center gap-2"
+            className="btn btn-primary w-auto sm:w-auto px-6 py-3 font-bold uppercase cursor-pointer flex items-center justify-center gap-2"
           >
             <svg
               className="w-4 h-4"

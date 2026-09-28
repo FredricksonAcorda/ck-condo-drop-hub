@@ -3,9 +3,9 @@ import { Parcel, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSett
 export const SEED_USERS: AuthUser[] = [
   {
     id: "usr-resident-1",
-    email: "juan.delacruz@example.com",
+    email: "juan.delacruz@gmail.com",
     name: "Juan Dela Cruz",
-    phone: "0917 123 4567",
+    phone: "+63 917 123 4567",
     role: "resident",
     unit: "Unit 101",
     tower: "Tower A",
@@ -20,9 +20,9 @@ export const SEED_USERS: AuthUser[] = [
   },
   {
     id: "usr-resident-2",
-    email: "maria.santos@example.com",
+    email: "maria.santos@gmail.com",
     name: "Maria Santos",
-    phone: "0918 234 5678",
+    phone: "+63 918 234 5678",
     role: "resident",
     unit: "Unit 304",
     tower: "Tower B",
@@ -49,8 +49,8 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
   {
     id: "usr-resident-1",
     name: "Juan Dela Cruz",
-    email: "juan.delacruz@example.com",
-    phone: "0917 123 4567",
+    email: "juan.delacruz@gmail.com",
+    phone: "+63 917 123 4567",
     unit: "Unit 101",
     tower: "Tower A",
     building: "CK Buildersville Condominium",
@@ -59,8 +59,8 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
     paymentMethod: "GCASH",
     paymentReference: "GC-9821-4402",
     residentCode: "CK-000123",
-    authorizedClaimant: "Maria Dela Cruz (Spouse)",
-    claimantPhone: "0918 987 6543",
+    authorizedClaimant: "",
+    claimantPhone: "",
     notifications: {
       smsArrival: true,
       smsReminder: true,
@@ -77,8 +77,8 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
   {
     id: "usr-resident-2",
     name: "Maria Santos",
-    email: "maria.santos@example.com",
-    phone: "0918 234 5678",
+    email: "maria.santos@gmail.com",
+    phone: "+63 918 234 5678",
     unit: "Unit 304",
     tower: "Tower B",
     building: "CK Buildersville Condominium",
@@ -87,8 +87,8 @@ export const SEED_RESIDENTS: ResidentProfile[] = [
     paymentMethod: "GCASH",
     paymentReference: "GC-1029-3381",
     residentCode: "CK-000189",
-    authorizedClaimant: "Carlo Santos (Son)",
-    claimantPhone: "0919 111 2222",
+    authorizedClaimant: "",
+    claimantPhone: "",
     notifications: {
       smsArrival: true,
       smsReminder: true,

@@ -531,7 +531,7 @@ export default function ParcelsInventoryPage() {
                 placeholder="Search tracking, resident, unit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-8 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
           </div>

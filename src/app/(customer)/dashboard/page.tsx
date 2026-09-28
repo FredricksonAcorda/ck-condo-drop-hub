@@ -63,7 +63,7 @@ export default function CustomerDashboardPage() {
   const deliveryCreditsText = isPendingPayment
     ? "Pending Payment"
     : user?.plan === "PREMIUM"
-    ? `${user?.deliveryCreditsLeft ?? 0} of 5 Left`
+    ? `${user?.deliveryCreditsLeft ?? 0} of 1 Left`
     : user?.plan === "REGULAR"
     ? "Not available for Regular Plans"
     : "Not available for Per Parcel";
@@ -149,7 +149,7 @@ export default function CustomerDashboardPage() {
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-          <span className="text-xs text-gray-500 uppercase font-semibold">Door Delivery Credits</span>
+          <span className="text-xs text-gray-500 uppercase font-semibold">FREE DOOR TO DOOR DELIVERY</span>
           <div className={`mt-2 ${user?.plan === "PREMIUM" ? "font-[family-name:var(--font-heading)] text-2xl sm:text-3xl text-gray-900" : "text-sm sm:text-base font-bold text-gray-700 leading-snug"}`}>
             {deliveryCreditsText}
           </div>
