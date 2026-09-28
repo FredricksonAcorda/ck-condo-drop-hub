@@ -49,6 +49,20 @@ export interface DeskInquiry {
   updatedAt?: string;
 }
 
+export interface EditableFAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+export interface CommunityAnnouncement {
+  id: string;
+  title: string;
+  highlight?: string;
+  desc: string;
+}
+
 export interface HubSettings {
   hubName: string;
   buildingName: string;
@@ -63,4 +77,13 @@ export interface HubSettings {
   lobbyAnnouncement?: string;
   pickupLocation?: string;
   operatingHours?: string;
+  // Dynamic Footer & Contact Us contents
+  contactPhone?: string;
+  contactEmail?: string;
+  contactAddress?: string;
+  // Dynamic CMS FAQs
+  homeFaqs?: EditableFAQ[];
+  residentFaqs?: EditableFAQ[];
+  // Dynamic Community Board Announcements
+  communityAnnouncements?: CommunityAnnouncement[];
 }

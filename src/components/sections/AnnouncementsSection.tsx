@@ -1,100 +1,26 @@
-import FAQAccordion, { FAQItem } from "@/components/ui/FAQAccordion";
+"use client";
 
-const faqItems: FAQItem[] = [
-  {
-    question: "How do I sign up and start receiving parcels at the Lobby?",
-    answer: (
-      <p>
-        Getting started is quick and easy! Click <strong className="font-bold text-brand-red">Sign Up</strong>, enter your name, mobile number, condominium tower, and unit number. Once registered, you will receive your unique resident drop code to use on your Shopee, Lazada, TikTok, and courier delivery addresses.
-      </p>
-    ),
-  },
-  {
-    question: "How will I know when my parcel has arrived and is ready for pickup?",
-    answer: (
-      <p>
-        The moment our Lobby Staff Admin scans your parcel into the Lobby, you will receive an automatic <strong className="font-bold text-brand-text">SMS notification</strong> and an instant update in your resident customer portal with your package details and digital claim code.
-      </p>
-    ),
-  },
-  {
-    question: "What are the Lobby operating hours for claiming packages?",
-    answer: (
-      <p>
-        Our physical storefront is open <strong className="font-bold text-brand-text">Monday to Sunday from 8:00 AM to 9:00 PM</strong>, including weekends and selected public holidays. You can pick up anytime during these hours by presenting your claim QR code or 4-digit verification pin.
-      </p>
-    ),
-  },
-  {
-    question: "How does the free holding period work?",
-    answer: (
-      <p>
-        Every parcel receives <strong className="font-bold text-brand-text">3 days of free holding</strong> on both Per Parcel and Regular plans (with Regular enjoying 15 days of unlimited parcels), and <strong className="font-bold text-brand-red">7 days of free holding</strong> with 30 days unlimited parcels on the Premium VIP Plan. Parcels held past the free window incur a minimal holding fee of only ₱5 per day.
-      </p>
-    ),
-  },
-  {
-    question: "How does the door-to-door delivery service work?",
-    answer: (
-      <p>
-        Premium VIP members receive <strong className="font-bold text-brand-red">1 free door-to-door delivery</strong> every month. You can request direct doorstep delivery to your unit with a single tap from your online customer portal during operating hours. (Note: Door delivery is exclusive to Premium VIP members and is not available on Regular or Per Parcel plans).
-      </p>
-    ),
-  },
-  {
-    question: "Which courier services are accepted at CK Condo Drop Hub?",
-    answer: (
-      <p>
-        We accept parcels from our official partner couriers: <strong className="font-bold text-brand-text">SPX Express</strong>, <strong className="font-bold text-brand-text">Flash Express</strong>, <strong className="font-bold text-brand-text">J&amp;T Express</strong>, <strong className="font-bold text-brand-text">YTO Express</strong>, <strong className="font-bold text-brand-text">LBC Express</strong>, and <strong className="font-bold text-brand-text">STO Express</strong>, as well as other couriers for appliances and retail items from SM and other brands.
-      </p>
-    ),
-  },
-];
+import FAQAccordion, { FAQItem } from "@/components/ui/FAQAccordion";
+import { useParcels } from "@/context";
+import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 
 export default function AnnouncementsSection() {
-  const announcements = [
-    {
-      title: "Store Hours",
-      desc: (
-        <>
-          <span className="font-extrabold text-brand-text block text-base sm:text-lg lg:text-xl mb-1.5">
-            Monday – Sunday
-          </span>
-          <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-brand-red block my-2 tracking-tight">
-            8:00 AM – 9:00 PM
-          </span>
-          <span className="text-sm sm:text-base lg:text-lg text-brand-text font-bold block mt-2.5 leading-relaxed">
-            Open daily including weekends and holidays for easy parcel pickup.
-          </span>
-        </>
-      ),
-    },
-    {
-      title: "Important Notice",
-      desc: (
-        <>
-          <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
-            Please claim your parcels within your plan&apos;s{" "}
-            <span className="text-brand-red font-black underline decoration-2 underline-offset-4">
-              free holding period (3 to 7 days)
-            </span>{" "}
-            to prevent extra storage charges.
-          </p>
-          <p className="text-sm sm:text-base lg:text-lg text-brand-text font-semibold mt-3 leading-relaxed">
-            Prompt pickup keeps our Lobby organized and prevents penalty fees.
-          </p>
-        </>
-      ),
-    },
-    {
-      title: "Promos & Updates",
-      desc: (
-        <p className="text-base sm:text-lg lg:text-xl text-brand-text font-bold leading-relaxed">
-          Stay tuned with our community bulletin for the latest resident discounts, raffle promos, and community schedules.
-        </p>
-      ),
-    },
-  ];
+  const { hubSettings } = useParcels();
+
+  const announcements =
+    hubSettings.communityAnnouncements && hubSettings.communityAnnouncements.length > 0
+      ? hubSettings.communityAnnouncements
+      : DEFAULT_HUB_SETTINGS.communityAnnouncements || [];
+
+  const rawFaqs =
+    hubSettings.homeFaqs && hubSettings.homeFaqs.length > 0
+      ? hubSettings.homeFaqs
+      : DEFAULT_HUB_SETTINGS.homeFaqs || [];
+
+  const faqItems: FAQItem[] = rawFaqs.map((f) => ({
+    question: f.question,
+    answer: <p className="leading-relaxed text-brand-text">{f.answer}</p>,
+  }));
 
   return (
     <section id="announcements" className="bg-white py-16 lg:py-24 scroll-mt-28 border-t border-brand-border/60">
@@ -111,16 +37,23 @@ export default function AnnouncementsSection() {
 
         {/* Announcements Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          {announcements.map((item) => (
+          {announcements.map((item, idx) => (
             <div
-              key={item.title}
+              key={item.id || item.title || idx}
               className="border-2 border-brand-border rounded-2xl p-6 sm:p-8 lg:p-9 hover:shadow-xl hover:border-brand-red/50 hover:-translate-y-1 transition-all duration-300 bg-white flex flex-col justify-between"
             >
               <div>
-                <h3 className="font-[family-name:var(--font-heading)] font-black text-2xl sm:text-3xl text-brand-text mb-4 uppercase tracking-wide">
+                <h3 className="font-[family-name:var(--font-heading)] font-black text-2xl sm:text-3xl text-brand-text mb-3 uppercase tracking-wide">
                   {item.title}
                 </h3>
-                <div className="text-brand-text leading-relaxed">{item.desc}</div>
+                {item.highlight && (
+                  <span className="text-xl sm:text-2xl font-black text-brand-red block mb-3 tracking-tight">
+                    {item.highlight}
+                  </span>
+                )}
+                <div className="text-brand-text leading-relaxed text-sm sm:text-base font-medium">
+                  {item.desc}
+                </div>
               </div>
             </div>
           ))}

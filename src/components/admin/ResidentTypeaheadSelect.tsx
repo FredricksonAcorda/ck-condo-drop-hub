@@ -40,10 +40,22 @@ export default function ResidentTypeaheadSelect({
     return residents.filter((r) => {
       const nameMatch = r.name.toLowerCase().includes(q);
       const unitMatch = r.unit.toLowerCase().includes(q);
-      const towerMatch = r.tower.toLowerCase().includes(q);
+      const towerMatch = (r.branch || r.tower).toLowerCase().includes(q);
+      const bldgMatch = (r.buildingNumber || "").toLowerCase().includes(q);
+      const floorMatch = (r.floorNumber || "").toLowerCase().includes(q);
+      const unitNumMatch = (r.unitNumber || "").toLowerCase().includes(q);
       const codeMatch = r.residentCode.toLowerCase().includes(q);
       const phoneMatch = r.phone.replace(/\s+/g, "").includes(q.replace(/\s+/g, ""));
-      return nameMatch || unitMatch || towerMatch || codeMatch || phoneMatch;
+      return (
+        nameMatch ||
+        unitMatch ||
+        towerMatch ||
+        bldgMatch ||
+        floorMatch ||
+        unitNumMatch ||
+        codeMatch ||
+        phoneMatch
+      );
     });
   }, [residents, searchQuery]);
 
@@ -146,7 +158,7 @@ export default function ResidentTypeaheadSelect({
   const displayInputValue = isOpen
     ? searchQuery
     : selectedResident
-    ? `${selectedResident.name} — Unit ${selectedResident.unit} (${selectedResident.tower})`
+    ? `${selectedResident.name} — ${selectedResident.unit} (${selectedResident.branch || selectedResident.tower})`
     : "";
 
   return (
@@ -301,7 +313,7 @@ export default function ResidentTypeaheadSelect({
 
                       <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500">
                         <span className="font-medium text-gray-700">
-                          Unit {renderHighlightedText(res.unit, searchQuery)} ({res.tower})
+                          {renderHighlightedText(res.unit, searchQuery)} ({res.branch || res.tower})
                         </span>
                         <span>•</span>
                         <span className="font-mono text-[10px] text-gray-400">

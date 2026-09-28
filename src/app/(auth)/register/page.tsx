@@ -8,6 +8,7 @@ import { useAuth } from "@/context";
 import { recordInvoice } from "@/lib/db/invoices";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
+import { BRANCHES } from "@/constants";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,8 +16,10 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [unit, setUnit] = useState("");
-  const [tower, setTower] = useState("Tower A");
+  const [branch, setBranch] = useState<string>("Malinta Branch");
+  const [buildingNumber, setBuildingNumber] = useState("");
+  const [floorNumber, setFloorNumber] = useState("");
+  const [unitNumber, setUnitNumber] = useState("");
   const [plan, setPlan] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM">("PREMIUM");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,8 +36,15 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!fullName.trim() || !phone.trim() || !email.trim() || !unit.trim()) {
-      setErrorMessage("Please complete all required resident fields.");
+    if (
+      !fullName.trim() ||
+      !phone.trim() ||
+      !email.trim() ||
+      !buildingNumber.trim() ||
+      !floorNumber.trim() ||
+      !unitNumber.trim()
+    ) {
+      setErrorMessage("Please complete all required resident fields (Building #, Floor #, Unit #).");
       return;
     }
 
@@ -76,13 +86,19 @@ export default function RegisterPage() {
     setIsLoading(true);
     setPaymentError(null);
 
+    const fullUnitString = `Bldg ${buildingNumber.trim()} • Flr ${floorNumber.trim()} • Unit ${unitNumber.trim()}`;
+
     try {
       const registeredUser = await register({
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim(),
-        unit: unit.trim(),
-        tower,
+        unit: fullUnitString,
+        tower: branch,
+        branch,
+        buildingNumber: buildingNumber.trim(),
+        floorNumber: floorNumber.trim(),
+        unitNumber: unitNumber.trim(),
         plan,
         pendingPlan: plan !== "PER_PARCEL" ? plan : undefined,
         planStatus,
@@ -96,8 +112,8 @@ export default function RegisterPage() {
           residentId: registeredUser.id,
           residentName: registeredUser.name,
           residentCode: registeredUser.residentCode || "CK-000123",
-          unit: registeredUser.unit || unit.trim(),
-          tower: registeredUser.tower || tower,
+          unit: registeredUser.unit || fullUnitString,
+          tower: registeredUser.tower || branch,
           date: "Today",
           plan: `${plan.replace("_", " ")} Membership`,
           pendingPlan: plan,
@@ -141,8 +157,10 @@ export default function RegisterPage() {
     setFullName("Juan Dela Cruz");
     setPhone("+63 917 123 4567");
     setEmail(`juan.${Date.now().toString().slice(-4)}@gmail.com`);
-    setTower("Tower A");
-    setUnit("Unit 204");
+    setBranch("Malinta Branch");
+    setBuildingNumber("1");
+    setFloorNumber("2");
+    setUnitNumber("204");
     setPlan("PREMIUM");
     setPassword("password123");
   };
@@ -245,34 +263,74 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Tower & Unit */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {/* Branch Selection */}
+        <div>
+          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 px-0.5">
+            Condo Drop Hub Branch
+          </label>
           <select
-            value={tower}
-            onChange={(e) => setTower(e.target.value)}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors cursor-pointer"
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors cursor-pointer"
             disabled={isLoading}
           >
-            <option value="Tower A">Tower A</option>
-            <option value="Tower B">Tower B</option>
-            <option value="Tower C">Tower C</option>
-            <option value="Tower 1">Tower 1</option>
-            <option value="Tower 2">Tower 2</option>
-            <option value="Tower 3">Tower 3</option>
+            {BRANCHES.map((b) => (
+              <option key={b} value={b} className="bg-[#1c1c21] text-white">
+                {b}
+              </option>
+            ))}
           </select>
+        </div>
 
-          <input
-            type="text"
-            placeholder="Unit (e.g. Unit 304)"
-            value={unit}
-            onChange={(e) => {
-              setUnit(e.target.value);
-              if (errorMessage) setErrorMessage(null);
-            }}
-            className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
-            required
-            disabled={isLoading}
-          />
+        {/* 3 Divided Unit Input Fields (Building #, Floor #, Unit #) */}
+        <div>
+          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 px-0.5">
+            Unit Details (Building #, Floor #, Unit #)
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <input
+                type="text"
+                placeholder="Building #"
+                value={buildingNumber}
+                onChange={(e) => {
+                  setBuildingNumber(e.target.value);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Floor #"
+                value={floorNumber}
+                onChange={(e) => {
+                  setFloorNumber(e.target.value);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Unit #"
+                value={unitNumber}
+                onChange={(e) => {
+                  setUnitNumber(e.target.value);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors text-center"
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Membership Tier Cards */}

@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { useAuth, useParcels } from "@/context";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { formatPhilippinePhone, isValidPhilippinePhone } from "@/lib/utils/phone-email";
+import { BRANCHES } from "@/constants";
+import { AuthorizedClaimant } from "@/types";
 
 export default function MyAccountPage() {
   const { user, updateProfile } = useAuth();
@@ -23,11 +25,20 @@ export default function MyAccountPage() {
   const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
   const [email, setEmail] = useState(user?.email || "juan.delacruz@gmail.com");
   const [phone, setPhone] = useState(formatPhilippinePhone(user?.phone || "0917 123 4567"));
-  const [unit, setUnit] = useState(user?.unit || "Unit 101");
-  const [tower, setTower] = useState(user?.tower || "Tower A");
+  const [branch, setBranch] = useState(user?.branch || "Malinta Branch");
+  const [buildingNumber, setBuildingNumber] = useState(user?.buildingNumber || "1");
+  const [floorNumber, setFloorNumber] = useState(user?.floorNumber || "1");
+  const [unitNumber, setUnitNumber] = useState(user?.unitNumber || "101");
   const building = "CK Buildersville Condominium";
-  const [authorizedClaimant, setAuthorizedClaimant] = useState(user?.authorizedClaimant || "");
-  const [claimantPhone, setClaimantPhone] = useState(user?.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
+
+  // Authorized claimants (up to 3 total)
+  const initialClaimants: AuthorizedClaimant[] =
+    user?.authorizedClaimants && user.authorizedClaimants.length > 0
+      ? user.authorizedClaimants
+      : user?.authorizedClaimant
+      ? [{ name: user.authorizedClaimant, phone: user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "" }]
+      : [{ name: "", phone: "" }];
+  const [claimants, setClaimants] = useState<AuthorizedClaimant[]>(initialClaimants);
 
   // Notifications
   const [smsArrival, setSmsArrival] = useState(true);
@@ -131,10 +142,29 @@ export default function MyAccountPage() {
       setFullName(user.name || "");
       setEmail(user.email || "");
       setPhone(formatPhilippinePhone(user.phone || ""));
-      if (user.unit) setUnit(user.unit);
-      if (user.tower) setTower(user.tower);
-      setAuthorizedClaimant(user.authorizedClaimant || "");
-      setClaimantPhone(user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "");
+      if (user.branch) setBranch(user.branch);
+      if (user.buildingNumber) setBuildingNumber(user.buildingNumber);
+      if (user.floorNumber) setFloorNumber(user.floorNumber);
+      if (user.unitNumber) setUnitNumber(user.unitNumber);
+      if (user.authorizedClaimants && user.authorizedClaimants.length > 0) {
+        setClaimants(
+          user.authorizedClaimants.map((c) => ({
+            name: c.name || "",
+            phone: c.phone ? formatPhilippinePhone(c.phone) : "",
+            relationship: c.relationship || "",
+          }))
+        );
+      } else if (user.authorizedClaimant) {
+        setClaimants([
+          {
+            name: user.authorizedClaimant,
+            phone: user.claimantPhone ? formatPhilippinePhone(user.claimantPhone) : "",
+            relationship: "",
+          },
+        ]);
+      } else {
+        setClaimants([{ name: "", phone: "" }]);
+      }
     }
   }, [user]);
 
@@ -154,11 +184,31 @@ export default function MyAccountPage() {
       return;
     }
 
-    // Validate claimant phone if claimant name is provided
-    if (authorizedClaimant.trim() && claimantPhone.trim() && !isValidPhilippinePhone(claimantPhone)) {
-      setSaveError("Please enter a valid Philippine mobile number for the authorized claimant (+63 9XX XXX XXXX).");
+    // Validate unit fields
+    if (!buildingNumber.trim() || !floorNumber.trim() || !unitNumber.trim()) {
+      setSaveError("Please enter Building #, Floor #, and Unit #.");
       return;
     }
+
+    // Validate claimant phones if claimant name is provided
+    for (let i = 0; i < claimants.length; i++) {
+      const c = claimants[i];
+      if (c.name.trim() && c.phone.trim() && !isValidPhilippinePhone(c.phone)) {
+        setSaveError(
+          `Please enter a valid Philippine mobile number (+63 9XX XXX XXXX) for claimant #${i + 1} (${c.name}).`
+        );
+        return;
+      }
+    }
+
+    const fullUnitString = `Bldg ${buildingNumber.trim()} • Flr ${floorNumber.trim()} • Unit ${unitNumber.trim()}`;
+    const cleanClaimants = claimants
+      .map((c) => ({
+        name: c.name.trim(),
+        phone: c.phone.trim(),
+        relationship: c.relationship?.trim() || "",
+      }))
+      .filter((c) => c.name !== "");
 
     setIsSaving(true);
 
@@ -167,10 +217,15 @@ export default function MyAccountPage() {
         name: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
-        unit: unit.trim(),
-        tower: tower.trim(),
-        authorizedClaimant: authorizedClaimant.trim(),
-        claimantPhone: claimantPhone.trim(),
+        unit: fullUnitString,
+        tower: branch,
+        branch,
+        buildingNumber: buildingNumber.trim(),
+        floorNumber: floorNumber.trim(),
+        unitNumber: unitNumber.trim(),
+        authorizedClaimants: cleanClaimants,
+        authorizedClaimant: cleanClaimants[0]?.name || "",
+        claimantPhone: cleanClaimants[0]?.phone || "",
         preferredDeliveryWindow: preferredWindow,
         deliveryInstructions: deliveryInstructions.trim(),
         notifications: {
@@ -313,45 +368,68 @@ export default function MyAccountPage() {
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
                     Condominium Unit Address
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Unit Number
-                      </label>
-                      <input
-                        type="text"
-                        value={unit}
-                        onChange={(e) => setUnit(e.target.value)}
-                        className="input w-full"
-                        required
-                        disabled={isSaving}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Tower / Cluster
-                      </label>
-                      <input
-                        type="text"
-                        value={tower}
-                        onChange={(e) => setTower(e.target.value)}
-                        className="input w-full"
-                        required
-                        disabled={isSaving}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Resident Code
-                      </label>
-                      <input
-                        type="text"
-                        value={user?.residentCode || "CK-000123"}
-                        disabled
-                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed font-mono"
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="md:col-span-3">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Branch
+                      </label>
+                      <select
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        className="input w-full cursor-pointer bg-white"
+                        disabled={isSaving}
+                      >
+                        {BRANCHES.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 3 Divided Unit Input Fields */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Building #
+                      </label>
+                      <input
+                        type="text"
+                        value={buildingNumber}
+                        onChange={(e) => setBuildingNumber(e.target.value)}
+                        placeholder="e.g. Bldg 1"
+                        className="input w-full text-center font-medium"
+                        required
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Floor #
+                      </label>
+                      <input
+                        type="text"
+                        value={floorNumber}
+                        onChange={(e) => setFloorNumber(e.target.value)}
+                        placeholder="e.g. 3rd Flr"
+                        className="input w-full text-center font-medium"
+                        required
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Unit #
+                      </label>
+                      <input
+                        type="text"
+                        value={unitNumber}
+                        onChange={(e) => setUnitNumber(e.target.value)}
+                        placeholder="e.g. Unit 304"
+                        className="input w-full text-center font-medium"
+                        required
+                        disabled={isSaving}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Condominium Property
                       </label>
@@ -362,41 +440,100 @@ export default function MyAccountPage() {
                         className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Resident Code
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.residentCode || "CK-000123"}
+                        disabled
+                        className="input w-full bg-gray-100 text-gray-500 cursor-not-allowed font-mono text-center"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-1">
-                    Authorized Parcel Claimants
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Allow family members or housemates to claim parcels on your behalf with their ID.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Authorized Person & Relationship
-                      </label>
-                      <input
-                        type="text"
-                        value={authorizedClaimant}
-                        onChange={(e) => setAuthorizedClaimant(e.target.value)}
-                        placeholder="Type roommate's name"
-                        className="input w-full placeholder:text-gray-400 placeholder:opacity-50"
-                        disabled={isSaving}
-                      />
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                        Authorized Parcel Claimants
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Allow family members or housemates to claim parcels on your behalf with their ID. You can register up to 3 authorized claimants.
+                      </p>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Claimant Mobile Number
-                      </label>
-                      <PhilippinePhoneInput
-                        value={claimantPhone}
-                        onChange={(fmt) => setClaimantPhone(fmt)}
-                        placeholder="+63 9XX XXX XXXX"
-                        disabled={isSaving}
-                      />
-                    </div>
+                    {claimants.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (claimants.length < 3) {
+                            setClaimants([...claimants, { name: "", phone: "", relationship: "" }]);
+                          }
+                        }}
+                        className="btn btn-outline text-xs text-brand-red border-brand-red/30 hover:bg-brand-red/10 py-1.5 px-3 rounded-lg w-auto cursor-pointer font-bold shrink-0"
+                      >
+                        + Add Another Claimant ({3 - claimants.length} left)
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {claimants.map((claimant, idx) => (
+                      <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-gray-50/60 relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-brand-text-muted">
+                            Claimant #{idx + 1} {idx === 0 ? "(Primary)" : "(Additional)"}
+                          </span>
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setClaimants(claimants.filter((_, i) => i !== idx));
+                              }}
+                              className="text-red-500 hover:text-red-700 text-xs font-semibold cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                              Authorized Person & Relationship
+                            </label>
+                            <input
+                              type="text"
+                              value={claimant.name}
+                              onChange={(e) => {
+                                const updated = [...claimants];
+                                updated[idx].name = e.target.value;
+                                setClaimants(updated);
+                              }}
+                              placeholder="Type roommate or family member's name"
+                              className="input w-full placeholder:text-gray-400 placeholder:opacity-50 bg-white"
+                              disabled={isSaving}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                              Claimant Mobile Number
+                            </label>
+                            <PhilippinePhoneInput
+                              value={claimant.phone}
+                              onChange={(fmt) => {
+                                const updated = [...claimants];
+                                updated[idx].phone = fmt;
+                                setClaimants(updated);
+                              }}
+                              placeholder="+63 9XX XXX XXXX"
+                              disabled={isSaving}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

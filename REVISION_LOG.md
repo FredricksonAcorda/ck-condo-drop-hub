@@ -30,6 +30,13 @@
 18. [Bi-Directional Door Delivery Concierge Status Sync with Staff Admin](#18-bi-directional-door-delivery-concierge-status-sync-with-staff-admin-add--fix)
 19. [Cross-Platform Terminology Standardization (Lobby, Staff Admin, Cash at Counter)](#19-cross-platform-terminology-standardization-modification)
 20. [Vercel Web Analytics and Speed Insights Integration](#20-vercel-web-analytics-and-speed-insights-integration-add)
+21. [Staff Admin "SETTINGS" Navigation & Live Footer Contact Us CMS](#21-staff-admin-settings-navigation--live-footer-contact-us-cms-add--modification)
+22. [Multi-Context FAQs Management Engine for Home & Help Center](#22-multi-context-faqs-management-engine-for-home--help-center-add--modification)
+23. [Community Board Announcements CMS for Home Page](#23-community-board-announcements-cms-for-home-page-add--modification)
+24. [Auth Layout Clean White Light-Mode Background with Persistent Card Branding](#24-auth-layout-clean-white-light-mode-background-with-persistent-card-branding-modification)
+25. [12 Multi-Branch Hub Network Dropdown Architecture](#25-12-multi-branch-hub-network-dropdown-architecture-modification--add)
+26. [3-Part Divided Unit Specification (Building #, Floor #, Unit #)](#26-3-part-divided-unit-specification-building--floor--unit--modification--add)
+27. [Dynamic Multi-Proxy Authorized Claimants Engine (Up to 3 Claimants)](#27-dynamic-multi-proxy-authorized-claimants-engine-up-to-3-claimants-add--modification)
 
 ---
 
@@ -431,6 +438,149 @@
 
 ---
 
+## 21. Staff Admin "SETTINGS" Navigation & Live Footer Contact Us CMS (Add / Modification)
+
+- **Current State**:
+  The Staff Admin navigation bar displayed "HUB SETTINGS". The home page footer (`PublicFooter.tsx`) contained hardcoded contact details (phone `+63 917 123 4567`, email `support@ckcondodrophub.com`, address `Lobby Level, Tower A`).
+- **The Problem**:
+  Navigation copy was unnecessarily verbose ("HUB SETTINGS" instead of concise "SETTINGS"). Furthermore, when physical lobby contact numbers, support gmail addresses, or condominium addresses changed, administrators had no interface to update them, requiring developer code edits and redeployments.
+- **What to Do (Solution)**:
+  1. Updated Staff Admin navigation tab label in `src/app/(admin)/layout.tsx` to `"SETTINGS"` only and aligned header copy to `"SYSTEM SETTINGS"`.
+  2. Extended `HubSettings` interface in `src/types/hub.ts` with `contactPhone`, `contactEmail`, and `contactAddress`.
+  3. Added Section 4 ("Home Page Footer Contact Us") inside `/admin/settings/page.tsx` with dedicated inputs for Contact Number, Gmail Address, and Physical Condominium Address, backed by `saveSettings` and reactive broadcasts.
+  4. Updated `PublicFooter.tsx` into a reactive client component subscribing to `useParcels().hubSettings`, rendering live fallback values if fields are unpopulated.
+- **Result**:
+  Clean, concise navigation ergonomics for staff admin and instant, code-free editing of public footer contact information across all pages.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never hardcode support contact information or address metadata in footer components. Expose a centralized settings CMS so non-technical operations staff can update hotline numbers, email channels, and branch headquarters in real time.
+
+---
+
+## 22. Multi-Context FAQs Management Engine for Home & Help Center (Add / Modification)
+
+- **Current State**:
+  FAQs displayed on the home page and in the resident portal Help Center (`/help`) were static, hardcoded array constants inside component files.
+- **The Problem**:
+  Staff administrators could not add, edit, or remove questions and answers to reflect changing condominium policies, updated courier protocols, or seasonal operating hours without engineering intervention.
+- **What to Do (Solution)**:
+  1. Created `EditableFAQ` type interface (`id`, `question`, `answer`, `category`).
+  2. Extended `HubSettings` with `homeFaqs` (home landing page) and `residentFaqs` (resident help center).
+  3. Seeded sensible default FAQs in `src/lib/db/seed-data.ts` and merged them into `local-store.ts`.
+  4. Added Section 6 ("Frequently Asked Questions (FAQs) Management") in `/admin/settings/page.tsx` with a dual tab toggle (`Home Landing Page FAQs` vs `Resident Help Center FAQs`).
+  5. Implemented live accordion preview, "Add FAQ" modal with category assignment, inline editing, and deletion with confirmation.
+  6. Connected `AnnouncementsSection.tsx` and `/help/page.tsx` directly to dynamic `hubSettings` via `useParcels()`.
+- **Result**:
+  Staff admin has full, granular CRUD control over FAQs for both public visitors and authenticated residents with immediate reactive UI synchronization.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Segment customer knowledge bases by context (pre-sales public FAQs vs authenticated post-purchase onboarding FAQs). Allow operations teams to manage both from a single, unified administrative dashboard.
+
+---
+
+## 23. Community Board Announcements CMS for Home Page (Add / Modification)
+
+- **Current State**:
+  The home page Community Board Announcements section showed static mock cards hardcoded directly into the template.
+- **The Problem**:
+  Condominium management could not broadcast urgent notices (e.g. Typhoon courier delays, scheduled holiday desk hours, elevator maintenance) directly to the community from the admin portal.
+- **What to Do (Solution)**:
+  1. Defined `CommunityAnnouncement` interface with `id`, `title`, `description`, `badge`, `badgeColor`, `date`, `priority`, and `active` status.
+  2. Extended `HubSettings` with `communityAnnouncements: CommunityAnnouncement[]`.
+  3. Built Section 5 ("Home Page Community Board Announcements") in `/admin/settings/page.tsx` featuring:
+     - "Add Announcement" interactive modal with title, description, badge tag, color preset, and priority toggling.
+     - Inline card editing and deletion capabilities.
+     - Live broadcast updates to all listening tabs via `ck_db_updated` events.
+  4. Converted `AnnouncementsSection.tsx` into a dynamic client component reading active announcements from `hubSettings.communityAnnouncements`.
+- **Result**:
+  Lobby staff can post, update, and withdraw high-visibility community notices in seconds without touching code.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Provide a lightweight announcement banner / broadcast system in administrative consoles for flash sales, maintenance windows, and shipping carrier disruptions.
+
+---
+
+## 24. Auth Layout Clean White Light-Mode Background with Persistent Card Branding (Modification)
+
+- **Current State**:
+  The authentication layout (`src/app/(auth)/layout.tsx`) forced an ultra-dark background (`bg-[#0a0a0c]`) across the entire viewport for both light and dark display modes.
+- **The Problem**:
+  The user requested the outer background of the Login and Sign-Up pages in light mode to be clean white, while retaining the signature dark branded box (`bg-[#141416]` with red glow and white typography) to keep high-contrast brand focus.
+- **What to Do (Solution)**:
+  1. Modified `src/app/(auth)/layout.tsx` outer container styling from `bg-[#0a0a0c]` to `bg-white sm:bg-slate-100/70`.
+  2. Preserved inner card styling (`bg-[#141416]`, `border-[#26262a]`, red accent glow, white headings, and red submit buttons) exactly as originally branded.
+  3. Updated the floating "← Back to Home" pill from dark charcoal to a crisp white pill with gray border (`bg-white/90 text-slate-700 border-slate-200 shadow-sm hover:text-black`).
+  4. Adjusted footer copyright and privacy policy links from muted dark gray to readable slate tones (`text-slate-500 hover:text-slate-800`).
+- **Result**:
+  Clean, high-end white backdrop in light mode that frames the bold dark branded card, improving visual hierarchy, readability, and mobile browser address-bar harmony.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Contrast isolation (e.g. placing a dark branded form card inside a clean neutral background) provides stronger visual anchoring than a monolithic dark canvas on consumer-facing web apps.
+
+---
+
+## 25. 12 Multi-Branch Hub Network Dropdown Architecture (Modification / Add)
+
+- **Current State**:
+  Registration and resident records used a free-form text input or a basic Tower dropdown limited to Towers A-C and Floors 1-3 within a single condominium.
+- **The Problem**:
+  The business expanded to a multi-branch network across 12 distinct metropolitan hubs. Free-form text caused branch typos and prevented accurate geographic parcel sorting and filtering.
+- **What to Do (Solution)**:
+  1. Created `BRANCHES` canonical constant array in `src/constants/branches.ts`:
+     - Malinta Branch, Marulas Branch, Marilao Branch, Makati Branch, Taguig Branch, Laguna Branch, Quezon City Branch, Caloocan Branch, Manila Branch, Pasig Branch, BGC Branch, Mandaluyong Branch.
+  2. Exported `BranchName` type union and updated `AuthUser`, `ResidentProfile`, and `RegisterData` types with `branch: BranchName`.
+  3. Replaced the Tower input field on the Sign-Up page (`/register`) with a styled select dropdown listing all 12 branches with Malinta Branch as default.
+  4. Updated resident account profile settings (`/account`) allowing residents to view or update their registered branch.
+  5. Updated Staff Admin Residents Directory (`/admin/customers`), Parcel Intake (`/admin/parcels`), and `ResidentTypeaheadSelect` to search, filter, and display branches.
+- **Result**:
+  Standardized 12-branch hub network topology enabling seamless multi-location expansion, branch-specific parcel routing, and zero typo errors in facility names.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When an enterprise scales from single-location to multi-branch or multi-warehouse, extract branch identifiers into immutable canonical constants before refactoring relational and UI layers.
+
+---
+
+## 26. 3-Part Divided Unit Specification (Building #, Floor #, Unit #) (Modification / Add)
+
+- **Current State**:
+  The condominium unit was captured as a single text input (e.g. `Unit 402` or `Bldg 2 Flr 4 Unit 12`).
+- **The Problem**:
+  Unstructured unit strings caused confusion for courier dispatch and staff runners, as building numbers, floor levels, and unit doors were entered inconsistently.
+- **What to Do (Solution)**:
+  1. Added granular fields `buildingNumber`, `floorNumber`, and `unitNumber` to `ResidentProfile`, `AuthUser`, and `RegisterData`.
+  2. On the Sign-Up page (`/register`), divided the unit container width equally into 3 distinct input fields:
+     - `Building #` (e.g. `1`, `A`)
+     - `Floor #` (e.g. `4`, `12`)
+     - `Unit #` (e.g. `402`, `12B`)
+  3. Implemented synthetic full unit formatting: `Bldg ${bldg} • Flr ${floor} • Unit ${unitNum}` to maintain backward compatibility with legacy single-string components.
+  4. Mirrored the divided 3-part unit fields in the resident account profile (`/account`) with live updates and validation.
+  5. Updated Staff Admin Residents Directory (`/admin/customers`) table, search indexing, and details modal to display the structured 3-part breakdown.
+  6. Updated `ResidentTypeaheadSelect` in the parcel intake scanner to search across building, floor, and unit numbers.
+- **Result**:
+  Precise 3-tier address parsing that eliminates courier delivery ambiguity, speeds up lobby runner routing, and guarantees clean structured address data.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  For multi-tenant complexes, campuses, or sub-divided office suites, always decompose addresses into discrete building/floor/suite fields rather than relying on unparsed single-line address inputs.
+
+---
+
+## 27. Dynamic Multi-Proxy Authorized Claimants Engine (Up to 3 Claimants) (Add / Modification)
+
+- **Current State**:
+  Residents could only record a single authorized proxy claimant name and phone number on their profile.
+- **The Problem**:
+  Residents frequently live with multiple family members, partners, or housemates (up to 3 people per condominium unit). Restricting authorized claimants to 1 meant that other household members were turned away at the lobby desk during parcel pickup verification.
+- **What to Do (Solution)**:
+  1. Defined `AuthorizedClaimant` interface: `{ name: string; relationship?: string; phone?: string; }`.
+  2. Updated `ResidentProfile` and `AuthUser` to store `authorizedClaimants?: AuthorizedClaimant[]` while preserving `authorizedClaimant` and `claimantPhone` for backward compatibility.
+  3. Redesigned the Authorized Parcel Claimants section in `/account`:
+     - Initialized claimant list from user profile.
+     - Enabled residents to add up to two more claimants (maximum of 3 authorized claimants total).
+     - Provided "Add Another Claimant (+)" and "Remove" actions with real-time claimant counter (`1 of 3`, `2 of 3`, `3 of 3`).
+     - Integrated Philippine phone masking (`+63 9XX XXX XXXX`) on every claimant's mobile number.
+  4. Updated Staff Admin Residents Directory details modal to display the complete list of authorized claimants with names, relationships, and contact numbers.
+  5. Enhanced Staff Admin Parcel Release Modal in `/admin/parcels` with quick-fill claimant buttons, allowing lobby staff to verify proxy claimants and auto-fill the recipient name with one click.
+- **Result**:
+  Full household coverage with up to 3 authorized proxy claimants per unit, automated phone validation, and rapid one-click staff verification during parcel handoffs.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  For delivery, pickup, or authorized delegate systems, always support multi-entity proxy lists with bounded upper limits (`n <= 3`) and strict identity/contact validation to balance household convenience with security.
+
+---
+
 ## Autonomous Agent Instructions for Future Updates
 
 Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **Modification**, or **Add**:
@@ -441,3 +591,4 @@ Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **
    - **What to Do (Solution)**
    - **Result**
 3. Include the cross-project transferable insight so that the pattern can be reapplied to other client codebases.
+

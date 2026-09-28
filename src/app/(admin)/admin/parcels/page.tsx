@@ -137,7 +137,7 @@ export default function ParcelsInventoryPage() {
         courier,
         residentId: resident.id,
         residentName: resident.name,
-        unit: `${resident.unit} - ${resident.tower}`,
+        unit: `${resident.unit} - ${resident.branch || resident.tower}`,
         shelf: "Lobby Counter",
         size: parcelSize,
         notes: notes.trim() || undefined,
@@ -822,7 +822,7 @@ export default function ParcelsInventoryPage() {
                 <span className="font-bold text-brand-black">{releaseModalParcel.residentName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Unit / Tower:</span>
+                <span className="text-brand-text-secondary">Unit / Branch:</span>
                 <span className="font-semibold text-brand-text">{releaseModalParcel.unit}</span>
               </div>
               <div className="flex justify-between">
@@ -832,6 +832,39 @@ export default function ParcelsInventoryPage() {
                 </span>
               </div>
             </div>
+
+            {/* Quick Fill Authorized Claimants if registered */}
+            {(() => {
+              const resObj = residents.find((r) => r.id === releaseModalParcel.residentId);
+              const claimantsList = resObj?.authorizedClaimants && resObj.authorizedClaimants.length > 0
+                ? resObj.authorizedClaimants
+                : resObj?.authorizedClaimant
+                ? [{ name: resObj.authorizedClaimant, phone: resObj.claimantPhone || "" }]
+                : [];
+
+              if (claimantsList.length === 0) return null;
+
+              return (
+                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-1.5 text-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">
+                    Authorized Proxy Claimants on File:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {claimantsList.map((c, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setRecipientNameInput(c.name)}
+                        className="text-[11px] bg-white border border-amber-300 hover:border-brand-red text-brand-black font-semibold px-2 py-1 rounded-md transition-all cursor-pointer shadow-2xs hover:bg-amber-100/50"
+                        title="Click to fill recipient name"
+                      >
+                        + {c.name} {c.relationship ? `(${c.relationship})` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             <form onSubmit={handleConfirmRelease} className="space-y-4">
               <div>

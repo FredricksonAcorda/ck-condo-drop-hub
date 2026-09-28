@@ -11,7 +11,7 @@ const adminNav = [
   { label: "PARCEL INVENTORY", href: "/admin/parcels" },
   { label: "RESIDENTS & UNITS", href: "/admin/customers" },
   { label: "LOBBY INQUIRIES", href: "/admin/inquiries" },
-  { label: "HUB SETTINGS", href: "/admin/settings" },
+  { label: "SETTINGS", href: "/admin/settings" },
 ];
 
 export default function AdminLayout({
