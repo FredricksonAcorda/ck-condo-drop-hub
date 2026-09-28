@@ -21,11 +21,11 @@ export default function CustomerLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, switchDemoUser } = useAuth();
+  const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const displayName = user?.name || "Juan Dela Cruz";
-  const displayCode = user?.residentCode || "CK-000123";
+  const displayName = user?.name || "Resident";
+  const displayCode = user?.residentCode || "";
 
   const initials = displayName
     .split(" ")
@@ -67,33 +67,6 @@ export default function CustomerLayout({
 
           {/* User area */}
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-1.5 text-xs">
-              <span className="text-brand-text-muted text-[11px]">Demo:</span>
-              <button
-                type="button"
-                onClick={() => switchDemoUser("usr-resident-1")}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                  user?.id === "usr-resident-1"
-                    ? "bg-brand-red text-white border-brand-red"
-                    : "bg-brand-surface text-brand-text border-brand-border hover:bg-gray-100"
-                }`}
-                title="Switch to Juan Dela Cruz (Premium)"
-              >
-                Juan (Prem)
-              </button>
-              <button
-                type="button"
-                onClick={() => switchDemoUser("usr-resident-2")}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                  user?.id === "usr-resident-2"
-                    ? "bg-brand-red text-white border-brand-red"
-                    : "bg-brand-surface text-brand-text border-brand-border hover:bg-gray-100"
-                }`}
-                title="Switch to Maria Santos (Regular)"
-              >
-                Maria (Reg)
-              </button>
-            </div>
 
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 bg-brand-red text-white font-bold text-xs rounded-full flex items-center justify-center">

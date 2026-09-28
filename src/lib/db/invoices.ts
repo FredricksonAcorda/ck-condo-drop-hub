@@ -1,84 +1,38 @@
 import { InvoiceRecord } from "@/types";
 import { db } from "./local-store";
 
-const INVOICES_KEY = "ck_hub_invoices_v1";
+const INVOICES_KEY = "ck_hub_invoices_v2";
 
-export const INITIAL_SEED_INVOICES: InvoiceRecord[] = [
-  {
-    id: "INV-2026-0901",
-    residentId: "usr-resident-1",
-    residentName: "Juan Dela Cruz",
-    residentCode: "CK-000123",
-    unit: "Unit 101",
-    tower: "Tower A",
-    plan: "PREMIUM VIP Membership",
-    amount: "₱299.00",
-    date: "Sept 1, 2026",
-    timestamp: "2026-09-01T08:30:00Z",
-    method: "GCash QR",
-    reference: "GC-9821-4402",
-    status: "PAID",
-  },
-  {
-    id: "INV-2026-0801",
-    residentId: "usr-resident-1",
-    residentName: "Juan Dela Cruz",
-    residentCode: "CK-000123",
-    unit: "Unit 101",
-    tower: "Tower A",
-    plan: "Regular Membership",
-    amount: "₱149.00",
-    date: "Aug 1, 2026",
-    timestamp: "2026-08-01T10:15:00Z",
-    method: "GCash QR",
-    reference: "GC-1029-3381",
-    status: "PAID",
-  },
-  {
-    id: "INV-2026-0815",
-    residentId: "usr-resident-2",
-    residentName: "Maria Santos",
-    residentCode: "CK-000189",
-    unit: "Unit 304",
-    tower: "Tower B",
-    plan: "Regular Membership",
-    amount: "₱149.00",
-    date: "Aug 15, 2026",
-    timestamp: "2026-08-15T09:30:00Z",
-    method: "GCash QR",
-    reference: "GC-5512-8890",
-    status: "PAID",
-  },
-  {
-    id: "INV-2026-0915",
-    residentId: "usr-resident-3",
-    residentName: "Roberto Reyes",
-    residentCode: "CK-000245",
-    unit: "Unit 205",
-    tower: "Tower A",
-    plan: "Regular Membership (15 Days)",
-    amount: "₱149.00",
-    date: "Today",
-    timestamp: "2026-09-25T10:00:00Z",
-    method: "Cash at Counter",
-    status: "PENDING",
-  },
-];
+export const INITIAL_SEED_INVOICES: InvoiceRecord[] = [];
 
 export async function getAllInvoices(): Promise<InvoiceRecord[]> {
   if (typeof window === "undefined") return [...INITIAL_SEED_INVOICES];
   try {
+    // Clean legacy v1 key
+    window.localStorage.removeItem("ck_hub_invoices_v1");
+
     const raw = localStorage.getItem(INVOICES_KEY);
     if (!raw) {
       localStorage.setItem(INVOICES_KEY, JSON.stringify(INITIAL_SEED_INVOICES));
       return [...INITIAL_SEED_INVOICES];
     }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(parsed)) {
       localStorage.setItem(INVOICES_KEY, JSON.stringify(INITIAL_SEED_INVOICES));
       return [...INITIAL_SEED_INVOICES];
     }
-    return parsed;
+    // Purge any legacy Juan or Maria demo invoices
+    const cleaned = parsed.filter(
+      (inv: InvoiceRecord) =>
+        inv.residentId !== "usr-resident-1" &&
+        inv.residentId !== "usr-resident-2" &&
+        inv.residentName !== "Juan Dela Cruz" &&
+        inv.residentName !== "Maria Santos"
+    );
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(INVOICES_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [...INITIAL_SEED_INVOICES];
   }

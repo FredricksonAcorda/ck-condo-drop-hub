@@ -19,8 +19,8 @@ export default function ReportsAndLogsPage() {
 
   // Manual SMS Modal
   const [showSmsModal, setShowSmsModal] = useState(false);
-  const [recipientPhone, setRecipientPhone] = useState("0917 123 4567");
-  const [recipientName, setRecipientName] = useState("Juan Dela Cruz");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [messageText, setMessageText] = useState(
     "CK Condo Drop Hub: Friendly reminder that you have 2 package(s) ready for pickup at the Lobby. Please claim before the holding deadline."
   );

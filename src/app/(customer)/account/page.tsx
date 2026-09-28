@@ -22,13 +22,13 @@ export default function MyAccountPage() {
   const [isEditingRequest, setIsEditingRequest] = useState(false);
 
   // Form states
-  const [fullName, setFullName] = useState(user?.name || "Juan Dela Cruz");
-  const [email, setEmail] = useState(user?.email || "juan.delacruz@gmail.com");
-  const [phone, setPhone] = useState(formatPhilippinePhone(user?.phone || "0917 123 4567"));
+  const [fullName, setFullName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(formatPhilippinePhone(user?.phone || ""));
   const [branch, setBranch] = useState(user?.branch || "Malinta Branch");
-  const [buildingNumber, setBuildingNumber] = useState(user?.buildingNumber || "1");
-  const [floorNumber, setFloorNumber] = useState(user?.floorNumber || "1");
-  const [unitNumber, setUnitNumber] = useState(user?.unitNumber || "101");
+  const [buildingNumber, setBuildingNumber] = useState(user?.buildingNumber || "");
+  const [floorNumber, setFloorNumber] = useState(user?.floorNumber || "");
+  const [unitNumber, setUnitNumber] = useState(user?.unitNumber || "");
   const building = "CK Buildersville Condominium";
 
   // Authorized claimants (up to 3 total)

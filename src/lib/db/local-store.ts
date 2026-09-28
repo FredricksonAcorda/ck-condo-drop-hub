@@ -11,13 +11,13 @@ import {
 } from "./seed-data";
 
 const STORAGE_KEYS = {
-  PARCELS: "ck_hub_parcels_v1",
-  RESIDENTS: "ck_hub_residents_v1",
-  USERS: "ck_hub_users_v1",
-  ACTIVITY: "ck_hub_activity_logs_v1",
-  SMS: "ck_hub_sms_logs_v1",
-  SETTINGS: "ck_hub_settings_v1",
-  INQUIRIES: "ck_hub_desk_inquiries_v1",
+  PARCELS: "ck_hub_parcels_v2",
+  RESIDENTS: "ck_hub_residents_v2",
+  USERS: "ck_hub_users_v2",
+  ACTIVITY: "ck_hub_activity_logs_v2",
+  SMS: "ck_hub_sms_logs_v2",
+  SETTINGS: "ck_hub_settings_v2",
+  INQUIRIES: "ck_hub_desk_inquiries_v2",
 };
 
 export class LocalDatabaseService implements IDatabaseService {
@@ -33,9 +33,22 @@ export class LocalDatabaseService implements IDatabaseService {
     return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
   }
 
+  private isDemoUser(id?: string, name?: string): boolean {
+    return (
+      id === "usr-resident-1" ||
+      id === "usr-resident-2" ||
+      name === "Juan Dela Cruz" ||
+      name === "Maria Santos"
+    );
+  }
+
   private load<T>(key: string, fallback: T): T {
     if (!this.isClient()) return fallback;
     try {
+      const v1Key = key.replace("_v2", "_v1");
+      if (v1Key !== key) {
+        window.localStorage.removeItem(v1Key);
+      }
       const item = window.localStorage.getItem(key);
       if (!item) {
         window.localStorage.setItem(key, JSON.stringify(fallback));
@@ -61,14 +74,13 @@ export class LocalDatabaseService implements IDatabaseService {
 
   async getAllParcels(): Promise<Parcel[]> {
     const loaded = this.load<Parcel[]>(STORAGE_KEYS.PARCELS, this.inMemoryParcels);
-    const existingIds = new Set(loaded.map((p) => p.id));
-    const missingSeeds = SEED_PARCELS.filter((p) => !existingIds.has(p.id));
-    if (missingSeeds.length > 0) {
-      const merged = [...loaded, ...missingSeeds];
-      this.save(STORAGE_KEYS.PARCELS, merged);
-      return merged;
+    const cleaned = loaded.filter(
+      (p) => !this.isDemoUser(p.residentId, p.residentName)
+    );
+    if (cleaned.length !== loaded.length) {
+      this.save(STORAGE_KEYS.PARCELS, cleaned);
     }
-    return loaded;
+    return cleaned;
   }
 
   async getParcelsByResident(residentId: string): Promise<Parcel[]> {
@@ -289,7 +301,12 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- Residents ---
 
   async getAllResidents(): Promise<ResidentProfile[]> {
-    return this.load<ResidentProfile[]>(STORAGE_KEYS.RESIDENTS, this.inMemoryResidents);
+    const loaded = this.load<ResidentProfile[]>(STORAGE_KEYS.RESIDENTS, this.inMemoryResidents);
+    const cleaned = loaded.filter((r) => !this.isDemoUser(r.id, r.name));
+    if (cleaned.length !== loaded.length) {
+      this.save(STORAGE_KEYS.RESIDENTS, cleaned);
+    }
+    return cleaned;
   }
 
   async getResidentById(id: string): Promise<ResidentProfile | null> {
@@ -364,7 +381,9 @@ export class LocalDatabaseService implements IDatabaseService {
       return false;
     };
 
-    const users = this.load<AuthUser[]>(STORAGE_KEYS.USERS, this.inMemoryUsers);
+    const users = this.load<AuthUser[]>(STORAGE_KEYS.USERS, this.inMemoryUsers).filter(
+      (u) => !this.isDemoUser(u.id, u.name)
+    );
 
     // Check staff match
     const userMatch = users.find((u) => matchIdentifier(u.email, u.phone));
@@ -406,7 +425,18 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- Activity Logs ---
 
   async getActivityLogs(): Promise<ActivityLogItem[]> {
-    return this.load<ActivityLogItem[]>(STORAGE_KEYS.ACTIVITY, this.inMemoryActivity);
+    const loaded = this.load<ActivityLogItem[]>(STORAGE_KEYS.ACTIVITY, this.inMemoryActivity);
+    const cleaned = loaded.filter(
+      (a) =>
+        !a.description?.includes("Juan Dela Cruz") &&
+        !a.description?.includes("Maria Santos") &&
+        !a.title?.includes("Juan Dela Cruz") &&
+        !a.title?.includes("Maria Santos")
+    );
+    if (cleaned.length !== loaded.length) {
+      this.save(STORAGE_KEYS.ACTIVITY, cleaned);
+    }
+    return cleaned;
   }
 
   async recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem> {
@@ -438,7 +468,16 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- SMS Logs ---
 
   async getSmsLogs(): Promise<SmsLogItem[]> {
-    return this.load<SmsLogItem[]>(STORAGE_KEYS.SMS, this.inMemorySms);
+    const loaded = this.load<SmsLogItem[]>(STORAGE_KEYS.SMS, this.inMemorySms);
+    const cleaned = loaded.filter(
+      (s) =>
+        s.recipientName !== "Juan Dela Cruz" &&
+        s.recipientName !== "Maria Santos"
+    );
+    if (cleaned.length !== loaded.length) {
+      this.save(STORAGE_KEYS.SMS, cleaned);
+    }
+    return cleaned;
   }
 
   private async recordSms(item: Omit<SmsLogItem, "id" | "timestamp">): Promise<SmsLogItem> {
@@ -491,7 +530,14 @@ export class LocalDatabaseService implements IDatabaseService {
   // --- Desk Inquiries ---
 
   async getInquiries(): Promise<DeskInquiry[]> {
-    return this.load<DeskInquiry[]>(STORAGE_KEYS.INQUIRIES, this.inMemoryInquiries);
+    const loaded = this.load<DeskInquiry[]>(STORAGE_KEYS.INQUIRIES, this.inMemoryInquiries);
+    const cleaned = loaded.filter(
+      (i) => !this.isDemoUser(i.residentId, i.residentName)
+    );
+    if (cleaned.length !== loaded.length) {
+      this.save(STORAGE_KEYS.INQUIRIES, cleaned);
+    }
+    return cleaned;
   }
 
   async createInquiry(input: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry> {

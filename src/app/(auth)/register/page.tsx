@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 type="text"
                 name="name"
                 autoComplete="name"
-                placeholder="e.g. Juan Dela Cruz"
+                placeholder="e.g. Full Name"
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);

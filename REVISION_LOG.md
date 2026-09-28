@@ -46,6 +46,7 @@
 34. [Digital Resident Pass Live Preview & Symmetrical Zero-Scroll Sign-Up Layout](#34-digital-resident-pass-live-preview--symmetrical-zero-scroll-sign-up-layout-modification--ux-polish)
 35. [Dark Glassmorphic Payment Activation Modal with 1-Tap Mobile GCash Copy](#35-dark-glassmorphic-payment-activation-modal-with-1-tap-mobile-gcash-copy-modification--ux-polish)
 36. [Purge Functionless GCash Number Input & Validation Across Registration, Membership Renewal, and Dashboard Payment Modals](#36-purge-functionless-gcash-number-input--validation-across-registration-membership-renewal-and-dashboard-payment-modals-modification--ux-polish)
+37. [Purge Demo Switcher Buttons, Demo Accounts (Juan & Maria), Seed Parcels, Payments, and Activity Logs](#37-purge-demo-switcher-buttons-demo-accounts-juan--maria-seed-parcels-payments-and-activity-logs-modification--fix)
 
 ---
 
@@ -822,6 +823,35 @@
   A frictionless, streamlined payment workflow where residents simply scan the QR code or copy the number, and immediately confirm activation or renewal without encountering non-functional inputs or blocking error popups.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Do not collect manual user inputs (such as phone numbers or manual reference strings) unless there is an automated reconciliation engine or strict manual auditing requirement that actually parses them. In manual verification workflows, eliminate placeholder inputs and replace them with clear action instructions to prevent conversion drop-offs.
+
+---
+
+## 37. Purge Demo Switcher Buttons, Demo Accounts (Juan & Maria), Seed Parcels, Payments, and Activity Logs (Modification / Fix)
+
+- **Current State**:
+  The customer portal header displayed demo switcher buttons (`Demo: [Juan (Prem)] [Maria (Reg)]`). Furthermore, legacy seed data across users, residents, parcels, activity logs, SMS dispatches, inquiries, and billing invoices was populated with simulated records for `"Juan Dela Cruz"` and `"Maria Santos"`. Customer and admin forms also contained default state fallbacks to Juan Dela Cruz.
+- **The Problem**:
+  1. **Demo Buttons in Production Header**: Having demo user switcher buttons in the resident customer portal top navigation created visual noise and exposed test accounts to actual end users.
+  2. **Polluted Database & Logs**: Resident lookup, parcel management, payment receipts, and activity feeds displayed mock data for Juan and Maria rather than real registered residents.
+  3. **Stale Local Storage Caching**: Browsers that had accessed the platform retained legacy `_v1` local storage records for Juan and Maria, which kept re-appearing even if backend collections were cleared.
+- **What to Do (Solution)**:
+  1. **Removed Demo Header Switchers**:
+     - Deleted the `Demo: [Juan (Prem)] [Maria (Reg)]` button container from [`src/app/(customer)/layout.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/layout.tsx).
+     - Standardized default display fallbacks to `"Resident"` with clean initial initials (`"R"`).
+  2. **Purged Juan and Maria Seed Entities**:
+     - Purged `usr-resident-1` (Juan Dela Cruz) and `usr-resident-2` (Maria Santos) from `SEED_USERS` and `SEED_RESIDENTS` in [`src/lib/db/seed-data.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/seed-data.ts), retaining only the verified Staff Admin.
+     - Cleared all Juan and Maria parcels (`SEED_PARCELS`), SMS records (`SEED_SMS_LOGS`), and inquiries (`SEED_INQUIRIES`).
+     - Replaced activity logs with a clean system operational log.
+     - Cleared all mock invoices in [`src/lib/db/invoices.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/invoices.ts).
+  3. **Storage Version Bump & Decommission Purge Guards**:
+     - Bumped storage and session keys to `_v2` across [`src/lib/db/local-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/local-store.ts), [`src/lib/db/invoices.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/invoices.ts), and [`src/lib/auth/auth-service.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/auth/auth-service.ts).
+     - Added auto-purge logic that automatically purges legacy `_v1` keys from `window.localStorage` and clears any active browser session matching Juan or Maria.
+  4. **Purged Form Fallbacks**:
+     - Cleared hardcoded Juan Dela Cruz defaults in [`src/app/(customer)/account/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/account/page.tsx), [`src/app/(customer)/membership/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/membership/page.tsx), [`src/app/(admin)/admin/reports/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/reports/page.tsx), and [`src/app/(auth)/register/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(auth)/register/page.tsx).
+- **Result**:
+  All traces of demo accounts Juan and Maria have been completely eradicated from the resident portal UI, database models, parcels, payment histories, and activity logs, leaving a clean, production-ready environment for real residents.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When transitioning from demo/mock states to live accounts, do not merely hide UI toggle buttons. Update storage schema versioning keys and implement an active cache-clearing sweep to evict legacy mock records from existing client browser sessions, preventing "ghost" demo data from resurfacing.
 
 ---
 

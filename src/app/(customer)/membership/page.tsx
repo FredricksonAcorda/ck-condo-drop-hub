@@ -82,43 +82,13 @@ export default function MembershipPage() {
 
   useEffect(() => {
     const loadInvoices = async () => {
-      const resId = user?.id || "usr-resident-1";
-      const records = await getInvoicesByResident(resId);
-      if (records && records.length > 0) {
-        setInvoices(records);
-      } else {
-        const initial: Invoice[] = [
-          {
-            id: "INV-2026-0901",
-            residentId: resId,
-            residentName: user?.name || "Juan Dela Cruz",
-            residentCode: user?.residentCode || "CK-000123",
-            unit: user?.unit || "Unit 101",
-            tower: user?.tower || "Tower A",
-            date: "Sept 1, 2026",
-            plan: `${currentPlan.replace("_", " ")} Membership`,
-            amount: currentPlan === "PREMIUM" ? "₱299.00" : currentPlan === "REGULAR" ? "₱149.00" : "₱0.00",
-            method: user?.paymentMethod === "CASH_COUNTER" ? "Cash at Counter" : "GCash QR",
-            reference: user?.paymentReference || "GC-9821-4402",
-            status: isPendingPayment ? "PENDING" : "PAID",
-          },
-          {
-            id: "INV-2026-0801",
-            residentId: resId,
-            residentName: user?.name || "Juan Dela Cruz",
-            residentCode: user?.residentCode || "CK-000123",
-            unit: user?.unit || "Unit 101",
-            tower: user?.tower || "Tower A",
-            date: "Aug 1, 2026",
-            plan: "Regular Membership",
-            amount: "₱149.00",
-            method: "GCash QR",
-            reference: "GC-1029-3381",
-            status: "PAID",
-          },
-        ];
-        setInvoices(initial);
+      const resId = user?.id || "";
+      if (!resId) {
+        setInvoices([]);
+        return;
       }
+      const records = await getInvoicesByResident(resId);
+      setInvoices(records || []);
     };
 
     loadInvoices();
@@ -216,10 +186,10 @@ export default function MembershipPage() {
 
       // Add to centralized invoices database as PENDING verification
       await recordInvoice({
-        residentId: user?.id || "usr-resident-1",
-        residentName: user?.name || "Juan Dela Cruz",
-        residentCode: user?.residentCode || "CK-000123",
-        unit: user?.unit || "Unit 101",
+        residentId: user?.id || `res-${Date.now()}`,
+        residentName: user?.name || "Resident",
+        residentCode: user?.residentCode || "",
+        unit: user?.unit || "",
         tower: user?.tower || "Tower A",
         date: "Today",
         plan: isRenewalMode
@@ -233,7 +203,7 @@ export default function MembershipPage() {
         notes: "Pending Admin Payment Verification",
       });
 
-      const updatedList = await getInvoicesByResident(user?.id || "usr-resident-1");
+      const updatedList = await getInvoicesByResident(user?.id || "");
       setInvoices(updatedList);
 
       setShowPaymentModal(false);

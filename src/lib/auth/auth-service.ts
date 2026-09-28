@@ -4,7 +4,7 @@ import { SEED_USERS } from "../db/seed-data";
 import { auth } from "../firebase/config";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
-const SESSION_KEY = "ck_hub_session_v1";
+const SESSION_KEY = "ck_hub_session_v2";
 
 class AuthService {
   private isClient(): boolean {
@@ -14,9 +14,23 @@ class AuthService {
   getCurrentSession(): AuthUser | null {
     if (!this.isClient()) return null;
     try {
+      window.localStorage.removeItem("ck_hub_session_v1");
       const raw = window.localStorage.getItem(SESSION_KEY);
       if (!raw || raw === "null") return null;
       const sessionUser = JSON.parse(raw) as AuthUser;
+      // Auto-purge decommissioned Juan / Maria demo sessions
+      if (
+        sessionUser &&
+        (sessionUser.id === "usr-resident-1" ||
+          sessionUser.id === "usr-resident-2" ||
+          sessionUser.name === "Juan Dela Cruz" ||
+          sessionUser.name === "Maria Santos" ||
+          sessionUser.email === "juan.delacruz@gmail.com" ||
+          sessionUser.email === "maria.santos@gmail.com")
+      ) {
+        this.setSession(null);
+        return null;
+      }
       if (sessionUser && sessionUser.role === "resident") {
         if (sessionUser.deliveryCreditsLeft === undefined) {
           sessionUser.deliveryCreditsLeft = sessionUser.plan === "PREMIUM" ? 1 : 0;
