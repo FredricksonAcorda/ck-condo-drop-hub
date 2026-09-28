@@ -47,6 +47,7 @@
 35. [Dark Glassmorphic Payment Activation Modal with 1-Tap Mobile GCash Copy](#35-dark-glassmorphic-payment-activation-modal-with-1-tap-mobile-gcash-copy-modification--ux-polish)
 36. [Purge Functionless GCash Number Input & Validation Across Registration, Membership Renewal, and Dashboard Payment Modals](#36-purge-functionless-gcash-number-input--validation-across-registration-membership-renewal-and-dashboard-payment-modals-modification--ux-polish)
 37. [Purge Demo Switcher Buttons, Demo Accounts (Juan & Maria), Seed Parcels, Payments, and Activity Logs](#37-purge-demo-switcher-buttons-demo-accounts-juan--maria-seed-parcels-payments-and-activity-logs-modification--fix)
+38. [Interactive Terms of Service & Privacy Policy Modals and Dedicated Public Legal Routes](#38-interactive-terms-of-service--privacy-policy-modals-and-dedicated-public-legal-routes-add--modification)
 
 ---
 
@@ -852,6 +853,34 @@
   All traces of demo accounts Juan and Maria have been completely eradicated from the resident portal UI, database models, parcels, payment histories, and activity logs, leaving a clean, production-ready environment for real residents.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When transitioning from demo/mock states to live accounts, do not merely hide UI toggle buttons. Update storage schema versioning keys and implement an active cache-clearing sweep to evict legacy mock records from existing client browser sessions, preventing "ghost" demo data from resurfacing.
+
+---
+
+## 38. Interactive Terms of Service & Privacy Policy Modals and Dedicated Public Legal Routes (Add / Modification)
+
+- **Current State**:
+  The Terms of Service and Privacy Policy text in the footer of the Sign-Up (`/register`) and Login (`/login`) authentication pages were non-functional hash anchor links (`href="#"`). There were no in-dialog legal document viewers available within the onboarding process, nor dedicated standalone `/terms` or `/privacy` public routes accessible from public footers.
+- **The Problem**:
+  1. **Disruptive Form Eviction**: When prospective residents were filling out multi-field registration details (full name, Philippine phone number, Gmail username, branch selection, building, floor, unit number, and secure password), clicking a hypothetical external link would navigate them away from the onboarding flow, causing them to lose all unsubmitted form inputs.
+  2. **Lack of Independent Document Access**: The user explicitly required that when clicking the text, users must be able to read the Terms of Service and separately the Privacy Policy. Clicking Terms must show the Terms of Service, and clicking Privacy Policy must show the Privacy Policy.
+  3. **Absence of Dedicated Public Legal Routes**: Outside the authentication flow, visitors, search indexers, and mobile users had no direct URLs to inspect the condominium drop hub's terms of service and Philippine Data Privacy Act (RA 10173) privacy disclosures.
+  4. **Strict Aesthetics & Zero-Icon Constraint**: All UI components must conform to the platform's high-contrast dark glassmorphic design system with pure typography and zero decorative icons or emojis.
+- **What to Do (Solution)**:
+  1. **Built Reusable Dark Glassmorphic Legal Modal**:
+     - Created [`src/components/modals/LegalModal.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/components/modals/LegalModal.tsx) with tab switchers for **Terms of Service** and **Privacy Policy**.
+     - Implemented pure typographic controls: text close pill (`[ CLOSE ]`), plain `✕` button, and text tabs with clear active indicators, strictly avoiding any icons or emojis.
+     - Added backdrop blur, ESC key listener, body scroll lock, and high-contrast, scrollable prose tailored specifically to CK Condo Drop Hub operations at Buildersville Condominium and Republic Act No. 10173 compliance.
+  2. **Dedicated Separate Public Pages**:
+     - Created [`src/app/(public)/terms/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(public)/terms/page.tsx) with comprehensive operational clauses (Service Description, Resident Obligations, Prohibited Items, Storage & Overdue Fees, Pickup Authorization, Limitation of Liability, and Account Termination).
+     - Created [`src/app/(public)/privacy/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(public)/privacy/page.tsx) with comprehensive Philippine Data Privacy Act (RA 10173) provisions (Data Collected, Lawful Purpose, Data Retention, Third-Party Disclosure, Resident Privacy Rights, and DPO Contact Information).
+     - Linked both pages in `FOOTER_QUICK_LINKS` inside [`src/constants/navigation.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/constants/navigation.ts).
+  3. **Seamless In-Page Modal Triggers**:
+     - Updated [`src/app/(auth)/register/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(auth)/register/page.tsx) and [`src/app/(auth)/login/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(auth)/login/page.tsx) by replacing dummy `#` anchors with interactive text buttons triggering `LegalModal` with initial tab set to `'terms'` or `'privacy'` respectively.
+     - Preserved all active registration and login form state while the resident reviews the agreements.
+- **Result**:
+  Residents and visitors can read the Terms of Service and Privacy Policy independently either as an instant modal dialog during sign-up/login without losing typed data, or as persistent standalone public web pages. All elements strictly adhere to the zero-icon typographic standard.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  During critical multi-step registration or checkout flows, never navigate users away from the page when they click on mandatory legal agreements or privacy policies. Provide an accessible in-context modal dialog that loads the specific requested document with tabbed switching, while maintaining dedicated standalone URLs for legal indexing, bookmarking, and regulatory compliance.
 
 ---
 

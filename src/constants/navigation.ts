@@ -16,5 +16,6 @@ export const FOOTER_QUICK_LINKS: NavLinkItem[] = [
   { label: "Home", href: "/#home" },
   { label: "Services", href: "/#services" },
   { label: "Pricing & Plans", href: "/#pricing" },
-  { label: "About Us", href: "/#about" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];

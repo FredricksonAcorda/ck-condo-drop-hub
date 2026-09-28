@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/context";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
+import LegalModal from "@/components/modals/LegalModal";
 
 function LoginForm() {
   const router = useRouter();
@@ -27,6 +28,8 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<"terms" | "privacy">("terms");
 
   const triggerError = (msg: string) => {
     setErrorMessage(msg);
@@ -309,13 +312,27 @@ function LoginForm() {
       {/* Terms & Privacy */}
       <p className="text-[11px] text-zinc-500 text-center leading-relaxed mt-3">
         By signing in, you agree to our{" "}
-        <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+        <button
+          type="button"
+          onClick={() => {
+            setLegalModalTab("terms");
+            setShowLegalModal(true);
+          }}
+          className="text-zinc-400 underline hover:text-zinc-300 cursor-pointer transition-colors"
+        >
           Terms of Service
-        </Link>{" "}
+        </button>{" "}
         and{" "}
-        <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+        <button
+          type="button"
+          onClick={() => {
+            setLegalModalTab("privacy");
+            setShowLegalModal(true);
+          }}
+          className="text-zinc-400 underline hover:text-zinc-300 cursor-pointer transition-colors"
+        >
           Privacy Policy
-        </Link>
+        </button>
         .
       </p>
 
@@ -323,6 +340,13 @@ function LoginForm() {
       <p className="text-[10.5px] text-zinc-600 text-center mt-2 font-medium">
         © 2026 CK Condo Drop Hub • Buildersville Condominium Community Platform
       </p>
+
+      {/* Terms of Service & Privacy Policy Modal */}
+      <LegalModal
+        isOpen={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        initialTab={legalModalTab}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { recordInvoice } from "@/lib/db/invoices";
 import { PhilippinePhoneInput, GmailInput, SecurePasswordInput, isPasswordStrongEnough } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
 import { BRANCHES } from "@/constants";
+import LegalModal from "@/components/modals/LegalModal";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,6 +38,8 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState<number>(0);
   const [isCopied, setIsCopied] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<"terms" | "privacy">("terms");
 
   const handleCopyGcashNumber = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -593,14 +596,28 @@ export default function RegisterPage() {
 
               {/* Terms & Privacy */}
               <p className="text-[10px] sm:text-[10.5px] text-zinc-500 text-center leading-tight">
-                By signing in, you agree to our{" "}
-                <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+                By registering, you agree to our{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLegalModalTab("terms");
+                    setShowLegalModal(true);
+                  }}
+                  className="text-zinc-400 underline hover:text-zinc-300 cursor-pointer transition-colors"
+                >
                   Terms of Service
-                </Link>{" "}
+                </button>{" "}
                 and{" "}
-                <Link href="#" className="text-zinc-400 underline hover:text-zinc-300">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLegalModalTab("privacy");
+                    setShowLegalModal(true);
+                  }}
+                  className="text-zinc-400 underline hover:text-zinc-300 cursor-pointer transition-colors"
+                >
                   Privacy Policy
-                </Link>
+                </button>
                 .
               </p>
 
@@ -782,6 +799,13 @@ export default function RegisterPage() {
           </div>
         </div>
       )}
+
+      {/* Terms of Service & Privacy Policy Modal */}
+      <LegalModal
+        isOpen={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        initialTab={legalModalTab}
+      />
     </div>
   );
 }
