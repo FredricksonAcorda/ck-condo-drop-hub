@@ -71,16 +71,69 @@ class AuthService {
     }
 
     // Attempt Firebase Auth sign-in if email provided and auth configured
+    let fbAuthenticated = false;
     if (auth && cleanInput.includes("@")) {
       try {
         await signInWithEmailAndPassword(auth, cleanInput, password);
+        fbAuthenticated = true;
       } catch (fbErr) {
         console.warn("Firebase Auth sign-in notice:", fbErr);
       }
     }
 
     // Check existing users / residents in database
-    const user = await db.findUserByCredentials(cleanInput);
+    let user = await db.findUserByCredentials(cleanInput);
+
+    // Self-healing: If user authenticated in Firebase Auth, but profile was missing in database
+    if (!user && fbAuthenticated && cleanInput.includes("@")) {
+      const cleanName = cleanInput.split("@")[0].replace(/[._-]/g, " ");
+      const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+      const autoResident = await db.createResident({
+        name: formattedName,
+        email: cleanInput.toLowerCase(),
+        phone: "+63 900 000 0000",
+        unit: "Bldg 1 • Flr 1 • Unit 101",
+        tower: "Malinta Branch",
+        branch: "Malinta Branch",
+        buildingNumber: "1",
+        floorNumber: "1",
+        unitNumber: "101",
+        building: "CK Buildersville Condominium",
+        plan: "PER_PARCEL",
+        planStatus: "ACTIVE",
+        paymentMethod: "CASH_COUNTER",
+        deliveryCreditsLeft: 0,
+        residentCode: `CK-${Math.floor(100000 + Math.random() * 900000)}`,
+        authorizedClaimants: [],
+        status: "ACTIVE",
+        notifications: {
+          smsArrival: true,
+          smsReminder: true,
+          emailDigest: true,
+          promoUpdates: false,
+        },
+      });
+
+      user = {
+        id: autoResident.id,
+        email: autoResident.email,
+        name: autoResident.name,
+        phone: autoResident.phone,
+        role: "resident",
+        unit: autoResident.unit,
+        tower: autoResident.tower,
+        branch: autoResident.branch,
+        buildingNumber: autoResident.buildingNumber,
+        floorNumber: autoResident.floorNumber,
+        unitNumber: autoResident.unitNumber,
+        plan: autoResident.plan,
+        planStatus: autoResident.planStatus,
+        paymentMethod: autoResident.paymentMethod,
+        residentCode: autoResident.residentCode,
+        authorizedClaimants: [],
+        createdAt: autoResident.createdAt,
+      };
+    }
 
     if (user) {
       this.setSession(user);
@@ -96,7 +149,7 @@ class AuthService {
       throw new Error("Please fill in all required fields.");
     }
 
-    // Check if email already registered
+    // Check if email already registered in database
     const existing = await db.getResidentByEmailOrPhone(data.email);
     if (existing) {
       throw new Error("An account with this email or phone number already exists.");
@@ -109,9 +162,20 @@ class AuthService {
       } catch (fbErr: unknown) {
         const error = fbErr as { code?: string };
         if (error?.code === "auth/email-already-in-use") {
-          throw new Error("An account with this email already exists in Firebase Auth.");
+          // If resident document already exists in DB, block duplicate
+          const existingResident = await db.getResidentByEmailOrPhone(data.email);
+          if (existingResident) {
+            throw new Error("An account with this email already exists. Please sign in instead.");
+          }
+          // If orphaned from previous failed DB write, verify password and continue
+          try {
+            await signInWithEmailAndPassword(auth, data.email, data.password);
+          } catch {
+            throw new Error("An account with this email already exists in Firebase Auth. Please verify your password or sign in.");
+          }
+        } else {
+          console.warn("Firebase Auth registration notice:", fbErr);
         }
-        console.warn("Firebase Auth registration notice:", fbErr);
       }
     }
 

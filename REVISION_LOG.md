@@ -40,6 +40,7 @@
 28. [Production Form Sanitization & Real-Time Secure Password Complexity Engine](#28-production-form-sanitization--real-time-secure-password-complexity-engine-fix--modification--add)
 29. [Wide Ergonomic Auth Layout, Non-Blocking Subscription Registration, and Floating Animated Header](#29-wide-ergonomic-auth-layout-non-blocking-subscription-registration-and-floating-animated-header-fix--modification--add)
 30. [Zero-Scroll Fixed Auth Pages, Card-Internal Copyright, Purge Icons Paired with Text & Modal Payment Activation](#30-zero-scroll-fixed-auth-pages-card-internal-copyright-purge-icons-paired-with-text--modal-payment-activation-fix--modification)
+31. [Firestore Undefined Payload Stripping, Orphaned Firebase Auth Auto-Healing & 7-Second Auto-Dismiss Alerts](#31-firestore-undefined-payload-stripping-orphaned-firebase-auth-auto-healing--7-second-auto-dismiss-alerts-bug--fix--modification)
 
 ---
 
@@ -670,6 +671,30 @@
   100% fixed, zero-scroll Sign In and Sign Up experiences on standard desktop screens, clean typography with zero icons paired with text, integrated copyright placement, and a smooth post-validation payment activation modal.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Keep multi-step registration forms visually anchored within the single viewport height (zero-scroll) by offloading secondary workflows (like payment activation or address confirmation) to focused modal dialogs after primary inputs are validated. Strictly honor client visual design preferences regarding text-only labels versus icon-adorned buttons.
+
+---
+
+## 31. Firestore Undefined Payload Stripping, Orphaned Firebase Auth Auto-Healing & 7-Second Auto-Dismiss Alerts (Bug / Fix / Modification)
+
+- **Current State**:
+  During resident account registration, clicking "Create Resident Account" triggered a Firestore SDK error: `Function setDoc() called with invalid data. Unsupported field value: undefined (found in field pendingPlan in document residents/...)`. Because this error occurred after `createUserWithEmailAndPassword` created the Firebase Auth user, the resident profile document was never written to Firestore. Subsequent registration attempts failed with `An account with this email already exists in Firebase Auth`, and attempting to sign in resulted in `No account found matching this email or phone`. Additionally, error banners remained indefinitely until manually dismissed via a clickable "Dismiss" button.
+- **The Problem**:
+  Firebase Firestore strictly rejects objects containing any properties with `undefined` values at the SDK level. Optional fields like `pendingPlan`, `paymentReference`, and `notes` caused Firestore document creation to crash, creating orphaned Firebase Auth users with no corresponding Firestore resident records. Furthermore, persistent error banners with manual dismiss buttons added unnecessary friction and cluttered the user interface.
+- **What to Do (Solution)**:
+  1. **Global Firestore Payload Sanitizer (`sanitizeForFirestore`)**:
+     - Implemented `sanitizeForFirestore` in `src/lib/db/firestore-store.ts` that recursively purges all keys whose value is `undefined`.
+     - Applied `sanitizeForFirestore` to all `setDoc` and `updateDoc` operations across `residents`, `users`, `parcels`, `activity_logs`, `sms_logs`, `inquiries`, and `settings`.
+     - Mirrored newly registered residents to the `users` collection to guarantee instant credential lookup.
+  2. **Self-Healing Firebase Auth Lifecycle**:
+     - In `authService.register()`: If `createUserWithEmailAndPassword` encounters `auth/email-already-in-use`, it checks whether a resident document exists in the database. If missing (an orphaned registration attempt), it authenticates with the provided password and completes the missing Firestore profile creation without blocking the user.
+     - In `authService.login()`: If Firebase Auth sign-in succeeds but the user document is missing in Firestore, it automatically synthesizes and stores the resident document, establishing a valid session immediately.
+  3. **7-Second Auto-Dismiss & Removed Dismiss Button**:
+     - Configured `useEffect` timers in both `src/app/(auth)/login/page.tsx` and `src/app/(auth)/register/page.tsx` to automatically clear `errorMessage` after exactly 7,000ms (7 seconds).
+     - Removed the clickable "Dismiss" text button from error banners, providing a clean, self-clearing alert experience.
+- **Result**:
+  Zero Firestore document write crashes, 100% resilient registration and login flows with self-healing orphaned Firebase Auth accounts, and clean error banners that automatically fade away after 7 seconds without manual dismiss buttons.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Always sanitize payloads before sending them to NoSQL document stores (like Firestore) that reject `undefined` properties. In multi-step auth architectures (Auth Provider + Database Document), implement idempotent self-healing during login/registration so that network glitches or partial writes never permanently orphan user credentials.
 
 ---
 

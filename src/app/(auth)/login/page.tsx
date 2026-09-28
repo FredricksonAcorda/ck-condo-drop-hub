@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/context";
 import { PhilippinePhoneInput, GmailInput } from "@/components/ui";
 import { isValidPhilippinePhone } from "@/lib/utils/phone-email";
@@ -26,6 +26,15 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Auto-dismiss error banner after 7 seconds
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => {
+      setErrorMessage(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,20 +149,13 @@ function LoginForm() {
         </button>
       </div>
 
-      {/* Error Alert Banner - Text only, strictly no icons paired with text */}
+      {/* Error Alert Banner - Text only, auto-dismisses after 7s, no dismiss button */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-3 flex items-center justify-between p-2.5 rounded-xl bg-red-950/60 border border-red-800/60 text-red-200 text-xs animate-in fade-in"
+          className="mb-3 p-2.5 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed animate-in fade-in"
         >
-          <div className="flex-1 leading-relaxed">{errorMessage}</div>
-          <button
-            type="button"
-            onClick={() => setErrorMessage(null)}
-            className="text-red-400 hover:text-red-200 text-xs font-semibold ml-2 cursor-pointer"
-          >
-            Dismiss
-          </button>
+          {errorMessage}
         </div>
       )}
 

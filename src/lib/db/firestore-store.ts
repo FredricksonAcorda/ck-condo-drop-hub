@@ -34,6 +34,29 @@ import {
   SEED_INQUIRIES,
 } from "./seed-data";
 
+/**
+ * Recursively strips any keys whose value is undefined.
+ * Firestore strictly rejects undefined field values at the SDK level.
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as unknown as T;
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === "object" && !(data instanceof Date)) {
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        clean[key] = sanitizeForFirestore(value);
+      }
+    }
+    return clean as T;
+  }
+  return data;
+}
+
 export class FirestoreDatabaseService implements IDatabaseService {
   private seeded = false;
 
@@ -187,7 +210,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await setDoc(doc(firestore, "parcels", newParcel.id), newParcel);
+      await setDoc(doc(firestore, "parcels", newParcel.id), sanitizeForFirestore(newParcel));
     }
 
     if (resident) {
@@ -305,7 +328,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
 
   async updateParcel(parcelId: string, updates: Partial<Parcel>): Promise<Parcel> {
     if (firestore) {
-      await updateDoc(doc(firestore, "parcels", parcelId), updates);
+      await updateDoc(doc(firestore, "parcels", parcelId), sanitizeForFirestore(updates));
     }
     const all = await this.getAllParcels();
     const target = all.find((p) => p.id === parcelId);
@@ -374,7 +397,31 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await setDoc(doc(firestore, "residents", id), newResident);
+      const sanitized = sanitizeForFirestore(newResident);
+      await setDoc(doc(firestore, "residents", id), sanitized);
+
+      // Also mirror to users collection so findUserByCredentials and auth lookup find them instantly
+      const userDoc: AuthUser = {
+        id: newResident.id,
+        email: newResident.email,
+        name: newResident.name,
+        phone: newResident.phone,
+        role: "resident",
+        unit: newResident.unit,
+        tower: newResident.tower,
+        branch: newResident.branch || "Malinta Branch",
+        buildingNumber: newResident.buildingNumber,
+        floorNumber: newResident.floorNumber,
+        unitNumber: newResident.unitNumber,
+        plan: newResident.plan,
+        planStatus: newResident.planStatus || "ACTIVE",
+        paymentMethod: newResident.paymentMethod,
+        paymentReference: newResident.paymentReference,
+        residentCode: newResident.residentCode,
+        authorizedClaimants: newResident.authorizedClaimants || [],
+        createdAt: newResident.createdAt,
+      };
+      await setDoc(doc(firestore, "users", id), sanitizeForFirestore(userDoc));
     }
 
     await this.recordActivity({
@@ -391,7 +438,13 @@ export class FirestoreDatabaseService implements IDatabaseService {
 
   async updateResidentProfile(id: string, updates: Partial<ResidentProfile>): Promise<ResidentProfile> {
     if (firestore) {
-      await updateDoc(doc(firestore, "residents", id), updates);
+      const sanitized = sanitizeForFirestore(updates);
+      await updateDoc(doc(firestore, "residents", id), sanitized);
+      try {
+        await updateDoc(doc(firestore, "users", id), sanitized);
+      } catch {
+        // user doc might not exist in users collection, that is fine
+      }
     }
     const target = await this.getResidentById(id);
     if (!target) throw new Error("Resident not found");
@@ -491,7 +544,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await setDoc(doc(firestore, "activity_logs", newLog.id), newLog);
+      await setDoc(doc(firestore, "activity_logs", newLog.id), sanitizeForFirestore(newLog));
     }
 
     return newLog;
@@ -526,7 +579,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await setDoc(doc(firestore, "sms_logs", newSms.id), newSms);
+      await setDoc(doc(firestore, "sms_logs", newSms.id), sanitizeForFirestore(newSms));
     }
 
     return newSms;
@@ -583,7 +636,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await setDoc(doc(firestore, "inquiries", newInquiry.id), newInquiry);
+      await setDoc(doc(firestore, "inquiries", newInquiry.id), sanitizeForFirestore(newInquiry));
     }
 
     await this.recordActivity({
@@ -599,7 +652,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
 
   async updateInquiry(id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry> {
     if (firestore) {
-      await updateDoc(doc(firestore, "inquiries", id), updates);
+      await updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore(updates));
     }
     const all = await this.getInquiries();
     const target = all.find((i) => i.id === id);
@@ -618,7 +671,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     };
 
     if (firestore) {
-      await updateDoc(doc(firestore, "inquiries", id), updates);
+      await updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore(updates));
     }
 
     await this.recordActivity({
@@ -670,7 +723,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     const current = await this.getHubSettings();
     const updated = { ...current, ...updates };
     if (firestore) {
-      await setDoc(doc(firestore, "settings", "default"), updated);
+      await setDoc(doc(firestore, "settings", "default"), sanitizeForFirestore(updated));
     }
 
     await this.recordActivity({

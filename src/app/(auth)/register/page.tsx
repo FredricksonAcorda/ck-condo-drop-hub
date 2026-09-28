@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 import { recordInvoice } from "@/lib/db/invoices";
 import { PhilippinePhoneInput, GmailInput, SecurePasswordInput, isPasswordStrongEnough } from "@/components/ui";
@@ -36,6 +36,15 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Auto-dismiss error banner after 7 seconds
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => {
+      setErrorMessage(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,20 +177,13 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* Error Alert Banner - Text only, strictly no icons paired with text */}
+      {/* Error Alert Banner - Text only, auto-dismisses after 7s, no dismiss button */}
       {errorMessage && (
         <div
           role="alert"
-          className="mb-3 p-2.5 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs flex items-center justify-between gap-3 animate-in fade-in"
+          className="mb-3 p-2.5 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs text-center leading-relaxed animate-in fade-in"
         >
-          <span>{errorMessage}</span>
-          <button
-            type="button"
-            onClick={() => setErrorMessage(null)}
-            className="text-red-400 hover:text-red-200 text-xs font-semibold cursor-pointer"
-          >
-            Dismiss
-          </button>
+          {errorMessage}
         </div>
       )}
 
