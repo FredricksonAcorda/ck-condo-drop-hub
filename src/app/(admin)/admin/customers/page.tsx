@@ -272,18 +272,13 @@ export default function AdminCustomersPage() {
         <div className="space-y-4">
           {/* Filter and Search Bar */}
           <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
-            <div className="w-full md:w-96 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
+            <div className="w-full md:w-96">
               <input
                 type="text"
                 placeholder="Search by name, unit number, branch, or CK-code..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-3.5 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
 
@@ -441,7 +436,7 @@ export default function AdminCustomersPage() {
                     }`}
                     title="Previous page"
                   >
-                    ← Prev
+                    Prev
                   </button>
 
                   {Array.from({ length: totalResidentPages }, (_, i) => i + 1).map((pageNum) => (
@@ -470,7 +465,7 @@ export default function AdminCustomersPage() {
                     }`}
                     title="Next page"
                   >
-                    Next →
+                    Next
                   </button>
                 </div>
               </div>
@@ -484,18 +479,13 @@ export default function AdminCustomersPage() {
         <div className="space-y-4">
           {/* Search & Filter Toolbar */}
           <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
-            <div className="w-full md:w-96 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
+            <div className="w-full md:w-96">
               <input
                 type="text"
                 placeholder="Search invoice #, resident name, or unit..."
                 value={invoiceSearch}
                 onChange={(e) => setInvoiceSearch(e.target.value)}
-                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-3.5 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
 
@@ -680,7 +670,7 @@ export default function AdminCustomersPage() {
                     }`}
                     title="Previous page"
                   >
-                    ← Prev
+                    Prev
                   </button>
 
                   {Array.from({ length: totalInvoicePages }, (_, i) => i + 1).map((pageNum) => (
@@ -709,7 +699,7 @@ export default function AdminCustomersPage() {
                     }`}
                     title="Next page"
                   >
-                    Next →
+                    Next
                   </button>
                 </div>
               </div>

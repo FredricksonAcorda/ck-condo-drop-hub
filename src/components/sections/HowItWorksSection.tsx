@@ -47,7 +47,7 @@ export default function HowItWorksSection() {
               href="/register"
               className="btn btn-primary btn-lg px-7 shadow-md inline-flex items-center gap-2 font-bold"
             >
-              GET STARTED →
+              GET STARTED
             </Link>
           </div>
 

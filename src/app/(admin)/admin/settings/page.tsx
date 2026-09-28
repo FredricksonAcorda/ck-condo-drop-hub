@@ -146,7 +146,7 @@ export default function HubSettingsPage() {
               <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Regular Plan Free Days
               </label>
-              <div className="relative">
+              <div>
                 <input
                   type="number"
                   min="1"
@@ -155,12 +155,9 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, freeDaysRegular: parseInt(String(e.target.value).replace(/\D/g, "")) || 3 })
                   }
-                  className="input font-bold pr-14 border border-gray-300 bg-white no-spinner"
+                  className="input font-bold border border-gray-300 bg-white no-spinner w-full"
                   required
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none select-none">
-                  days
-                </span>
               </div>
               <span className="text-[10px] text-brand-text-muted mt-1 block">
                 Standard allowance for basic condo units.
@@ -171,7 +168,7 @@ export default function HubSettingsPage() {
               <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Premium Plan Free Days
               </label>
-              <div className="relative">
+              <div>
                 <input
                   type="number"
                   min="1"
@@ -180,12 +177,9 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, freeDaysPremium: parseInt(String(e.target.value).replace(/\D/g, "")) || 7 })
                   }
-                  className="input font-bold pr-14 border border-gray-300 bg-white no-spinner"
+                  className="input font-bold border border-gray-300 bg-white no-spinner w-full"
                   required
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none select-none">
-                  days
-                </span>
               </div>
               <span className="text-[10px] text-brand-text-muted mt-1 block">
                 Extended holding for subscribers.
@@ -196,10 +190,7 @@ export default function HubSettingsPage() {
               <label className="block font-bold uppercase text-brand-text mb-1.5">
                 Overdue Rate Per Day
               </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-normal text-sm pointer-events-none select-none">
-                  ₱
-                </span>
+              <div>
                 <input
                   type="number"
                   min="0"
@@ -209,12 +200,9 @@ export default function HubSettingsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, overdueFeePerDay: parseInt(String(e.target.value).replace(/\D/g, "")) || 0 })
                   }
-                  className="input pl-8 pr-14 font-semibold text-brand-red border border-gray-300 bg-white no-spinner"
+                  className="input font-semibold text-brand-red border border-gray-300 bg-white no-spinner w-full"
                   required
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-text-muted font-bold text-xs pointer-events-none select-none">
-                  /day
-                </span>
               </div>
               <span className="text-[10px] text-brand-text-muted mt-1 block">
                 Charged upon handoff if overdue.

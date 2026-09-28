@@ -113,7 +113,7 @@ export default function ReportsAndLogsPage() {
             Send Manual SMS
           </button>
           <Link href="/admin" className="btn btn-outline btn-sm">
-            ← Station Admin
+            Station Admin
           </Link>
         </div>
       </div>
@@ -295,7 +295,7 @@ export default function ReportsAndLogsPage() {
                         }`}
                         title="Previous page"
                       >
-                        ← Prev
+                        Prev
                       </button>
 
                       {Array.from({ length: totalActivityPages }, (_, i) => i + 1).map((pageNum) => (
@@ -324,7 +324,7 @@ export default function ReportsAndLogsPage() {
                         }`}
                         title="Next page"
                       >
-                        Next →
+                        Next
                       </button>
                     </div>
                   </div>
@@ -456,7 +456,7 @@ export default function ReportsAndLogsPage() {
                     }`}
                     title="Previous page"
                   >
-                    ← Prev
+                    Prev
                   </button>
 
                   {Array.from({ length: totalSmsPages }, (_, i) => i + 1).map((pageNum) => (
@@ -485,7 +485,7 @@ export default function ReportsAndLogsPage() {
                     }`}
                     title="Next page"
                   >
-                    Next →
+                    Next
                   </button>
                 </div>
               </div>

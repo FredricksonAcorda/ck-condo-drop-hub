@@ -712,7 +712,7 @@ export default function MembershipPage() {
                 }`}
                 title="Previous page"
               >
-                ← Prev
+                Prev
               </button>
 
               {Array.from({ length: totalInvoicePages }, (_, i) => i + 1).map((pageNum) => (
@@ -741,7 +741,7 @@ export default function MembershipPage() {
                 }`}
                 title="Next page"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>

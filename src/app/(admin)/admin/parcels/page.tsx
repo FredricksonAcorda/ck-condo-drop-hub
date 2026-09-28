@@ -46,9 +46,6 @@ export default function ParcelsInventoryPage() {
       try {
         const list = await db.getAllResidents();
         setResidents(list);
-        if (list.length > 0 && !selectedResidentId) {
-          setSelectedResidentId(list[0].id);
-        }
       } catch (err) {
         console.error("Failed to load residents:", err);
       }
@@ -419,7 +416,7 @@ export default function ParcelsInventoryPage() {
                 required={true}
               />
               <div className="mt-1 text-[11px] text-brand-text-secondary">
-                Type name or unit to search
+                Search by name, bldg #, floor #, unit # and/or branch
               </div>
             </div>
           </div>
@@ -520,18 +517,13 @@ export default function ParcelsInventoryPage() {
               />
             </div>
 
-            <div className="relative w-full sm:w-60">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
+            <div className="w-full sm:w-60">
               <input
                 type="text"
                 placeholder="Search tracking, resident, unit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-10 text-xs w-full border border-gray-300 bg-white"
+                className="input pl-3.5 text-xs w-full border border-gray-300 bg-white"
               />
             </div>
           </div>
@@ -758,7 +750,7 @@ export default function ParcelsInventoryPage() {
                 }`}
                 title="Previous page"
               >
-                ← Prev
+                Prev
               </button>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -787,7 +779,7 @@ export default function ParcelsInventoryPage() {
                 }`}
                 title="Next page"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>

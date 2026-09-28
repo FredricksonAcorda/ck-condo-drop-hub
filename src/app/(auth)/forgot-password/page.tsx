@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
               href="/login"
               className="w-full py-3 rounded-xl bg-brand-red hover:bg-[#b30000] text-white font-bold text-xs uppercase tracking-wider block text-center transition-all shadow-md"
             >
-              Return to Login →
+              Return to Login
             </Link>
             <button
               type="button"

@@ -199,18 +199,13 @@ export default function AdminInquiriesPage() {
       <div className="bg-white rounded-2xl border border-brand-border shadow-sm overflow-hidden">
         {/* Search & Filter Toolbar */}
         <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
-          <div className="relative w-full sm:w-96">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </span>
+          <div className="w-full sm:w-96">
             <input
               type="text"
               placeholder="Search resident, unit, tracking #, or message..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input w-full text-xs pl-10 placeholder:text-gray-400 placeholder:opacity-50"
+              className="input w-full text-xs pl-3.5 placeholder:text-gray-400 placeholder:opacity-50"
             />
           </div>
 
@@ -326,7 +321,7 @@ export default function AdminInquiriesPage() {
                       onClick={() => updateInquiryStatus(inq.id, "IN_PROGRESS")}
                       className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
                     >
-                      Mark In Progress →
+                      Mark In Progress
                     </button>
                   )}
                 </div>
@@ -367,7 +362,7 @@ export default function AdminInquiriesPage() {
                 }`}
                 title="Previous page"
               >
-                ← Prev
+                Prev
               </button>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -396,7 +391,7 @@ export default function AdminInquiriesPage() {
                 }`}
                 title="Next page"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>

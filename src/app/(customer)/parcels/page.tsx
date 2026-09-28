@@ -787,7 +787,7 @@ export default function MyParcelsPage() {
                         }`}
                         title="Previous page"
                       >
-                        ← Prev
+                        Prev
                       </button>
 
                       {/* Numbered Page Buttons */}
@@ -818,7 +818,7 @@ export default function MyParcelsPage() {
                         }`}
                         title="Next page"
                       >
-                        Next →
+                        Next
                       </button>
                     </div>
                   </div>

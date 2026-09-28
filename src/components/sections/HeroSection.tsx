@@ -79,7 +79,7 @@ export default function HeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/register" className="btn btn-primary btn-lg shadow-md hover:shadow-brand-red/25 transition-all text-center">
-                SIGN UP NOW →
+                SIGN UP NOW
               </Link>
               <Link href="/#services" className="btn btn-outline btn-lg transition-all text-center">
                 LEARN MORE

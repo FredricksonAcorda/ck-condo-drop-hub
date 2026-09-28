@@ -165,32 +165,13 @@ export default function ResidentTypeaheadSelect({
     <div ref={containerRef} className="relative w-full">
       {/* Search Input Box */}
       <div className="relative flex items-center">
-        <span className="absolute left-3 text-gray-400 pointer-events-none flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </span>
-
         <input
           ref={inputRef}
           type="text"
           disabled={disabled}
           required={required && !selectedResidentId}
           value={displayInputValue}
-          placeholder={
-            isOpen ? "Type name or unit (e.g. John, 101)..." : "Select condo resident & unit..."
-          }
+          placeholder="Search by name, bldg #, floor #, unit # and/or branch"
           onFocus={() => {
             setIsOpen(true);
             setSearchQuery("");
@@ -200,7 +181,7 @@ export default function ResidentTypeaheadSelect({
             if (!isOpen) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          className={`input pl-10 pr-14 text-xs w-full cursor-text border font-medium h-11 transition-all ${
+          className={`input pl-3.5 pr-10 text-xs w-full cursor-text border font-medium h-11 transition-all ${
             isOpen
               ? "border-brand-red ring-2 ring-brand-red/20 bg-white"
               : selectedResident
@@ -210,7 +191,7 @@ export default function ResidentTypeaheadSelect({
           autoComplete="off"
         />
 
-        {/* Clear & Dropdown Indicator Controls */}
+        {/* Clear Control */}
         <div className="absolute right-2.5 flex items-center gap-1.5">
           {(searchQuery || selectedResident) && (
             <button
@@ -222,32 +203,6 @@ export default function ResidentTypeaheadSelect({
               ✕
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={() => {
-              if (!disabled) {
-                setIsOpen(!isOpen);
-                inputRef.current?.focus();
-              }
-            }}
-            className="text-gray-400 hover:text-gray-700 p-0.5 cursor-pointer"
-            tabIndex={-1}
-            aria-label="Toggle resident dropdown"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`w-4 h-4 transition-transform duration-150 ${isOpen ? "rotate-180 text-brand-red" : ""}`}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
         </div>
       </div>
 

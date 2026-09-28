@@ -75,17 +75,8 @@ function TrackParcelContent() {
           <button
             type="submit"
             disabled={isSearching}
-            className="btn btn-primary w-auto sm:w-auto px-6 py-3 font-bold uppercase cursor-pointer flex items-center justify-center gap-2"
+            className="btn btn-primary w-auto sm:w-auto px-6 py-3 font-bold uppercase cursor-pointer flex items-center justify-center"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="11" cy="11" r="8" strokeWidth="2" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" strokeLinecap="round" />
-            </svg>
             <span>{isSearching ? "Searching..." : "Track Parcel"}</span>
           </button>
         </form>

@@ -29,7 +29,7 @@ export default function TermsPage() {
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between text-xs">
             <span className="text-gray-600">Looking for our data privacy information?</span>
             <Link href="/privacy" className="text-brand-red font-bold hover:underline">
-              Read Privacy Policy →
+              Read Privacy Policy
             </Link>
           </div>
 
@@ -124,7 +124,7 @@ export default function TermsPage() {
           {/* Footer Back link */}
           <div className="pt-6 border-t border-gray-200 flex justify-between items-center">
             <Link href="/" className="text-xs text-gray-500 hover:text-gray-900 font-semibold">
-              ← Back to Home
+              Back to Home
             </Link>
             <Link href="/register" className="btn btn-primary py-2 px-5 text-xs font-bold uppercase">
               REGISTER ACCOUNT

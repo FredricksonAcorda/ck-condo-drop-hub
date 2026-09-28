@@ -27,7 +27,7 @@ export default function CommunityBanner() {
               Reliable parcel handling and essential services, right at your doorstep.
             </p>
             <Link href="/register" className="btn btn-primary btn-lg shadow-sm">
-              JOIN NOW →
+              JOIN NOW
             </Link>
           </div>
 
