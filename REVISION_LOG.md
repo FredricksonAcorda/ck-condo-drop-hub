@@ -48,6 +48,7 @@
 36. [Purge Functionless GCash Number Input & Validation Across Registration, Membership Renewal, and Dashboard Payment Modals](#36-purge-functionless-gcash-number-input--validation-across-registration-membership-renewal-and-dashboard-payment-modals-modification--ux-polish)
 37. [Purge Demo Switcher Buttons, Demo Accounts (Juan & Maria), Seed Parcels, Payments, and Activity Logs](#37-purge-demo-switcher-buttons-demo-accounts-juan--maria-seed-parcels-payments-and-activity-logs-modification--fix)
 38. [Interactive Terms of Service & Privacy Policy Modals and Dedicated Public Legal Routes](#38-interactive-terms-of-service--privacy-policy-modals-and-dedicated-public-legal-routes-add--modification)
+39. [Firebase Firestore Cloud Invoices & Payment Logs Synchronization](#39-firebase-firestore-cloud-invoices--payment-logs-synchronization-bug--fix--add)
 
 ---
 
@@ -881,6 +882,29 @@
   Residents and visitors can read the Terms of Service and Privacy Policy independently either as an instant modal dialog during sign-up/login without losing typed data, or as persistent standalone public web pages. All elements strictly adhere to the zero-icon typographic standard.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   During critical multi-step registration or checkout flows, never navigate users away from the page when they click on mandatory legal agreements or privacy policies. Provide an accessible in-context modal dialog that loads the specific requested document with tabbed switching, while maintaining dedicated standalone URLs for legal indexing, bookmarking, and regulatory compliance.
+
+---
+
+## 39. Firebase Firestore Cloud Invoices & Payment Logs Synchronization (Bug / Fix / Add)
+
+- **Current State**:
+  While user accounts, resident profiles, parcels, activity logs, inquiries, and hub settings were synchronized via Firebase Firestore, the billing system in [`src/lib/db/invoices.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/invoices.ts) was isolated strictly to client-side browser `localStorage` (`ck_hub_invoices_v2`).
+- **The Problem**:
+  When a resident registered on their own mobile phone or laptop and submitted a GCash or Cash-at-Counter payment activation for a Premium or Regular plan, the invoice record was saved exclusively inside that specific physical device's browser `localStorage`. When Staff Admin logged into the management console on a different computer or phone, the **Payment & Billing Logs** tab queried the admin device's empty local storage, showing 0 invoices for the newly registered resident. Cross-device invoice auditing and real-time subscription verification were impossible.
+- **What to Do (Solution)**:
+  1. **Connected Invoices to Firebase Firestore**:
+     - Updated [`src/lib/db/invoices.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/invoices.ts) to read from and write directly to the cloud `invoices` collection in Firestore.
+     - `getAllInvoices`: Queries Firestore `invoices`, sorts newest first, updates local cache, and gracefully falls back to `localStorage` when offline.
+     - `recordInvoice`: Persists new billing records to Firestore (`collection(firestore, "invoices")`) and mirrors to `localStorage`.
+     - `verifyAndActivateMembership` & `rejectMembershipPayment`: Real-time cloud document status updates in Firestore, updating resident profile states and dispatching audit logs.
+  2. **Implemented Real-Time Firestore Subscription**:
+     - Added `subscribeToInvoices` listener utilizing Firestore's `onSnapshot` in [`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx). Staff admin dashboards automatically receive payment submissions across any device without requiring manual page reload.
+  3. **Backfilled Tracy Aloria's Premium GCash Invoice**:
+     - Injected invoice `INV-2026-1088` into Firestore for resident `usr-resident-1790633557323` (Tracy Aloria, Quezon City Branch, Bldg 4 • Flr 12 • Unit 456, Premium ₱299.00 via GCash QR) with status `PENDING` so Staff Admin can review and confirm payment immediately.
+- **Result**:
+  Instant, cross-device cloud synchronization for all customer payments, invoices, and billing receipts. Any payment made on any device immediately reflects across all administrator dashboards.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never leave billing ledgers, transaction records, or invoice receipts in client-side storage (`localStorage` / `sessionStorage`) when auth and user entities are cloud-backed. Financial audit trails must always write directly to the primary cloud datastore with real-time snapshot subscriptions for administrative staff.
 
 ---
 

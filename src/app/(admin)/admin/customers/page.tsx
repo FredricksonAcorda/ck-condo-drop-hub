@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResidentProfile, InvoiceRecord } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { useParcels } from "@/context";
-import { getAllInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
+import { getAllInvoices, subscribeToInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
 import { BRANCHES } from "@/constants";
 
 export default function AdminCustomersPage() {
@@ -58,9 +58,15 @@ export default function AdminCustomersPage() {
       loadInvoices();
     };
 
+    const unsubscribeInvoices = subscribeToInvoices((updatedInvoices) => {
+      setInvoices(updatedInvoices);
+      setLoadingInvoices(false);
+    });
+
     window.addEventListener("ck_db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
     return () => {
+      unsubscribeInvoices();
       window.removeEventListener("ck_db_updated", handleDbUpdate);
       window.removeEventListener("storage", handleDbUpdate);
     };
