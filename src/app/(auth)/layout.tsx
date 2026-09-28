@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AuthHeader from "@/components/layout/AuthHeader";
 
 export default function AuthLayout({
   children,
@@ -7,31 +7,11 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen bg-white sm:bg-slate-100/70 text-zinc-900 flex flex-col justify-between selection:bg-brand-red selection:text-white font-sans antialiased relative overflow-x-hidden">
-      {/* Top Navigation Bar with Home Link */}
-      <header className="w-full max-w-xl mx-auto px-6 pt-6 sm:pt-8 flex items-center justify-start z-10">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-zinc-600 hover:text-black bg-white/90 hover:bg-white px-3.5 py-1.5 rounded-full border border-gray-200 shadow-xs text-sm font-semibold transition-all group"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4 text-zinc-500 group-hover:text-brand-red transition-colors"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span>Home</span>
-        </Link>
-      </header>
+      {/* Floating Pill Top Navigation matching Home Page */}
+      <AuthHeader />
 
       {/* Centered Main Auth Card */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 py-6 sm:py-8 z-10">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 pb-8 z-10">
         {children}
       </main>
 

@@ -610,6 +610,32 @@
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Never leave demo prefill states or non-functional third-party buttons in production handovers. Pair client-side dynamic password strength meters with strict form submit gates to ensure both immediate user guidance and enforced security.
 
+## 29. Wide Ergonomic Auth Layout, Non-Blocking Subscription Registration, and Floating Animated Header (Fix / Modification / Add)
+
+- **Current State**:
+  The sign up and sign in containers used narrow widths (`max-w-[460px]`/`max-w-[430px]`), forcing desktop and tablet users to scroll vertically to view form fields. On the registration page, selecting a paid tier (Regular or Premium) triggered a blocking modal requiring an 8-digit GCash reference number before account creation was allowed. The auth header rendered a basic text button that didn't match the floating pill aesthetic of the home page.
+- **The Problem**:
+  Blocking account creation until immediate payment discouraged resident onboarding and caused friction. Residents who registered under the Per-Parcel free plan saw ambiguous status indicators if pending states weren't properly isolated. Excessive vertical scrolling diminished UX on wide monitors, and the navigation header lacked the premium animated branding of the landing page.
+- **What to Do (Solution)**:
+  1. **Non-Blocking Subscription Registration**:
+     - Residents can create accounts freely regardless of chosen plan.
+     - Selecting **Per Parcel Plan** immediately activates standard free access with zero pending payment notices on resident portal or staff admin.
+     - Selecting **Regular Plan** (₱149/mo) or **Premium Plan** (₱299/mo) creates the account immediately with `planStatus: "PENDING_PAYMENT"` (or `PENDING_VERIFICATION` if GCash reference is optionally provided), giving the resident instant dashboard access while awaiting staff confirmation at the lobby desk.
+     - Eliminated blocking modal popups and forced reference inputs.
+  2. **Wide Responsive 2-Column Layout**:
+     - Expanded Sign Up box to `max-w-4xl` (`w-full max-w-[896px]`) with a 2-column grid:
+       * Left Column: Resident Profile, Contact, 12-Branch Dropdown, 3-Part Unit, and Secure Password with real-time complexity validation.
+       * Right Column: Membership tier cards, payment preference, terms, and submit button.
+     - Expanded Sign In box to `max-w-[520px]` with generous padding and zero vertical scrolling.
+  3. **Floating Top Navigation Header (`AuthHeader.tsx`)**:
+     - Modeled directly after the home page's floating capsule bar (`PillNav`).
+     - Features the brand logo mark in a circular capsule with smooth 360° spin animation on hover (non-clickable).
+     - Features an active, pill-styled "Home" button linking to `/` with smooth hover transitions.
+- **Result**:
+  Zero-scroll auth experience on standard displays, frictionless resident registration without forced payment blockers, accurate plan isolation, and cohesive animated navigation matching the home page.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Always allow top-of-funnel user registration to complete unhindered by deferring payment verification to asynchronous counter or admin confirmation workflows. Pair multi-section onboarding forms with 2-column wide grid containers on desktop to minimize page height and avoid vertical scroll fatigue.
+
 ---
 
 ## Autonomous Agent Instructions for Future Updates
@@ -622,5 +648,6 @@ Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **
    - **What to Do (Solution)**
    - **Result**
 3. Include the cross-project transferable insight so that the pattern can be reapplied to other client codebases.
+
 
 

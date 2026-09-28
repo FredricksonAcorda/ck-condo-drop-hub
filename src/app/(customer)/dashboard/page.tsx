@@ -57,8 +57,11 @@ export default function CustomerDashboardPage() {
   const overdueParcels = userParcels.filter((p) => p.status === "OVERDUE");
   const totalActive = readyParcels.length;
 
-  const isPendingPayment = user?.planStatus === "PENDING_PAYMENT";
-  const planPrice = user?.plan === "PREMIUM" ? "₱299/mo" : user?.plan === "REGULAR" ? "₱149/mo" : "₱15/claim";
+  const isPendingPayment =
+    (user?.planStatus === "PENDING_PAYMENT" || user?.planStatus === "PENDING_VERIFICATION") &&
+    Boolean(user?.pendingPlan);
+  const displayPlanName = user?.pendingPlan || user?.plan || "PER_PARCEL";
+  const planPrice = displayPlanName === "PREMIUM" ? "₱299/mo" : displayPlanName === "REGULAR" ? "₱149/mo" : "₱15/claim";
 
   const deliveryCreditsText = isPendingPayment
     ? "Pending Payment"
@@ -79,11 +82,11 @@ export default function CustomerDashboardPage() {
                 Action Required
               </span>
               <h3 className="font-bold text-sm text-gray-900">
-                Membership Pending Payment: {user?.plan} Tier ({planPrice})
+                Membership Pending Payment: {displayPlanName} Tier ({planPrice})
               </h3>
             </div>
             <p className="text-xs text-gray-600 max-w-xl leading-relaxed">
-              You registered under the <strong>{user?.plan} Plan</strong>. Please settle your subscription via GCash QR or pay at the Lobby to activate free holding days and package perks.
+              You selected the <strong>{displayPlanName} Plan</strong>. Please settle your subscription via GCash QR or pay at the Lobby to activate free holding days and package perks.
             </p>
           </div>
 

@@ -13,8 +13,8 @@ export default function MembershipPage() {
   const { user, updateProfile } = useAuth();
   const currentPlan = user?.plan || "PREMIUM";
   const planStatus = user?.planStatus || "ACTIVE";
-  const isPendingPayment = planStatus === "PENDING_PAYMENT";
-  const isPendingVerification = planStatus === "PENDING_VERIFICATION";
+  const isPendingPayment = planStatus === "PENDING_PAYMENT" && Boolean(user?.pendingPlan);
+  const isPendingVerification = planStatus === "PENDING_VERIFICATION" && Boolean(user?.pendingPlan);
 
   const [selectedPlanToSwitch, setSelectedPlanToSwitch] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM" | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);

@@ -92,7 +92,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative w-full max-w-[430px] sm:max-w-[440px] bg-[#141416] rounded-3xl border border-white/[0.08] p-7 sm:p-9 shadow-2xl overflow-hidden">
+    <div className="relative w-full max-w-[500px] sm:max-w-[520px] bg-[#141416] rounded-3xl border border-white/[0.08] p-8 sm:p-10 shadow-2xl overflow-hidden my-4">
       {/* Top Red Glow Rim Light (matches reference styling) */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[2px] bg-gradient-to-r from-transparent via-brand-red to-transparent" />
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-52 h-16 bg-brand-red/20 blur-xl rounded-full pointer-events-none" />
