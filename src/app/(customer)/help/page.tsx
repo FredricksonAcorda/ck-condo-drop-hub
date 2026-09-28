@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useAuth, useParcels } from "@/context";
+import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 
 export default function HelpCenterPage() {
   const { user } = useAuth();
-  const { inquiries, sendInquiry } = useParcels();
+  const { inquiries, sendInquiry, hubSettings } = useParcels();
 
   // Calculator State
   const [calcPlan, setCalcPlan] = useState<"PER_PARCEL" | "REGULAR" | "PREMIUM">(user?.plan || "PREMIUM");
@@ -13,7 +14,7 @@ export default function HelpCenterPage() {
 
   const freeDaysAllowed = calcPlan === "PREMIUM" ? 7 : 3;
   const overdueDays = Math.max(0, calcDays - freeDaysAllowed);
-  const calculatedFee = overdueDays * 10;
+  const calculatedFee = overdueDays * (hubSettings.overdueFeePerDay || 10);
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -37,7 +38,7 @@ export default function HelpCenterPage() {
       await sendInquiry({
         residentId: user.id,
         residentName: user.name,
-        residentUnit: `${user.unit || "Unit 101"}, ${user.tower || "Tower A"}`,
+        residentUnit: `${user.unit || "Unit 101"}, ${user.branch || user.tower || "Tower A"}`,
         residentPhone: user.phone || "0917 123 4567",
         category,
         trackingNumber: trackingNum.trim() || undefined,
@@ -54,32 +55,15 @@ export default function HelpCenterPage() {
     }
   };
 
-  const faqs = [
-    {
-      q: "How do I claim my package at the Lobby?",
-      a: "Proceed to the Lobby in the Ground Floor Main Lobby during operating hours (8:00 AM – 9:00 PM). Present your 4-digit parcel passcode (e.g. CK-8921) or show the QR code from your My Parcels tab. Our Staff Admin will verify the code and hand you your parcel immediately.",
-    },
-    {
-      q: "Can my spouse, family member, or helper claim my parcels on my behalf?",
-      a: "Yes! Go to My Account > Authorized Claimants and register their full name and mobile number. They can claim your packages by showing their valid government ID or condominium resident badge at the Lobby.",
-    },
-    {
-      q: "What happens if I cannot claim my package within the free holding period?",
-      a: "Parcels under Per-Parcel and Regular plans have 3 free calendar days (with Regular members enjoying 15 days of unlimited parcels), and Premium VIP members enjoy 7 free calendar days (with 30 days of unlimited parcels). If a parcel remains unclaimed after the free holding period, a storage holding fee of ₱10.00 per day applies upon pickup.",
-    },
-    {
-      q: "How does Door-to-Door Unit Delivery work?",
-      a: "If you don't want to carry heavy boxes or are away from home, Premium subscribers can schedule a unit delivery from My Account. A Staff Admin will bring your package directly to your condo door during your chosen delivery window (Morning, Afternoon, or Evening). Premium members receive 5 complimentary door deliveries each month!",
-    },
-    {
-      q: "What payment methods are accepted at the Lobby?",
-      a: "We accept GCash QR (instant scanning), Maya QR, and Cash at the Lobby counter. You can pay holding fees, subscription renewals, or per-parcel drops on the spot.",
-    },
-    {
-      q: "Which delivery couriers are supported by CK Condo Drop Hub?",
-      a: "Our official partner couriers deliver to our lobby daily: SPX Express, Flash Express, J&T Express, YTO Express, LBC Express, and STO Express. We also accept other couriers delivering appliances, groceries, and parcels from SM, IKEA, and other brands.",
-    },
-  ];
+  const rawResidentFaqs =
+    hubSettings.residentFaqs && hubSettings.residentFaqs.length > 0
+      ? hubSettings.residentFaqs
+      : DEFAULT_HUB_SETTINGS.residentFaqs || [];
+
+  const faqs = rawResidentFaqs.map((f) => ({
+    q: f.question,
+    a: f.answer,
+  }));
 
   return (
     <div className="space-y-6">
@@ -123,10 +107,11 @@ export default function HelpCenterPage() {
                     key={p.id}
                     type="button"
                     onClick={() => setCalcPlan(p.id)}
-                    className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer ${calcPlan === p.id
+                    className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                      calcPlan === p.id
                         ? "border-brand-red bg-red-50 text-brand-red font-bold"
                         : "border-gray-200 bg-white text-gray-600 hover:text-black"
-                      }`}
+                    }`}
                   >
                     <div className="text-xs">{p.label}</div>
                     <div className="text-[10px] text-gray-500">{p.days} Days Free</div>
@@ -270,12 +255,13 @@ export default function HelpCenterPage() {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-900">{inq.category}</span>
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${inq.status === "RESOLVED"
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          inq.status === "RESOLVED"
                             ? "bg-green-100 text-green-800 border border-green-200"
                             : inq.status === "IN_PROGRESS"
-                              ? "bg-blue-100 text-blue-800 border border-blue-200"
-                              : "bg-amber-100 text-amber-800 border border-amber-200"
-                          }`}
+                            ? "bg-blue-100 text-blue-800 border border-blue-200"
+                            : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
                       >
                         {inq.status.replace("_", " ")}
                       </span>

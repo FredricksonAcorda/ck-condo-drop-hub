@@ -6,6 +6,7 @@ import { ResidentProfile, InvoiceRecord } from "@/types";
 import { db } from "@/lib/db/local-store";
 import { useParcels } from "@/context";
 import { getAllInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
+import { BRANCHES } from "@/constants";
 
 export default function AdminCustomersPage() {
   const { parcels } = useParcels();
@@ -15,7 +16,7 @@ export default function AdminCustomersPage() {
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [loadingResidents, setLoadingResidents] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [towerFilter, setTowerFilter] = useState("ALL");
+  const [branchFilter, setBranchFilter] = useState("ALL");
   const [selectedResident, setSelectedResident] = useState<ResidentProfile | null>(null);
 
   // Invoices & Payments State
@@ -73,14 +74,21 @@ export default function AdminCustomersPage() {
         !q ||
         res.name.toLowerCase().includes(q) ||
         res.unit.toLowerCase().includes(q) ||
+        (res.branch && res.branch.toLowerCase().includes(q)) ||
+        (res.buildingNumber && res.buildingNumber.toLowerCase().includes(q)) ||
+        (res.floorNumber && res.floorNumber.toLowerCase().includes(q)) ||
+        (res.unitNumber && res.unitNumber.toLowerCase().includes(q)) ||
         res.residentCode.toLowerCase().includes(q) ||
         res.phone.includes(q) ||
         res.email.toLowerCase().includes(q);
 
-      const matchesTower = towerFilter === "ALL" || res.tower === towerFilter;
-      return matchesSearch && matchesTower;
+      const matchesBranch =
+        branchFilter === "ALL" ||
+        res.branch === branchFilter ||
+        res.tower === branchFilter;
+      return matchesSearch && matchesBranch;
     });
-  }, [residents, searchQuery, towerFilter]);
+  }, [residents, searchQuery, branchFilter]);
 
   // 5-item pagination for registered residents
   const [residentPage, setResidentPage] = useState(1);
@@ -88,7 +96,7 @@ export default function AdminCustomersPage() {
 
   useEffect(() => {
     setResidentPage(1);
-  }, [searchQuery, towerFilter]);
+  }, [searchQuery, branchFilter]);
 
   const totalResidentPages = Math.ceil(filteredResidents.length / ITEMS_PER_PAGE) || 1;
   const validResidentPage = Math.min(Math.max(1, residentPage), totalResidentPages);
@@ -219,10 +227,11 @@ export default function AdminCustomersPage() {
         <button
           type="button"
           onClick={() => setActiveTab("DIRECTORY")}
-          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "DIRECTORY"
+          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === "DIRECTORY"
               ? "border-brand-red text-brand-red font-black"
               : "border-transparent text-brand-text-secondary hover:text-brand-black"
-            }`}
+          }`}
         >
           <span>Residents Directory</span>
           <span className="bg-brand-surface text-brand-black text-[10px] px-2 py-0.5 rounded-full font-bold">
@@ -233,10 +242,11 @@ export default function AdminCustomersPage() {
         <button
           type="button"
           onClick={() => setActiveTab("PAYMENTS")}
-          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "PAYMENTS"
+          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === "PAYMENTS"
               ? "border-brand-red text-brand-red font-black"
               : "border-transparent text-brand-text-secondary hover:text-brand-black"
-            }`}
+          }`}
         >
           <span>Payment & Billing Logs</span>
           {pendingSettlementCount > 0 ? (
@@ -264,7 +274,7 @@ export default function AdminCustomersPage() {
               </span>
               <input
                 type="text"
-                placeholder="Search by name, unit number, or CK-code..."
+                placeholder="Search by name, unit number, branch, or CK-code..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input pl-10 text-xs w-full border border-gray-300 bg-white"
@@ -273,17 +283,17 @@ export default function AdminCustomersPage() {
 
             <div className="flex items-center gap-2 w-full md:w-auto">
               <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
-                Filter Tower:
+                Filter Branch:
               </span>
               <select
-                value={towerFilter}
-                onChange={(e) => setTowerFilter(e.target.value)}
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
                 className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
               >
-                <option value="ALL">All Towers</option>
-                <option value="Tower A">Tower A</option>
-                <option value="Tower B">Tower B</option>
-                <option value="Tower C">Tower C</option>
+                <option value="ALL">All Branches</option>
+                {BRANCHES.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -295,7 +305,7 @@ export default function AdminCustomersPage() {
                 <thead className="bg-brand-surface text-brand-text-secondary uppercase border-b border-brand-border">
                   <tr>
                     <th className="px-4 py-3">Resident Code & Name</th>
-                    <th className="px-4 py-3">Unit & Tower</th>
+                    <th className="px-4 py-3">Unit & Branch</th>
                     <th className="px-4 py-3">Phone & Email</th>
                     <th className="px-4 py-3">Membership Plan</th>
                     <th className="px-4 py-3">Parcels at Hub</th>
@@ -328,7 +338,9 @@ export default function AdminCustomersPage() {
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="font-semibold text-brand-text">{res.unit}</div>
-                            <div className="text-[11px] text-brand-text-secondary">{res.tower}</div>
+                            <div className="text-[11px] text-brand-text-secondary font-medium">
+                              {res.branch || res.tower}
+                            </div>
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="text-brand-text">{res.phone}</div>
@@ -337,12 +349,13 @@ export default function AdminCustomersPage() {
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${res.plan === "PREMIUM"
+                                className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                  res.plan === "PREMIUM"
                                     ? "bg-amber-100 text-amber-800 border border-amber-300"
                                     : res.plan === "REGULAR"
-                                      ? "bg-blue-50 text-blue-700"
-                                      : "bg-gray-100 text-gray-700"
-                                  }`}
+                                    ? "bg-blue-50 text-blue-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
                               >
                                 {res.plan.replace("_", " ")}
                               </span>
@@ -361,8 +374,8 @@ export default function AdminCustomersPage() {
                               {res.plan === "PREMIUM"
                                 ? "30d Unlimited • 7d Grace • 1 Door Deliv."
                                 : res.plan === "REGULAR"
-                                  ? "15d Unlimited • 3d Grace • No Door Deliv."
-                                  : "₱20 / Claim • 2d Grace"}
+                                ? "15d Unlimited • 3d Grace • No Door Deliv."
+                                : "₱20 / Claim • 2d Grace"}
                             </div>
                           </td>
                           <td className="px-4 py-3.5">
@@ -415,10 +428,11 @@ export default function AdminCustomersPage() {
                     type="button"
                     onClick={() => setResidentPage((p) => Math.max(1, p - 1))}
                     disabled={validResidentPage <= 1}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validResidentPage <= 1
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validResidentPage <= 1
                         ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                         : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                      }`}
+                    }`}
                     title="Previous page"
                   >
                     ← Prev
@@ -429,10 +443,11 @@ export default function AdminCustomersPage() {
                       key={pageNum}
                       type="button"
                       onClick={() => setResidentPage(pageNum)}
-                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${validResidentPage === pageNum
+                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        validResidentPage === pageNum
                           ? "bg-brand-red text-white shadow-xs"
                           : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -442,10 +457,11 @@ export default function AdminCustomersPage() {
                     type="button"
                     onClick={() => setResidentPage((p) => Math.min(totalResidentPages, p + 1))}
                     disabled={validResidentPage >= totalResidentPages}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validResidentPage >= totalResidentPages
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validResidentPage >= totalResidentPages
                         ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                         : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                      }`}
+                    }`}
                     title="Next page"
                   >
                     Next →
@@ -487,10 +503,11 @@ export default function AdminCustomersPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setInvoiceStatusFilter(tab.id as typeof invoiceStatusFilter)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${invoiceStatusFilter === tab.id
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                    invoiceStatusFilter === tab.id
                       ? "bg-brand-red text-white shadow-xs"
                       : "bg-brand-surface text-brand-text-secondary hover:text-brand-black"
-                    }`}
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -533,8 +550,9 @@ export default function AdminCustomersPage() {
                       return (
                         <tr
                           key={inv.id}
-                          className={`hover:bg-brand-surface/60 transition-colors ${isPending ? "bg-amber-50/50" : ""
-                            }`}
+                          className={`hover:bg-brand-surface/60 transition-colors ${
+                            isPending ? "bg-amber-50/50" : ""
+                          }`}
                         >
                           <td className="px-4 py-3.5">
                             <div className="font-mono font-bold text-brand-black">{inv.id}</div>
@@ -558,10 +576,11 @@ export default function AdminCustomersPage() {
                           </td>
                           <td className="px-4 py-3.5">
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${inv.method.includes("GCash")
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                inv.method.includes("GCash")
                                   ? "bg-blue-50 text-blue-700 border border-blue-200"
                                   : "bg-amber-50 text-amber-800 border border-amber-200"
-                                }`}
+                              }`}
                             >
                               {inv.method}
                             </span>
@@ -648,10 +667,11 @@ export default function AdminCustomersPage() {
                     type="button"
                     onClick={() => setInvoicePage((p) => Math.max(1, p - 1))}
                     disabled={validInvoicePage <= 1}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validInvoicePage <= 1
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validInvoicePage <= 1
                         ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                         : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                      }`}
+                    }`}
                     title="Previous page"
                   >
                     ← Prev
@@ -662,10 +682,11 @@ export default function AdminCustomersPage() {
                       key={pageNum}
                       type="button"
                       onClick={() => setInvoicePage(pageNum)}
-                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${validInvoicePage === pageNum
+                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        validInvoicePage === pageNum
                           ? "bg-brand-red text-white shadow-xs"
                           : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -675,10 +696,11 @@ export default function AdminCustomersPage() {
                     type="button"
                     onClick={() => setInvoicePage((p) => Math.min(totalInvoicePages, p + 1))}
                     disabled={validInvoicePage >= totalInvoicePages}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validInvoicePage >= totalInvoicePages
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                      validInvoicePage >= totalInvoicePages
                         ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                         : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                      }`}
+                    }`}
                     title="Next page"
                   >
                     Next →
@@ -718,13 +740,29 @@ export default function AdminCustomersPage() {
 
             <div className="grid grid-cols-2 gap-3 text-xs bg-brand-surface p-4 rounded-xl border border-brand-border">
               <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Unit</span>
-                <span className="font-semibold text-brand-black">{selectedResident.unit}</span>
+                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Branch</span>
+                <span className="font-semibold text-brand-black">{selectedResident.branch || selectedResident.tower || "Malinta Branch"}</span>
               </div>
               <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Tower</span>
-                <span className="font-semibold text-brand-black">{selectedResident.tower}</span>
+                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Unit / Address</span>
+                <span className="font-semibold text-brand-black">{selectedResident.unit}</span>
               </div>
+              {(selectedResident.buildingNumber || selectedResident.floorNumber || selectedResident.unitNumber) && (
+                <div className="col-span-2 bg-white/70 p-2 rounded-lg border border-brand-border/60 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Building #</span>
+                    <span className="font-bold text-brand-black">{selectedResident.buildingNumber || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Floor #</span>
+                    <span className="font-bold text-brand-black">{selectedResident.floorNumber || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Unit #</span>
+                    <span className="font-bold text-brand-black">{selectedResident.unitNumber || "—"}</span>
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Phone</span>
                 <span className="text-brand-black font-medium">{selectedResident.phone}</span>
@@ -740,21 +778,48 @@ export default function AdminCustomersPage() {
               <div>
                 <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Plan Status</span>
                 <span
-                  className={`font-bold uppercase ${selectedResident.planStatus === "ACTIVE" ? "text-green-700" : "text-amber-700"
-                    }`}
+                  className={`font-bold uppercase ${
+                    selectedResident.planStatus === "ACTIVE" ? "text-green-700" : "text-amber-700"
+                  }`}
                 >
                   {selectedResident.planStatus}
                 </span>
               </div>
               <div className="col-span-2">
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">
-                  Authorized Proxy Claimant
+                <span className="text-brand-text-muted block text-[10px] uppercase font-bold mb-1">
+                  Authorized Proxy Claimants (Up to 3)
                 </span>
-                <span className="text-brand-black">
-                  {selectedResident.authorizedClaimant
-                    ? `${selectedResident.authorizedClaimant} (${selectedResident.claimantPhone || "No Phone"})`
-                    : "None registered"}
-                </span>
+                {selectedResident.authorizedClaimants && selectedResident.authorizedClaimants.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {selectedResident.authorizedClaimants.map((c, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white p-2 rounded-lg border border-brand-border/60 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <span className="font-bold text-brand-black">{c.name}</span>
+                          {c.relationship && (
+                            <span className="text-brand-text-secondary ml-1.5 text-[11px]">
+                              • {c.relationship}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-mono text-[11px] text-gray-600 font-medium">
+                          {c.phone || "No Phone"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : selectedResident.authorizedClaimant ? (
+                  <div className="bg-white p-2 rounded-lg border border-brand-border/60 text-xs">
+                    <span className="font-bold text-brand-black">{selectedResident.authorizedClaimant}</span>
+                    <span className="font-mono text-[11px] text-gray-600 font-medium ml-2">
+                      ({selectedResident.claimantPhone || "No Phone"})
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-brand-text-muted text-xs italic">No proxy claimants registered</span>
+                )}
               </div>
             </div>
 

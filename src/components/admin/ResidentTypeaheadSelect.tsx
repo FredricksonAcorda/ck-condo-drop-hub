@@ -40,10 +40,22 @@ export default function ResidentTypeaheadSelect({
     return residents.filter((r) => {
       const nameMatch = r.name.toLowerCase().includes(q);
       const unitMatch = r.unit.toLowerCase().includes(q);
-      const towerMatch = r.tower.toLowerCase().includes(q);
+      const towerMatch = (r.branch || r.tower).toLowerCase().includes(q);
+      const bldgMatch = (r.buildingNumber || "").toLowerCase().includes(q);
+      const floorMatch = (r.floorNumber || "").toLowerCase().includes(q);
+      const unitNumMatch = (r.unitNumber || "").toLowerCase().includes(q);
       const codeMatch = r.residentCode.toLowerCase().includes(q);
       const phoneMatch = r.phone.replace(/\s+/g, "").includes(q.replace(/\s+/g, ""));
-      return nameMatch || unitMatch || towerMatch || codeMatch || phoneMatch;
+      return (
+        nameMatch ||
+        unitMatch ||
+        towerMatch ||
+        bldgMatch ||
+        floorMatch ||
+        unitNumMatch ||
+        codeMatch ||
+        phoneMatch
+      );
     });
   }, [residents, searchQuery]);
 
@@ -146,8 +158,8 @@ export default function ResidentTypeaheadSelect({
   const displayInputValue = isOpen
     ? searchQuery
     : selectedResident
-      ? `${selectedResident.name} — Unit ${selectedResident.unit} (${selectedResident.tower})`
-      : "";
+    ? `${selectedResident.name} — ${selectedResident.unit} (${selectedResident.branch || selectedResident.tower})`
+    : "";
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -188,12 +200,13 @@ export default function ResidentTypeaheadSelect({
             if (!isOpen) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          className={`input pl-10 pr-14 text-xs w-full cursor-text border font-medium h-11 transition-all ${isOpen
+          className={`input pl-10 pr-14 text-xs w-full cursor-text border font-medium h-11 transition-all ${
+            isOpen
               ? "border-brand-red ring-2 ring-brand-red/20 bg-white"
               : selectedResident
-                ? "border-gray-300 bg-white text-gray-900 font-semibold"
-                : "border-gray-300 bg-white text-gray-500"
-            }`}
+              ? "border-gray-300 bg-white text-gray-900 font-semibold"
+              : "border-gray-300 bg-white text-gray-500"
+          }`}
           autoComplete="off"
         />
 
@@ -274,12 +287,13 @@ export default function ResidentTypeaheadSelect({
                     type="button"
                     onClick={() => handlePickResident(res)}
                     onMouseEnter={() => setHighlightedIndex(idx)}
-                    className={`w-full text-left px-3.5 py-2.5 transition-colors flex items-center justify-between gap-3 cursor-pointer ${isSelected
+                    className={`w-full text-left px-3.5 py-2.5 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
+                      isSelected
                         ? "bg-red-50/80 text-brand-red font-bold"
                         : isHighlighted
-                          ? "bg-gray-100 text-gray-900"
-                          : "hover:bg-gray-50 text-gray-800"
-                      }`}
+                        ? "bg-gray-100 text-gray-900"
+                        : "hover:bg-gray-50 text-gray-800"
+                    }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -299,7 +313,7 @@ export default function ResidentTypeaheadSelect({
 
                       <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500">
                         <span className="font-medium text-gray-700">
-                          Unit {renderHighlightedText(res.unit, searchQuery)} ({res.tower})
+                          {renderHighlightedText(res.unit, searchQuery)} ({res.branch || res.tower})
                         </span>
                         <span>•</span>
                         <span className="font-mono text-[10px] text-gray-400">

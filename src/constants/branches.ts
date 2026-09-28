@@ -13,4 +13,4 @@ export const BRANCHES = [
   "Mandaluyong Branch",
 ] as const;
 
-export type BranchName = typeof BRANCHES[number];
+export type BranchName = (typeof BRANCHES)[number];

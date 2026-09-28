@@ -137,7 +137,7 @@ export default function ParcelsInventoryPage() {
         courier,
         residentId: resident.id,
         residentName: resident.name,
-        unit: `${resident.unit} - ${resident.tower}`,
+        unit: `${resident.unit} - ${resident.branch || resident.tower}`,
         shelf: "Lobby Counter",
         size: parcelSize,
         notes: notes.trim() || undefined,
@@ -437,10 +437,11 @@ export default function ParcelsInventoryPage() {
                     key={sz}
                     type="button"
                     onClick={() => setParcelSize(sz)}
-                    className={`h-10 text-xs rounded-lg border font-bold transition-all cursor-pointer ${parcelSize === sz
+                    className={`h-10 text-xs rounded-lg border font-bold transition-all cursor-pointer ${
+                      parcelSize === sz
                         ? "bg-brand-black text-white border-brand-black shadow-xs"
                         : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                      }`}
+                    }`}
                   >
                     {sz}
                   </button>
@@ -549,10 +550,11 @@ export default function ParcelsInventoryPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${statusFilter === tab.id
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  statusFilter === tab.id
                     ? "bg-brand-red text-white shadow-sm"
                     : "text-brand-text-secondary hover:text-brand-black"
-                  }`}
+                }`}
               >
                 {tab.label}
               </button>
@@ -600,13 +602,14 @@ export default function ParcelsInventoryPage() {
                   return (
                     <tr
                       key={parcel.id}
-                      className={`hover:bg-brand-surface/60 transition-colors ${isJustLogged
+                      className={`hover:bg-brand-surface/60 transition-colors ${
+                        isJustLogged
                           ? "bg-green-50 ring-2 ring-green-500/50"
                           : quickPasscodeSearch &&
                             parcel.claimCode.toLowerCase().includes(quickPasscodeSearch.toLowerCase())
-                            ? "bg-yellow-50"
-                            : ""
-                        }`}
+                          ? "bg-yellow-50"
+                          : ""
+                      }`}
                     >
                       {/* Tracking & Courier */}
                       <td className="px-4 py-3.5">
@@ -686,10 +689,11 @@ export default function ParcelsInventoryPage() {
                         ) : (
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-[11px] font-bold px-2 py-0.5 rounded ${isOverdue
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                                isOverdue
                                   ? "bg-brand-red-light text-brand-red"
                                   : "bg-green-100 text-green-800"
-                                }`}
+                              }`}
                             >
                               {isOverdue ? `Overdue (${parcel.holdingFee})` : "Ready for Pickup"}
                             </span>
@@ -747,10 +751,11 @@ export default function ParcelsInventoryPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={validPage <= 1}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validPage <= 1
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validPage <= 1
                     ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                     : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                  }`}
+                }`}
                 title="Previous page"
               >
                 ← Prev
@@ -761,10 +766,11 @@ export default function ParcelsInventoryPage() {
                   key={pageNum}
                   type="button"
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${validPage === pageNum
+                  className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    validPage === pageNum
                       ? "bg-brand-red text-white shadow-xs"
                       : "text-gray-600 hover:bg-gray-100"
-                    }`}
+                  }`}
                 >
                   {pageNum}
                 </button>
@@ -774,10 +780,11 @@ export default function ParcelsInventoryPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={validPage >= totalPages}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${validPage >= totalPages
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  validPage >= totalPages
                     ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
                     : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                  }`}
+                }`}
                 title="Next page"
               >
                 Next →
@@ -815,7 +822,7 @@ export default function ParcelsInventoryPage() {
                 <span className="font-bold text-brand-black">{releaseModalParcel.residentName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Unit / Tower:</span>
+                <span className="text-brand-text-secondary">Unit / Branch:</span>
                 <span className="font-semibold text-brand-text">{releaseModalParcel.unit}</span>
               </div>
               <div className="flex justify-between">
@@ -825,6 +832,39 @@ export default function ParcelsInventoryPage() {
                 </span>
               </div>
             </div>
+
+            {/* Quick Fill Authorized Claimants if registered */}
+            {(() => {
+              const resObj = residents.find((r) => r.id === releaseModalParcel.residentId);
+              const claimantsList = resObj?.authorizedClaimants && resObj.authorizedClaimants.length > 0
+                ? resObj.authorizedClaimants
+                : resObj?.authorizedClaimant
+                ? [{ name: resObj.authorizedClaimant, phone: resObj.claimantPhone || "" }]
+                : [];
+
+              if (claimantsList.length === 0) return null;
+
+              return (
+                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-1.5 text-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">
+                    Authorized Proxy Claimants on File:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {claimantsList.map((c, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setRecipientNameInput(c.name)}
+                        className="text-[11px] bg-white border border-amber-300 hover:border-brand-red text-brand-black font-semibold px-2 py-1 rounded-md transition-all cursor-pointer shadow-2xs hover:bg-amber-100/50"
+                        title="Click to fill recipient name"
+                      >
+                        + {c.name} {c.relationship ? `(${c.relationship})` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             <form onSubmit={handleConfirmRelease} className="space-y-4">
               <div>

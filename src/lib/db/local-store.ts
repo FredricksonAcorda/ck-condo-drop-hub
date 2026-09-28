@@ -382,6 +382,10 @@ class LocalDatabaseService implements IDatabaseService {
         role: "resident",
         unit: residentMatch.unit,
         tower: residentMatch.tower,
+        branch: residentMatch.branch || "Malinta Branch",
+        buildingNumber: residentMatch.buildingNumber,
+        floorNumber: residentMatch.floorNumber,
+        unitNumber: residentMatch.unitNumber,
         plan: residentMatch.plan,
         planStatus: residentMatch.planStatus,
         paymentMethod: residentMatch.paymentMethod,
@@ -389,6 +393,7 @@ class LocalDatabaseService implements IDatabaseService {
         residentCode: residentMatch.residentCode,
         authorizedClaimant: residentMatch.authorizedClaimant,
         claimantPhone: residentMatch.claimantPhone,
+        authorizedClaimants: residentMatch.authorizedClaimants || [],
         deliveryCreditsLeft: residentMatch.deliveryCreditsLeft,
         subscriptionExpiry: residentMatch.subscriptionExpiry,
         createdAt: residentMatch.createdAt,
@@ -664,7 +669,17 @@ class LocalDatabaseService implements IDatabaseService {
   // --- Hub Settings ---
 
   async getHubSettings(): Promise<HubSettings> {
-    return this.load<HubSettings>(STORAGE_KEYS.SETTINGS, this.inMemorySettings);
+    const loaded = this.load<HubSettings>(STORAGE_KEYS.SETTINGS, this.inMemorySettings);
+    return {
+      ...DEFAULT_HUB_SETTINGS,
+      ...loaded,
+      contactPhone: loaded.contactPhone || DEFAULT_HUB_SETTINGS.contactPhone,
+      contactEmail: loaded.contactEmail || DEFAULT_HUB_SETTINGS.contactEmail,
+      contactAddress: loaded.contactAddress || DEFAULT_HUB_SETTINGS.contactAddress,
+      homeFaqs: loaded.homeFaqs && loaded.homeFaqs.length > 0 ? loaded.homeFaqs : DEFAULT_HUB_SETTINGS.homeFaqs,
+      residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
+      communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
+    };
   }
 
   async updateHubSettings(updates: Partial<HubSettings>): Promise<HubSettings> {

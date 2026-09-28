@@ -11,7 +11,7 @@ const adminNav = [
   { label: "PARCEL INVENTORY", href: "/admin/parcels" },
   { label: "RESIDENTS & UNITS", href: "/admin/customers" },
   { label: "LOBBY INQUIRIES", href: "/admin/inquiries" },
-  { label: "HUB SETTINGS", href: "/admin/settings" },
+  { label: "SETTINGS", href: "/admin/settings" },
 ];
 
 export default function AdminLayout({
@@ -84,10 +84,11 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isActive
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                  isActive
                     ? "bg-brand-red text-white shadow-md font-black"
                     : "text-white/70 hover:text-white hover:bg-white/5"
-                  }`}
+                }`}
               >
                 <span>{item.label}</span>
                 {isDeskInquiries && newInquiriesCount > 0 && (
@@ -128,7 +129,7 @@ export default function AdminLayout({
           className="p-1.5 rounded text-white hover:bg-white/10"
           aria-label="Toggle admin navigation"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
         <div className="flex items-center gap-2">
@@ -174,8 +175,9 @@ export default function AdminLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setDrawerOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${pathname === item.href ? "bg-brand-red text-white" : "text-white/70 hover:text-white"
-                        }`}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                        pathname === item.href ? "bg-brand-red text-white" : "text-white/70 hover:text-white"
+                      }`}
                     >
                       <span>{item.label}</span>
                       {isDeskInquiries && newInquiriesCount > 0 && (
