@@ -7,6 +7,7 @@ import { db, subscribeToResidents } from "@/lib/db";
 import { useParcels } from "@/context";
 import { getAllInvoices, subscribeToInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
 import { BRANCHES } from "@/constants";
+import { ResidentDetailsModal, InvoiceReceiptModal } from "@/components/admin/customers";
 
 export default function AdminCustomersPage() {
   const { parcels } = useParcels();
@@ -197,6 +198,51 @@ export default function AdminCustomersPage() {
   };
 
   const handleConfirmCash = handleVerifyPayment;
+
+  // Handle verifying resident directly from details modal
+  const handleVerifyResident = async (res: ResidentProfile) => {
+    const residentInv = invoices.find(
+      (i) => i.residentId === res.id && i.status === "PENDING"
+    );
+    if (residentInv) {
+      await verifyAndActivateMembership(residentInv.id, "Lobby Staff Admin");
+    } else {
+      const targetPlan = res.pendingPlan || "PREMIUM";
+      await db.updateResidentProfile(res.id, {
+        plan: targetPlan,
+        planStatus: "ACTIVE",
+        deliveryCreditsLeft: targetPlan === "PREMIUM" ? 1 : 0,
+        pendingPlan: undefined,
+      });
+    }
+    await loadResidents();
+    await loadInvoices();
+    setSelectedResident(null);
+    setPaymentFeedback(
+      `✓ Payment verified! ${res.name}'s ${res.pendingPlan || res.plan} is now ACTIVE.`
+    );
+  };
+
+  // Handle rejecting resident directly from details modal
+  const handleRejectResident = async (res: ResidentProfile) => {
+    const residentInv = invoices.find(
+      (i) => i.residentId === res.id && i.status === "PENDING"
+    );
+    if (residentInv) {
+      await rejectMembershipPayment(residentInv.id, "Payment receipt could not be confirmed");
+    } else {
+      await db.updateResidentProfile(res.id, {
+        planStatus: "ACTIVE",
+        pendingPlan: undefined,
+      });
+    }
+    await loadResidents();
+    await loadInvoices();
+    setSelectedResident(null);
+    setPaymentFeedback(
+      `Payment request for ${res.name} was rejected.`
+    );
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -715,271 +761,19 @@ export default function AdminCustomersPage() {
       )}
 
       {/* Resident Details Modal */}
-      {selectedResident && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-brand-border">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-brand-red text-white font-bold flex items-center justify-center text-xs">
-                  {selectedResident.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="font-[family-name:var(--font-heading)] text-lg text-brand-black uppercase">
-                    {selectedResident.name}
-                  </h3>
-                  <p className="text-xs text-brand-text-secondary font-mono">
-                    {selectedResident.residentCode}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedResident(null)}
-                className="text-brand-text-muted hover:text-brand-black cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs bg-brand-surface p-4 rounded-xl border border-brand-border">
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Branch</span>
-                <span className="font-semibold text-brand-black">{selectedResident.branch || selectedResident.tower || "Malinta Branch"}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Unit / Address</span>
-                <span className="font-semibold text-brand-black">{selectedResident.unit}</span>
-              </div>
-              {(selectedResident.buildingNumber || selectedResident.floorNumber || selectedResident.unitNumber) && (
-                <div className="col-span-2 bg-white/70 p-2 rounded-lg border border-brand-border/60 grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Building #</span>
-                    <span className="font-bold text-brand-black">{selectedResident.buildingNumber || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Floor #</span>
-                    <span className="font-bold text-brand-black">{selectedResident.floorNumber || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] uppercase font-bold text-brand-text-muted block">Unit #</span>
-                    <span className="font-bold text-brand-black">{selectedResident.unitNumber || "—"}</span>
-                  </div>
-                </div>
-              )}
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Phone</span>
-                <span className="text-brand-black font-medium">{selectedResident.phone}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Email</span>
-                <span className="text-brand-black font-medium truncate block">{selectedResident.email}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Membership Tier</span>
-                <span className="font-bold text-brand-red uppercase">{selectedResident.plan}</span>
-              </div>
-              <div>
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold">Plan Status</span>
-                <span
-                  className={`font-bold uppercase ${
-                    selectedResident.planStatus === "ACTIVE" ? "text-green-700" : "text-amber-700"
-                  }`}
-                >
-                  {selectedResident.planStatus}
-                </span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-brand-text-muted block text-[10px] uppercase font-bold mb-1">
-                  Authorized Proxy Claimants (Up to 3)
-                </span>
-                {selectedResident.authorizedClaimants && selectedResident.authorizedClaimants.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {selectedResident.authorizedClaimants.map((c, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-white p-2 rounded-lg border border-brand-border/60 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <span className="font-bold text-brand-black">{c.name}</span>
-                          {c.relationship && (
-                            <span className="text-brand-text-secondary ml-1.5 text-[11px]">
-                              • {c.relationship}
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-mono text-[11px] text-gray-600 font-medium">
-                          {c.phone || "No Phone"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : selectedResident.authorizedClaimant ? (
-                  <div className="bg-white p-2 rounded-lg border border-brand-border/60 text-xs">
-                    <span className="font-bold text-brand-black">{selectedResident.authorizedClaimant}</span>
-                    <span className="font-mono text-[11px] text-gray-600 font-medium ml-2">
-                      ({selectedResident.claimantPhone || "No Phone"})
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-brand-text-muted text-xs italic">No proxy claimants registered</span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              {selectedResident.planStatus === "PENDING_VERIFICATION" || selectedResident.planStatus === "PENDING_PAYMENT" ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const residentInv = invoices.find(
-                        (i) => i.residentId === selectedResident.id && i.status === "PENDING"
-                      );
-                      if (residentInv) {
-                        await verifyAndActivateMembership(residentInv.id, "Lobby Staff Admin");
-                      } else {
-                        const targetPlan = selectedResident.pendingPlan || "PREMIUM";
-                        await db.updateResidentProfile(selectedResident.id, {
-                          plan: targetPlan,
-                          planStatus: "ACTIVE",
-                          deliveryCreditsLeft: targetPlan === "PREMIUM" ? 1 : 0,
-                          pendingPlan: undefined,
-                        });
-                      }
-                      await loadResidents();
-                      await loadInvoices();
-                      setSelectedResident(null);
-                      setPaymentFeedback(
-                        `✓ Payment verified! ${selectedResident.name}'s ${selectedResident.pendingPlan || selectedResident.plan} is now ACTIVE.`
-                      );
-                    }}
-                    className="btn btn-sm bg-green-700 hover:bg-green-800 text-white font-bold uppercase cursor-pointer shadow-xs"
-                  >
-                    Confirm & Activate {selectedResident.pendingPlan || "Premium"} ✓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const residentInv = invoices.find(
-                        (i) => i.residentId === selectedResident.id && i.status === "PENDING"
-                      );
-                      if (residentInv) {
-                        await rejectMembershipPayment(residentInv.id, "Payment receipt could not be confirmed");
-                      } else {
-                        await db.updateResidentProfile(selectedResident.id, {
-                          planStatus: "ACTIVE",
-                          pendingPlan: undefined,
-                        });
-                      }
-                      await loadResidents();
-                      await loadInvoices();
-                      setSelectedResident(null);
-                      setPaymentFeedback(
-                        `Payment request for ${selectedResident.name} was rejected.`
-                      );
-                    }}
-                    className="btn btn-sm bg-red-100 hover:bg-red-200 text-red-800 font-bold uppercase cursor-pointer"
-                  >
-                    Reject
-                  </button>
-                </div>
-              ) : (
-                <span className="text-xs text-green-700 font-semibold flex items-center gap-1">
-                  <span>✓</span> Account Verified & Active
-                </span>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setSelectedResident(null)}
-                className="btn btn-outline btn-sm cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ResidentDetailsModal
+        resident={selectedResident}
+        invoices={invoices}
+        onClose={() => setSelectedResident(null)}
+        onVerify={handleVerifyResident}
+        onReject={handleRejectResident}
+      />
 
       {/* Invoice Receipt Modal */}
-      {selectedInvoice && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-brand-border">
-              <div>
-                <h3 className="font-[family-name:var(--font-heading)] text-lg text-brand-black uppercase">
-                  OFFICIAL RECEIPT
-                </h3>
-                <p className="text-xs text-brand-text-secondary font-mono">{selectedInvoice.id}</p>
-              </div>
-              <button
-                onClick={() => setSelectedInvoice(null)}
-                className="text-brand-text-muted hover:text-brand-black cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-2.5 text-xs bg-brand-surface p-4 rounded-xl border border-brand-border">
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Resident Name:</span>
-                <span className="font-bold text-brand-black">{selectedInvoice.residentName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Unit / Tower:</span>
-                <span className="font-semibold text-brand-black">
-                  {selectedInvoice.unit} • {selectedInvoice.tower}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Resident Code:</span>
-                <span className="font-mono font-bold text-brand-red">
-                  {selectedInvoice.residentCode}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Description:</span>
-                <span className="font-medium text-brand-black">{selectedInvoice.plan}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Amount Paid:</span>
-                <span className="font-mono font-bold text-brand-black text-sm">
-                  {selectedInvoice.amount}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Payment Method:</span>
-                <span className="font-semibold text-brand-black">{selectedInvoice.method}</span>
-              </div>
-              {selectedInvoice.reference && (
-                <div className="flex justify-between">
-                  <span className="text-brand-text-secondary">Transaction Ref:</span>
-                  <span className="font-mono text-brand-black">{selectedInvoice.reference}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Date Issued:</span>
-                <span className="text-brand-black">{selectedInvoice.date}</span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-brand-border">
-                <span className="text-brand-text-secondary">Payment Status:</span>
-                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                  ✓ {selectedInvoice.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedInvoice(null)}
-                className="btn btn-primary btn-sm cursor-pointer"
-              >
-                Close Receipt
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InvoiceReceiptModal
+        invoice={selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+      />
     </div>
   );
 }

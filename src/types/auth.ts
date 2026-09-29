@@ -1,4 +1,5 @@
 export type UserRole = "resident" | "admin";
+export type MembershipPlan = "PER_PARCEL" | "REGULAR" | "PREMIUM";
 export type PlanStatus = "ACTIVE" | "PENDING_PAYMENT" | "PENDING_VERIFICATION";
 export type PaymentMethod = "GCASH" | "CASH_COUNTER";
 

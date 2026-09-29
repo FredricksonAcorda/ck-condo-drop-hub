@@ -52,6 +52,10 @@
 40. [Universal Purge of Search Icons, Button Arrows, Settings Input Overlays & Initial Blank Typeahead Placeholder](#40-universal-purge-of-search-icons-button-arrows-settings-input-overlays--initial-blank-typeahead-placeholder-modification--ux-polish)
 41. [Accurate Courier Pattern Recognition for YTO (200 Prefix) and STO (S18 Prefix) Parcels](#41-accurate-courier-pattern-recognition-for-yto-200-prefix-and-sto-s18-prefix-parcels-bug--fix)
 42. [Exhaustive STO Express (Numeric 18 & S18) Recognition & J&T False-Positive Elimination](#42-exhaustive-sto-express-numeric-18--s18-recognition--jt-false-positive-elimination-bug--fix)
+43. [Universal Cloud Database Routing & Real-Time Cross-Device Firestore Subscriptions (Purge Direct `local-store` Imports)](#43-universal-cloud-database-routing--real-time-cross-device-firestore-subscriptions-purge-direct-local-store-imports-bug--fix)
+44. [Live Cloud Session Revalidation, Universal Philippine Phone Normalization, and Automated Local-to-Cloud Data Migration](#44-live-cloud-session-revalidation-universal-philippine-phone-normalization-and-automated-local-to-cloud-data-migration-fix--refactor)
+45. [Universal Real-Time WebSocket Synchronization (Settings, Logged-in User Profile, Inquiries) and Mobile Session Auto-Migration](#45-universal-real-time-websocket-synchronization-settings-logged-in-user-profile-inquiries-and-mobile-session-auto-migration-feature--fix)
+46. [Codebase Refactoring (Hakbang 3): Component Decomposition of Admin Modals and Centralized Formatting Utilities](#46-codebase-refactoring-hakbang-3-component-decomposition-of-admin-modals-and-centralized-formatting-utilities-refactor)
 
 ---
 
@@ -1059,6 +1063,32 @@
   Complete universal cross-device synchronization: any addition, modification, or removal made on desktop (settings, announcements, customer plan activations, inquiries, parcels) propagates instantly to mobile phones via live WebSocket listeners with zero logout and zero manual refresh required.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When designing multi-tenant or multi-device web applications with cloud databases, never rely on polling or one-time fetches for critical shared state (e.g. system configurations, tenant settings, or active session claims). Bind real-time document listeners (`onSnapshot`) at the global context provider level so administrative mutations immediately broadcast to all active client viewports.
+
+## 46. Codebase Refactoring (Hakbang 3): Component Decomposition of Admin Modals and Centralized Formatting Utilities (Refactor)
+
+- **Current State**:
+  `src/app/(admin)/admin/customers/page.tsx` was a monolithic 986-line component containing directory listings, invoice transaction tables, and two massive modal dialogs (`ResidentDetailsModal` and `InvoiceReceiptModal`) spanning over 265 lines of deeply nested inline JSX. Furthermore, presentation logic such as currency formatting (`₱...`), date parsing, and membership badge styling was repeatedly reconstructed ad-hoc across files.
+- **The Problem**:
+  Monolithic component files (approaching 1,000 lines) create severe maintenance friction: minor adjustments to modal UI force re-evaluation of the entire page component tree, isolate unit tests become impossible, and duplicated presentation logic risks visual inconsistencies (e.g. varying currency symbol formats or badge colors).
+- **What to Do (Solution)**:
+  1. **Centralized Formatting Utilities (`src/lib/utils/formatters.ts`)**:
+     - Built strongly typed helpers: `formatCurrency(amount)` producing canonical Philippine Peso strings (`₱149.00`).
+     - Implemented `formatShortDate(date)` and `formatDateTime(date)` with defensive parsing for ISO strings and Date objects.
+     - Extracted `getPlanBadgeConfig`, `getPlanStatusBadgeConfig`, and `getParcelStatusBadgeConfig` providing consistent Tailwind CSS token combinations across both resident and administrative views.
+  2. **Component Decomposition (`src/components/admin/customers/`)**:
+     - Extracted `ResidentDetailsModal.tsx` encapsulating customer profile information, multi-proxy claimant cards, building/floor/unit details, and verification/rejection controls with 100% identical markup and styling.
+     - Extracted `InvoiceReceiptModal.tsx` encapsulating official invoice receipt display, payment method references, and billing timestamps.
+     - Created `index.ts` barrel export for clean modular imports.
+  3. **Streamlined Admin Customers Route**:
+     - Refactored `src/app/(admin)/admin/customers/page.tsx` to import the decomposed modals, delegating state through clean typed callback props (`onVerify`, `onReject`, `onClose`).
+     - Extracted `handleVerifyResident` and `handleRejectResident` handler methods, reducing `page.tsx` by ~210 lines without altering a single visual element or user interaction flow.
+  4. **Strict Type Safety & Build Verification**:
+     - Added `MembershipPlan` type export to `src/types/auth.ts`.
+     - Validated compilation via `npx tsc --noEmit` (0 errors) and Turbopack `npm run build` (all 22 App Router routes statically generated with 0 errors).
+- **Result**:
+  `admin/customers/page.tsx` is significantly more readable, modular, and maintainable, modal rendering is decoupled from directory table state, and shared formatting logic is centralized and reusable throughout the application with strictly zero visual or behavioral regressions.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  In enterprise dashboards with complex modal popups (such as user profile inspectors, invoice receipts, or refund approval forms), extract each modal into a dedicated component with strict TypeScript prop contracts and event-driven callbacks. Combine this with centralized presentation utilities for currency, dates, and status badges to maintain design consistency and prevent monolithic component bloat.
 
 ---
 
