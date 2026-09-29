@@ -859,6 +859,104 @@ export function subscribeToParcels(callback: (parcels: Parcel[]) => void): () =>
 }
 
 /**
+ * Real-time listener for Hub Settings (announcements, FAQs, store hours, contact info).
+ * Pushes any changes saved by Admin on desktop to all open client and resident devices live via WebSocket.
+ */
+export function subscribeToHubSettings(callback: (settings: HubSettings) => void): () => void {
+  if (isFirebaseConfigured() && firestore) {
+    try {
+      const unsubscribe = onSnapshot(
+        doc(firestore, "settings", "default"),
+        (snap) => {
+          if (snap.exists()) {
+            const loaded = snap.data() as HubSettings;
+            callback({
+              ...DEFAULT_HUB_SETTINGS,
+              ...loaded,
+              contactPhone: loaded.contactPhone || DEFAULT_HUB_SETTINGS.contactPhone,
+              contactEmail: loaded.contactEmail || DEFAULT_HUB_SETTINGS.contactEmail,
+              contactAddress: loaded.contactAddress || DEFAULT_HUB_SETTINGS.contactAddress,
+              homeFaqs: loaded.homeFaqs && loaded.homeFaqs.length > 0 ? loaded.homeFaqs : DEFAULT_HUB_SETTINGS.homeFaqs,
+              residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
+              communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
+            });
+          }
+        },
+        (err) => {
+          console.warn("Firestore settings onSnapshot notice:", err);
+        }
+      );
+      return unsubscribe;
+    } catch (err) {
+      console.warn("Firestore subscribeToHubSettings failed:", err);
+    }
+  }
+  return () => {};
+}
+
+/**
+ * Real-time listener for Desk Inquiries from residents.
+ * Allows instant two-way synchronization between resident inquiries and staff responses.
+ */
+export function subscribeToInquiries(callback: (inquiries: DeskInquiry[]) => void): () => void {
+  if (isFirebaseConfigured() && firestore) {
+    try {
+      const unsubscribe = onSnapshot(
+        collection(firestore, "inquiries"),
+        (snap) => {
+          const list: DeskInquiry[] = [];
+          snap.forEach((d) => {
+            const item = d.data() as DeskInquiry;
+            list.push({ ...item, id: d.id });
+          });
+          list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          callback(list);
+        },
+        (err) => {
+          console.warn("Firestore inquiries onSnapshot notice:", err);
+        }
+      );
+      return unsubscribe;
+    } catch (err) {
+      console.warn("Firestore subscribeToInquiries failed:", err);
+    }
+  }
+  return () => {};
+}
+
+/**
+ * Real-time listener for a specific resident's profile document.
+ * When staff verifies payment or modifies resident plan on desktop,
+ * the resident's mobile phone updates live without needing a refresh or logout!
+ */
+export function subscribeToUserDoc(
+  userId: string,
+  callback: (resident: ResidentProfile | null) => void
+): () => void {
+  if (isFirebaseConfigured() && firestore && userId) {
+    try {
+      const unsubscribe = onSnapshot(
+        doc(firestore, "residents", userId),
+        (snap) => {
+          if (snap.exists()) {
+            callback(snap.data() as ResidentProfile);
+          } else {
+            callback(null);
+          }
+        },
+        (err) => {
+          console.warn(`Firestore user ${userId} onSnapshot notice:`, err);
+        }
+      );
+      return unsubscribe;
+    } catch (err) {
+      console.warn("Firestore subscribeToUserDoc failed:", err);
+    }
+  }
+  return () => {};
+}
+
+/**
  * Automatically inspects browser localStorage for any resident or parcel records
  * created prior to cloud synchronization and transparently uploads them to Firestore.
  */
@@ -955,6 +1053,67 @@ export async function autoMigrateLocalDataToFirestore(): Promise<{ migratedResid
         }
       } catch (err) {
         console.warn(`[AutoMigrate] Failed parsing parcel key ${key}:`, err);
+      }
+    }
+
+    // 3. Scan and migrate active local browser session (critical for mobile phones)
+    const sessionKeys = ["ck_hub_session_v2", "ck_hub_session_v1"];
+    for (const sKey of sessionKeys) {
+      const sRaw = window.localStorage.getItem(sKey);
+      if (!sRaw || sRaw === "null") continue;
+      try {
+        const sessionUser = JSON.parse(sRaw);
+        if (
+          sessionUser &&
+          sessionUser.id &&
+          sessionUser.role === "resident" &&
+          sessionUser.id !== "usr-resident-1" &&
+          sessionUser.id !== "usr-resident-2" &&
+          sessionUser.name !== "Juan Dela Cruz" &&
+          sessionUser.name !== "Maria Santos"
+        ) {
+          const resDocRef = doc(firestore, "residents", sessionUser.id);
+          const existingSnap = await getDoc(resDocRef);
+          if (!existingSnap.exists()) {
+            const residentDoc: ResidentProfile = {
+              id: sessionUser.id,
+              name: sessionUser.name,
+              email: sessionUser.email,
+              phone: sessionUser.phone,
+              unit: sessionUser.unit,
+              tower: sessionUser.tower || "Tower A",
+              branch: sessionUser.branch || "Malinta Branch",
+              buildingNumber: sessionUser.buildingNumber,
+              floorNumber: sessionUser.floorNumber,
+              unitNumber: sessionUser.unitNumber,
+              building: "CK Buildersville Condominium",
+              plan: sessionUser.plan || "PER_PARCEL",
+              pendingPlan: sessionUser.pendingPlan,
+              planStatus: sessionUser.planStatus || "ACTIVE",
+              paymentMethod: sessionUser.paymentMethod || "CASH_COUNTER",
+              paymentReference: sessionUser.paymentReference,
+              deliveryCreditsLeft: sessionUser.deliveryCreditsLeft || 0,
+              residentCode: sessionUser.residentCode || `CK-${Math.floor(100000 + Math.random() * 900000)}`,
+              authorizedClaimants: sessionUser.authorizedClaimants || [],
+              activeParcelsCount: 0,
+              totalParcelsReceived: 0,
+              status: "ACTIVE",
+              notifications: {
+                smsArrival: true,
+                smsReminder: true,
+                emailDigest: true,
+                promoUpdates: false,
+              },
+              createdAt: sessionUser.createdAt || new Date().toISOString(),
+            };
+            await setDoc(resDocRef, sanitizeForFirestore(residentDoc));
+            await setDoc(doc(firestore, "users", sessionUser.id), sanitizeForFirestore(sessionUser));
+            migratedResidents++;
+            console.log(`[AutoMigrate] Uploaded resident from session ${sessionUser.name} (${sessionUser.id}) to Firestore`);
+          }
+        }
+      } catch (err) {
+        console.warn(`[AutoMigrate] Failed parsing session key ${sKey}:`, err);
       }
     }
 

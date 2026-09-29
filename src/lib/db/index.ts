@@ -4,6 +4,9 @@ import {
   FirestoreDatabaseService,
   subscribeToResidents,
   subscribeToParcels,
+  subscribeToHubSettings,
+  subscribeToInquiries,
+  subscribeToUserDoc,
   autoMigrateLocalDataToFirestore,
   normalizePhone,
 } from "./firestore-store";
@@ -23,6 +26,9 @@ export {
   FirestoreDatabaseService,
   subscribeToResidents,
   subscribeToParcels,
+  subscribeToHubSettings,
+  subscribeToInquiries,
+  subscribeToUserDoc,
   autoMigrateLocalDataToFirestore,
   normalizePhone,
 };

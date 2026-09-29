@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
-import { db, subscribeToParcels } from "@/lib/db";
+import { db, subscribeToParcels, subscribeToHubSettings, subscribeToInquiries } from "@/lib/db";
 import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 import { scannerAudio } from "@/lib/scanner/audio-feedback";
 
@@ -76,11 +76,22 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
       setParcels(liveParcels);
     });
 
+    const unsubscribeSettings = subscribeToHubSettings((liveSettings) => {
+      setHubSettings(liveSettings);
+      scannerAudio.setSoundEnabled(liveSettings.soundEnabled);
+    });
+
+    const unsubscribeInquiries = subscribeToInquiries((liveInquiries) => {
+      setInquiries(liveInquiries);
+    });
+
     window.addEventListener("ck_db_updated", handleDbUpdate);
     window.addEventListener("storage", refresh);
 
     return () => {
       unsubscribeParcels();
+      unsubscribeSettings();
+      unsubscribeInquiries();
       window.removeEventListener("ck_db_updated", handleDbUpdate);
       window.removeEventListener("storage", refresh);
     };

@@ -1038,6 +1038,30 @@
 
 ---
 
+## 45. Universal Real-Time WebSocket Synchronization (Settings, Logged-in User Profile, Inquiries) and Mobile Session Auto-Migration (Feature / Fix)
+
+- **Current State**:
+  While Parcels, Invoices, and Admin Customer lists were connected to Firestore `onSnapshot` real-time listeners, Hub Settings (`settings/default`), Desk Inquiries (`inquiries`), and the active logged-in resident's document (`residents/[userId]`) relied on static one-time loading. Furthermore, `autoMigrateLocalDataToFirestore` only scanned resident arrays in `localStorage`, without inspecting the active user session object (`ck_hub_session_v2`).
+- **The Problem**:
+  1. **Settings / Home Page Sync Gap**: When Staff Admin modified announcements, FAQs, contact numbers, or station operating hours on desktop, the changes persisted to Firestore but failed to push to mobile phones or external devices without a full hard-refresh, because `ParcelContext` had no live Firestore listener for `settings/default`.
+  2. **Active Resident State Delay**: When Staff Admin verified a GCash payment or activated a resident's VIP status on desktop, the resident's phone screen remained in "Pending Verification" until an app focus/refresh event triggered revalidation.
+  3. **Stranded Mobile Phone Accounts**: Residents who registered on mobile phones prior to cloud routing had their credentials stored inside `ck_hub_session_v2`. If their browser didn't maintain a full resident array in `ck_hub_residents_v2`, the auto-migrator skipped them, preventing the mobile-created account from surfacing in the Staff Admin customer directory.
+- **What to Do (Solution)**:
+  1. **Real-Time Hub Settings WebSocket Listener (`subscribeToHubSettings`)**:
+     - Implemented `subscribeToHubSettings` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) and attached it in [`src/context/ParcelContext.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/context/ParcelContext.tsx). Any update to contact information, FAQs, announcements, or operating hours instantly pushes via WebSocket to all connected devices in sub-second time.
+  2. **Live Resident Document Listener (`subscribeToUserDoc`)**:
+     - Implemented `subscribeToUserDoc(userId)` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) and hooked it into [`src/context/AuthContext.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/context/AuthContext.tsx). When an admin verifies payment or updates a resident's profile on desktop, the resident's mobile phone updates live on screen with zero latency and zero reload.
+  3. **Real-Time Desk Inquiries Listener (`subscribeToInquiries`)**:
+     - Implemented `subscribeToInquiries` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) and attached it in `ParcelContext`, providing real-time two-way sync for customer service tickets.
+  4. **Active Session Auto-Migration for Mobile**:
+     - Extended `autoMigrateLocalDataToFirestore()` to inspect `ck_hub_session_v2` and `ck_hub_session_v1`. Any valid resident session stored in a mobile device's browser automatically reconstructs and uploads the resident document to Firestore `residents` and `users` collections.
+- **Result**:
+  Complete universal cross-device synchronization: any addition, modification, or removal made on desktop (settings, announcements, customer plan activations, inquiries, parcels) propagates instantly to mobile phones via live WebSocket listeners with zero logout and zero manual refresh required.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When designing multi-tenant or multi-device web applications with cloud databases, never rely on polling or one-time fetches for critical shared state (e.g. system configurations, tenant settings, or active session claims). Bind real-time document listeners (`onSnapshot`) at the global context provider level so administrative mutations immediately broadcast to all active client viewports.
+
+---
+
 ## Autonomous Agent Instructions for Future Updates
 
 Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **Modification**, or **Add**:

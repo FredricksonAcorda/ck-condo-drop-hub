@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { AuthUser, LoginCredentials, RegisterData, ResidentProfile, UserRole } from "@/types";
 import { authService } from "@/lib/auth/auth-service";
-import { db, autoMigrateLocalDataToFirestore } from "@/lib/db";
+import { db, autoMigrateLocalDataToFirestore, subscribeToUserDoc } from "@/lib/db";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -77,6 +77,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refreshSession]);
+
+  // 5. Live real-time WebSocket listener for the logged-in resident's document
+  useEffect(() => {
+    if (!user?.id || user.role === "admin") return;
+
+    const unsubscribe = subscribeToUserDoc(user.id, (freshResident) => {
+      if (freshResident) {
+        setUser((prev) => {
+          if (!prev) return null;
+          const updated: AuthUser = {
+            ...prev,
+            name: freshResident.name,
+            email: freshResident.email,
+            phone: freshResident.phone,
+            unit: freshResident.unit,
+            tower: freshResident.tower,
+            branch: freshResident.branch || prev.branch,
+            buildingNumber: freshResident.buildingNumber,
+            floorNumber: freshResident.floorNumber,
+            unitNumber: freshResident.unitNumber,
+            plan: freshResident.plan,
+            pendingPlan: freshResident.pendingPlan,
+            planStatus: freshResident.planStatus,
+            paymentMethod: freshResident.paymentMethod,
+            paymentReference: freshResident.paymentReference,
+            residentCode: freshResident.residentCode,
+            authorizedClaimants: freshResident.authorizedClaimants || [],
+            deliveryCreditsLeft: freshResident.deliveryCreditsLeft,
+            subscriptionExpiry: freshResident.subscriptionExpiry,
+          };
+          authService.setSessionDirect(updated);
+          return updated;
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user?.id, user?.role]);
 
   const login = async (credentials: LoginCredentials): Promise<AuthUser> => {
     const { user } = await authService.login(credentials);
