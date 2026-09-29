@@ -388,8 +388,8 @@ export default function ParcelsInventoryPage() {
       </div>
 
       {/* COMBINED SCANNER & QUICK INTAKE BOX */}
-      <div className="bg-white rounded-2xl border border-brand-border overflow-hidden shadow-sm">
-        <div className="bg-brand-red text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="bg-white rounded-2xl border border-brand-border shadow-sm">
+        <div className="bg-brand-red text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-t-2xl">
           <div>
             <h2 className="font-[family-name:var(--font-heading)] text-xl tracking-wider uppercase">
               SCANNER & QUICK INTAKE

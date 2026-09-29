@@ -59,6 +59,7 @@
 47. [Admin Inquiries Demo Account Purge, Customer Directory Membership/Sort Filters, Typeahead Bottom Clearance, and Parcel Re-Edit Engine](#47-admin-inquiries-demo-account-purge-customer-directory-membershipsort-filters-typeahead-bottom-clearance-and-parcel-re-edit-engine-fix--modification--feature)
 48. [Staff Admin UI Cleanup, Live Mobile Phone Synchronization, and Fully Editable Hub Announcements](#48-staff-admin-ui-cleanup-live-mobile-phone-synchronization-and-fully-editable-hub-announcements-modification--fix)
 49. [Residents Directory Toolbar Layout Rectification & Single-Line Filter Row Restoration](#49-residents-directory-toolbar-layout-rectification--single-line-filter-row-restoration-fix--ux-polish)
+50. [Condo Directory Typeahead Container Overflow Unclipping & Bottom Clearance Spacer](#50-condo-directory-typeahead-container-overflow-unclipping--bottom-clearance-spacer-bug--fix)
 
 ---
 
@@ -1178,6 +1179,26 @@
   100% restored single-line filter layout directly below the search input, zero vertical stacking, zero clipped placeholders, and seamless responsive behavior on both mobile and desktop admin viewports.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When global input stylesheets define `width: 100%`, placing naked `<select>` elements inside flex containers with `flex-wrap` will always cause unexpected multi-line wrapping. For toolbars combining search inputs and multiple filter selects, split the layout into a full-width search row and an inline horizontal action bar with explicit `!w-auto shrink-0 flex-nowrap` constraints.
+
+---
+
+## 50. Condo Directory Typeahead Container Overflow Unclipping & Bottom Clearance Spacer (Bug / Fix)
+
+- **Current State**:
+  In the Scanner & Quick Intake station ([`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx)), the floating `ResidentTypeaheadSelect` dropdown only showed the first 1.5 resident items and was sliced horizontally across the bottom of the second item (`Tracy Aloria VIP`).
+- **The Problem**:
+  The parent card container (`COMBINED SCANNER & QUICK INTAKE BOX`) had the Tailwind class `overflow-hidden`. Because the dropdown list was positioned absolutely (`absolute z-50 left-0 right-0 mt-1.5`) inside the card, any portion of the dropdown menu extending below the card boundary was abruptly clipped by CSS `overflow-hidden`. Additionally, in WebKit and Chromium engines, applying `padding-bottom` directly onto a container with `overflow-y-auto` does not add scrollable space to the bottom of the list items, causing the final item to butt directly against the rounded bottom border.
+- **What to Do (Solution)**:
+  1. **Purged `overflow-hidden` from the Parent Scanner Card Container**:
+     - Removed `overflow-hidden` from the main card wrapper in [`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx).
+     - Explicitly added `rounded-t-2xl` to the red banner header to retain perfect rounded top corners without clipping child floating menus.
+  2. **Internal Scroll Clearance & Bottom Breathing Spacer**:
+     - Updated [`src/components/admin/ResidentTypeaheadSelect.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/components/admin/ResidentTypeaheadSelect.tsx) to elevate the dropdown container with `z-[70]` and increased `max-h` to `max-h-80` (320px).
+     - Wrapped the list items in an inner `<div className="divide-y divide-gray-100">` and placed a dedicated `<div className="h-6 bg-white" aria-hidden="true" />` spacer at the bottom of the scrollable content. This forces the browser's scroll height calculation to include 24px of clear white breathing room below the final resident.
+- **Result**:
+  The typeahead directory dropdown now floats freely down over lower sections without being clipped by parent cards. All residents—including their name, unit, branch, CK-code, and mobile number—are 100% visible and completely legible all the way to the bottom of the list.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never place `overflow-hidden` on parent card wrappers that contain absolute or popup menus (typeaheads, datepickers, custom selects), as the card boundaries will aggressively slice overflowing dropdowns. Instead, assign `rounded-t-*` and `rounded-b-*` directly to header and footer children, and insert a physical spacer element (`<div className="h-X" />`) inside scroll containers to guarantee bottom clearance across all browser engines.
 
 ---
 

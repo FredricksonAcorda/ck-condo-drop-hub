@@ -208,7 +208,7 @@ export default function ResidentTypeaheadSelect({
 
       {/* Floating Scrollable Typeahead Directory List */}
       {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-gray-300 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute z-[70] left-0 right-0 mt-1.5 bg-white border border-gray-300 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           {/* Header count info */}
           <div className="bg-gray-50 px-3.5 py-2 border-b border-gray-200 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
             <span>
@@ -219,8 +219,8 @@ export default function ResidentTypeaheadSelect({
             <span className="text-[10px] text-gray-400">↑↓ to navigate • Enter to pick</span>
           </div>
 
-          {/* Scrollable Items Container with bottom clearance */}
-          <div ref={listRef} className="max-h-72 overflow-y-auto divide-y divide-gray-100 overscroll-contain pb-6">
+          {/* Scrollable Items Container with guaranteed internal bottom clearance */}
+          <div ref={listRef} className="max-h-80 overflow-y-auto overscroll-contain">
             {filteredResidents.length === 0 ? (
               <div className="p-6 text-center text-xs text-gray-500 space-y-1">
                 <p className="font-semibold text-gray-700">
@@ -231,67 +231,71 @@ export default function ResidentTypeaheadSelect({
                 </p>
               </div>
             ) : (
-              filteredResidents.map((res, idx) => {
-                const isSelected = res.id === selectedResidentId;
-                const isHighlighted = idx === highlightedIndex;
+              <div className="divide-y divide-gray-100">
+                {filteredResidents.map((res, idx) => {
+                  const isSelected = res.id === selectedResidentId;
+                  const isHighlighted = idx === highlightedIndex;
 
-                return (
-                  <button
-                    key={res.id}
-                    data-typeahead-item
-                    type="button"
-                    onClick={() => handlePickResident(res)}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                    className={`w-full text-left px-3.5 py-2.5 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
-                      isSelected
-                        ? "bg-red-50/80 text-brand-red font-bold"
-                        : isHighlighted
-                        ? "bg-gray-100 text-gray-900"
-                        : "hover:bg-gray-50 text-gray-800"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold truncate">
-                          {renderHighlightedText(res.name, searchQuery)}
-                        </span>
-                        {res.plan === "PREMIUM" ? (
-                          <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0">
-                            VIP
+                  return (
+                    <button
+                      key={res.id}
+                      data-typeahead-item
+                      type="button"
+                      onClick={() => handlePickResident(res)}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      className={`w-full text-left px-3.5 py-2.5 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
+                        isSelected
+                          ? "bg-red-50/80 text-brand-red font-bold"
+                          : isHighlighted
+                          ? "bg-gray-100 text-gray-900"
+                          : "hover:bg-gray-50 text-gray-800"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold truncate">
+                            {renderHighlightedText(res.name, searchQuery)}
                           </span>
-                        ) : res.plan === "REGULAR" ? (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0">
-                            REGULAR
+                          {res.plan === "PREMIUM" ? (
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0">
+                              VIP
+                            </span>
+                          ) : res.plan === "REGULAR" ? (
+                            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0">
+                              REGULAR
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500">
+                          <span className="font-medium text-gray-700">
+                            {renderHighlightedText(res.unit, searchQuery)} ({res.branch || res.tower})
                           </span>
-                        ) : null}
+                          <span>•</span>
+                          <span className="font-mono text-[10px] text-gray-400">
+                            {renderHighlightedText(res.residentCode, searchQuery)}
+                          </span>
+                          {res.phone && (
+                            <>
+                              <span>•</span>
+                              <span className="text-[10px] text-gray-400">{res.phone}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500">
-                        <span className="font-medium text-gray-700">
-                          {renderHighlightedText(res.unit, searchQuery)} ({res.branch || res.tower})
+                      {/* Selected Checkmark */}
+                      {isSelected && (
+                        <span className="text-brand-red font-black text-sm shrink-0">
+                          ✓
                         </span>
-                        <span>•</span>
-                        <span className="font-mono text-[10px] text-gray-400">
-                          {renderHighlightedText(res.residentCode, searchQuery)}
-                        </span>
-                        {res.phone && (
-                          <>
-                            <span>•</span>
-                            <span className="text-[10px] text-gray-400">{res.phone}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Selected Checkmark */}
-                    {isSelected && (
-                      <span className="text-brand-red font-black text-sm shrink-0">
-                        ✓
-                      </span>
-                    )}
-                  </button>
-                );
-              })
+                      )}
+                    </button>
+                  );
+                })}
+                {/* Dedicated bottom spacer to ensure the last item is never clipped by rounded corners */}
+                <div className="h-6 bg-white" aria-hidden="true" />
+              </div>
             )}
           </div>
         </div>
