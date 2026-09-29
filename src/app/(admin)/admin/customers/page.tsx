@@ -356,8 +356,9 @@ export default function AdminCustomersPage() {
       {activeTab === "DIRECTORY" && (
         <div className="space-y-4">
           {/* Filter and Search Bar */}
-          <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col xl:flex-row gap-4 justify-between items-center shadow-sm">
-            <div className="w-full xl:w-80">
+          <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col gap-3 shadow-sm">
+            {/* Row 1: Universal Search Bar */}
+            <div className="w-full">
               <input
                 type="text"
                 placeholder="Search by name, unit number, branch, or CK-code..."
@@ -367,37 +368,40 @@ export default function AdminCustomersPage() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-start xl:justify-end">
-              <select
-                value={branchFilter}
-                onChange={(e) => setBranchFilter(e.target.value)}
-                className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
-              >
-                <option value="ALL">All Branches</option>
-                {BRANCHES.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
+            {/* Row 2: All Filters in One Single Horizontal Line Below */}
+            <div className="flex items-center justify-between gap-2.5 flex-nowrap overflow-x-auto pb-0.5">
+              <div className="flex items-center gap-2.5 shrink-0">
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="input !w-auto text-xs py-1.5 px-3 cursor-pointer border border-gray-300 bg-white shrink-0 font-medium"
+                >
+                  <option value="ALL">All Branches</option>
+                  {BRANCHES.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
 
-              <select
-                value={membershipFilter}
-                onChange={(e) => setMembershipFilter(e.target.value as any)}
-                className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
-              >
-                <option value="ALL">All Memberships</option>
-                <option value="PREMIUM">VIP Premium</option>
-                <option value="REGULAR">Regular Pass</option>
-                <option value="PER_PARCEL">Pay Per Parcel</option>
-              </select>
+                <select
+                  value={membershipFilter}
+                  onChange={(e) => setMembershipFilter(e.target.value as any)}
+                  className="input !w-auto text-xs py-1.5 px-3 cursor-pointer border border-gray-300 bg-white shrink-0 font-medium"
+                >
+                  <option value="ALL">All Memberships</option>
+                  <option value="PREMIUM">VIP Premium</option>
+                  <option value="REGULAR">Regular Pass</option>
+                  <option value="PER_PARCEL">Pay Per Parcel</option>
+                </select>
+              </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                 <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
                   Sort:
                 </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white font-medium"
+                  className="input !w-auto text-xs py-1.5 px-3 cursor-pointer border border-gray-300 bg-white font-medium shrink-0"
                 >
                   <option value="NEWEST">Newest First (Desc)</option>
                   <option value="OLDEST">Oldest First (Asc)</option>

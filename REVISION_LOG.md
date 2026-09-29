@@ -58,6 +58,7 @@
 46. [Codebase Refactoring (Hakbang 3): Component Decomposition of Admin Modals and Centralized Formatting Utilities](#46-codebase-refactoring-hakbang-3-component-decomposition-of-admin-modals-and-centralized-formatting-utilities-refactor)
 47. [Admin Inquiries Demo Account Purge, Customer Directory Membership/Sort Filters, Typeahead Bottom Clearance, and Parcel Re-Edit Engine](#47-admin-inquiries-demo-account-purge-customer-directory-membershipsort-filters-typeahead-bottom-clearance-and-parcel-re-edit-engine-fix--modification--feature)
 48. [Staff Admin UI Cleanup, Live Mobile Phone Synchronization, and Fully Editable Hub Announcements](#48-staff-admin-ui-cleanup-live-mobile-phone-synchronization-and-fully-editable-hub-announcements-modification--fix)
+49. [Residents Directory Toolbar Layout Rectification & Single-Line Filter Row Restoration](#49-residents-directory-toolbar-layout-rectification--single-line-filter-row-restoration-fix--ux-polish)
 
 ---
 
@@ -1158,6 +1159,25 @@
   Clean, focused Admin navigation without clutter; instantaneous propagation of the staff admin's mobile phone number across resident screens; and 100% editable community announcements allowing staff to publish live advisories, promos, and operational schedules directly to all logged-in residents.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Never leave static placeholder lists or hardcoded contact data in end-user portals when an administrative CMS settings model exists. Always bind customer-facing advisories and contact points to centralized reactive state so non-developer operations teams can manage content live without code deployments.
+
+---
+
+## 49. Residents Directory Toolbar Layout Rectification & Single-Line Filter Row Restoration (Fix / UX Polish)
+
+- **Current State**:
+  In the Residents Directory tab ([`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx)), after removing the `Branch:` and `Membership:` label text in Revision #48, the native `.input` class (`width: 100%`) caused the direct child `<select>` elements (`All Branches`, `All Memberships`, and `Sort: Newest First`) to expand across the full container width. This caused them to wrap and stack into three separate vertical rows on the right side of the toolbar.
+- **The Problem**:
+  The stacked dropdowns produced an awkward staircase layout where `Sort: Newest First` was pushed down to the third row, severely compressing the search input on the left and creating visual clutter that compromised staff administrative ergonomics.
+- **What to Do (Solution)**:
+  1. Restructured the toolbar into a clean, hierarchical two-row architecture:
+     - **Row 1**: Full-width universal search bar (`Search by name, unit number, branch, or CK-code...`), eliminating placeholder truncation and giving staff maximal typing width.
+     - **Row 2 ("sa baba")**: A dedicated single horizontal filter row containing `All Branches` and `All Memberships` on the left, and `Sort: [Newest First (Desc)]` cleanly right-aligned (`ml-auto`).
+  2. Applied `!w-auto shrink-0 font-medium` to all `<select>` elements, overriding global `width: 100%` and locking each dropdown to its exact content width.
+  3. Added `flex-nowrap overflow-x-auto` to strictly guarantee that all three filter controls stay on **one single horizontal line** across all screen resolutions without vertical wrapping.
+- **Result**:
+  100% restored single-line filter layout directly below the search input, zero vertical stacking, zero clipped placeholders, and seamless responsive behavior on both mobile and desktop admin viewports.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When global input stylesheets define `width: 100%`, placing naked `<select>` elements inside flex containers with `flex-wrap` will always cause unexpected multi-line wrapping. For toolbars combining search inputs and multiple filter selects, split the layout into a full-width search row and an inline horizontal action bar with explicit `!w-auto shrink-0 flex-nowrap` constraints.
 
 ---
 
