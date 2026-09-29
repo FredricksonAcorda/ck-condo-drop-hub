@@ -56,6 +56,7 @@
 44. [Live Cloud Session Revalidation, Universal Philippine Phone Normalization, and Automated Local-to-Cloud Data Migration](#44-live-cloud-session-revalidation-universal-philippine-phone-normalization-and-automated-local-to-cloud-data-migration-fix--refactor)
 45. [Universal Real-Time WebSocket Synchronization (Settings, Logged-in User Profile, Inquiries) and Mobile Session Auto-Migration](#45-universal-real-time-websocket-synchronization-settings-logged-in-user-profile-inquiries-and-mobile-session-auto-migration-feature--fix)
 46. [Codebase Refactoring (Hakbang 3): Component Decomposition of Admin Modals and Centralized Formatting Utilities](#46-codebase-refactoring-hakbang-3-component-decomposition-of-admin-modals-and-centralized-formatting-utilities-refactor)
+47. [Admin Inquiries Demo Account Purge, Customer Directory Membership/Sort Filters, Typeahead Bottom Clearance, and Parcel Re-Edit Engine](#47-admin-inquiries-demo-account-purge-customer-directory-membershipsort-filters-typeahead-bottom-clearance-and-parcel-re-edit-engine-fix--modification--feature)
 
 ---
 
@@ -1089,6 +1090,42 @@
   `admin/customers/page.tsx` is significantly more readable, modular, and maintainable, modal rendering is decoupled from directory table state, and shared formatting logic is centralized and reusable throughout the application with strictly zero visual or behavioral regressions.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   In enterprise dashboards with complex modal popups (such as user profile inspectors, invoice receipts, or refund approval forms), extract each modal into a dedicated component with strict TypeScript prop contracts and event-driven callbacks. Combine this with centralized presentation utilities for currency, dates, and status badges to maintain design consistency and prevent monolithic component bloat.
+
+## 47. Admin Inquiries Demo Account Purge, Customer Directory Membership/Sort Filters, Typeahead Bottom Clearance, and Parcel Re-Edit Engine (Fix / Modification / Feature)
+
+- **Current State**:
+  1. The Admin Inquiries ledger (`/admin/inquiries`) continued to surface demo user inquiries ("Juan Dela Cruz" and "Maria Santos") because `getInquiries()` and `subscribeToInquiries()` in Firestore services lacked demo user exclusion filters.
+  2. The Residents & Units directory (`/admin/customers`) provided only a free-form search input and branch filter. Newly registered residents were appended at the end of the collection, forcing staff to navigate to the final pagination page to view recent accounts.
+  3. During barcode scanning on the Parcel Intake station (`/admin/parcels`), the `Package Note (Optional)` field felt required due to error alert placement at the top of the viewport when resident selection was missing.
+  4. A legacy `+ Quick Fill Sample` button remained in the scanner station header.
+  5. The Condo Directory typeahead dropdown (`ResidentTypeaheadSelect`) lacked bottom scroll padding, causing the details of the final resident in the list to be cut off by the container boundary.
+  6. The Parcel Inventory table only offered "Delete" and "Release" actions with no ability to edit parcel metadata if staff miskeyed courier partners, recipient names, or sizes.
+- **The Problem**:
+  Staff workflows suffered from friction: demo inquiries cluttered the customer support inbox, finding newly created residents required paging through entire lists, intake scanning lacked immediate inline feedback, the typeahead clipped essential contact info, and typos during intake required manual deletion and re-entry rather than seamless editing.
+- **What to Do (Solution)**:
+  1. **Purged Demo Inquiries from Cloud & Admin UI**:
+     - Updated `getInquiries()` and `subscribeToInquiries()` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) to filter out "Juan Dela Cruz", "Maria Santos", and demo IDs `usr-resident-1` / `usr-resident-2`.
+     - Hooked automatic deletion of lingering demo inquiry documents in `autoMigrateLocalDataToFirestore()`.
+     - Added secondary filtering in [`src/app/(admin)/admin/inquiries/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/inquiries/page.tsx) across both inquiry table lists and KPI metric computations.
+  2. **Multi-Filter & Reverse Chronological Default Sort in Customer Directory**:
+     - Retained the high-speed universal search input while adding dedicated dropdowns for **Membership Tier** (`All Memberships`, `VIP Premium`, `Regular Pass`, `Pay Per Parcel`) and **Sort Order**.
+     - Configured **`Newest First (Desc)` as the default sort**, guaranteeing that newly created resident accounts immediately appear on Page 1.
+     - Added alternate sorting options: `Oldest First (Asc)`, `Name (A → Z)`, `Name (Z → A)`, `CK Code (Asc)`, `CK Code (Desc)`, and `Unit (Asc)`.
+  3. **Guaranteed Optional Package Notes with Inline Validation**:
+     - Explicitly designated `required={false}` on the package note input and styled the optional tag.
+     - Added contextual inline alert warnings directly adjacent to the resident selector and submit button, clearly informing staff if resident selection from the dropdown was omitted.
+  4. **Purged `+ Quick Fill Sample` Button**:
+     - Removed the demo sample intake button from the Scanner station header in [`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx).
+  5. **Resolved Typeahead Dropdown Bottom Cutoff**:
+     - Enhanced [`src/components/admin/ResidentTypeaheadSelect.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/components/admin/ResidentTypeaheadSelect.tsx) with `max-h-72` and generous `pb-6` bottom padding so the final directory item is completely legible and never clipped.
+  6. **Built Parcel Inventory Re-Edit Modal Engine**:
+     - Added an **"Edit"** action button to every inventory table row.
+     - Implemented `EditParcelModal` allowing admins to modify courier tracking number, courier partner, recipient resident, parcel size, and package notes on the fly.
+     - Connected the modal to `updateParcel()` with real-time Firestore persistence and instant feedback.
+- **Result**:
+  Zero demo inquiries in lobby communications, instantaneous access to newly registered resident accounts on Page 1, frictionless parcel intake with zero false-mandatory validations, 100% full-height typeahead directory visibility, and full operational capability to correct parcel details without database re-entry.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When designing operations-critical staff consoles (inventory intake, customer directories), always default records to reverse chronological order (`createdAt` desc) so recent user actions require zero pagination clicks. Pair universal search bars with multi-dimensional dropdown filters rather than fragmented text fields, and place form validation notices immediately beside the submit action to prevent user confusion.
 
 ---
 

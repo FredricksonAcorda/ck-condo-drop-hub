@@ -18,6 +18,10 @@ export default function AdminCustomersPage() {
   const [loadingResidents, setLoadingResidents] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [membershipFilter, setMembershipFilter] = useState<"ALL" | "PREMIUM" | "REGULAR" | "PER_PARCEL">("ALL");
+  const [sortBy, setSortBy] = useState<
+    "NEWEST" | "OLDEST" | "NAME_ASC" | "NAME_DESC" | "CODE_ASC" | "CODE_DESC" | "UNIT_ASC"
+  >("NEWEST");
   const [selectedResident, setSelectedResident] = useState<ResidentProfile | null>(null);
 
   // Invoices & Payments State
@@ -79,9 +83,9 @@ export default function AdminCustomersPage() {
     };
   }, [loadResidents, loadInvoices]);
 
-  // Filtered Residents
+  // Filtered & Sorted Residents
   const filteredResidents = useMemo(() => {
-    return residents.filter((res) => {
+    const list = residents.filter((res) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
@@ -99,9 +103,45 @@ export default function AdminCustomersPage() {
         branchFilter === "ALL" ||
         res.branch === branchFilter ||
         res.tower === branchFilter;
-      return matchesSearch && matchesBranch;
+
+      const matchesMembership =
+        membershipFilter === "ALL" || res.plan === membershipFilter;
+
+      return matchesSearch && matchesBranch && matchesMembership;
     });
-  }, [residents, searchQuery, branchFilter]);
+
+    // Ascending & Descending sorting logic (Default: Newest created account on Page 1)
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "NEWEST": {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
+          return b.id.localeCompare(a.id);
+        }
+        case "OLDEST": {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeA !== timeB) return timeA - timeB;
+          return a.id.localeCompare(b.id);
+        }
+        case "NAME_ASC":
+          return a.name.localeCompare(b.name);
+        case "NAME_DESC":
+          return b.name.localeCompare(a.name);
+        case "CODE_ASC":
+          return a.residentCode.localeCompare(b.residentCode);
+        case "CODE_DESC":
+          return b.residentCode.localeCompare(a.residentCode);
+        case "UNIT_ASC":
+          return a.unit.localeCompare(b.unit);
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  }, [residents, searchQuery, branchFilter, membershipFilter, sortBy]);
 
   // 5-item pagination for registered residents
   const [residentPage, setResidentPage] = useState(1);
@@ -109,7 +149,7 @@ export default function AdminCustomersPage() {
 
   useEffect(() => {
     setResidentPage(1);
-  }, [searchQuery, branchFilter]);
+  }, [searchQuery, branchFilter, membershipFilter, sortBy]);
 
   const totalResidentPages = Math.ceil(filteredResidents.length / ITEMS_PER_PAGE) || 1;
   const validResidentPage = Math.min(Math.max(1, residentPage), totalResidentPages);
@@ -323,8 +363,8 @@ export default function AdminCustomersPage() {
       {activeTab === "DIRECTORY" && (
         <div className="space-y-4">
           {/* Filter and Search Bar */}
-          <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
-            <div className="w-full md:w-96">
+          <div className="bg-white p-4 rounded-xl border border-brand-border flex flex-col xl:flex-row gap-4 justify-between items-center shadow-sm">
+            <div className="w-full xl:w-80">
               <input
                 type="text"
                 placeholder="Search by name, unit number, branch, or CK-code..."
@@ -334,20 +374,57 @@ export default function AdminCustomersPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
-                Filter Branch:
-              </span>
-              <select
-                value={branchFilter}
-                onChange={(e) => setBranchFilter(e.target.value)}
-                className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
-              >
-                <option value="ALL">All Branches</option>
-                {BRANCHES.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-start xl:justify-end">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
+                  Branch:
+                </span>
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
+                >
+                  <option value="ALL">All Branches</option>
+                  {BRANCHES.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
+                  Membership:
+                </span>
+                <select
+                  value={membershipFilter}
+                  onChange={(e) => setMembershipFilter(e.target.value as any)}
+                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
+                >
+                  <option value="ALL">All Memberships</option>
+                  <option value="PREMIUM">VIP Premium</option>
+                  <option value="REGULAR">Regular Pass</option>
+                  <option value="PER_PARCEL">Pay Per Parcel</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
+                  Sort:
+                </span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white font-medium"
+                >
+                  <option value="NEWEST">Newest First (Desc)</option>
+                  <option value="OLDEST">Oldest First (Asc)</option>
+                  <option value="NAME_ASC">Name (A → Z)</option>
+                  <option value="NAME_DESC">Name (Z → A)</option>
+                  <option value="CODE_ASC">CK Code (Asc)</option>
+                  <option value="CODE_DESC">CK Code (Desc)</option>
+                  <option value="UNIT_ASC">Unit (Asc)</option>
+                </select>
+              </div>
             </div>
           </div>
 

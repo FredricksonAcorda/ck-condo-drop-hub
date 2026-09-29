@@ -219,8 +219,8 @@ export default function ResidentTypeaheadSelect({
             <span className="text-[10px] text-gray-400">↑↓ to navigate • Enter to pick</span>
           </div>
 
-          {/* Scrollable Items Container */}
-          <div ref={listRef} className="max-h-60 overflow-y-auto divide-y divide-gray-100 overscroll-contain">
+          {/* Scrollable Items Container with bottom clearance */}
+          <div ref={listRef} className="max-h-72 overflow-y-auto divide-y divide-gray-100 overscroll-contain pb-6">
             {filteredResidents.length === 0 ? (
               <div className="p-6 text-center text-xs text-gray-500 space-y-1">
                 <p className="font-semibold text-gray-700">

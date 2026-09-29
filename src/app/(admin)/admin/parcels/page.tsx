@@ -38,6 +38,16 @@ export default function ParcelsInventoryPage() {
   const [releaseCodeError, setReleaseCodeError] = useState<string | null>(null);
   const [releaseSuccess, setReleaseSuccess] = useState<string | null>(null);
 
+  // Edit Parcel Modal State
+  const [editModalParcel, setEditModalParcel] = useState<Parcel | null>(null);
+  const [editTracking, setEditTracking] = useState("");
+  const [editCourier, setEditCourier] = useState("SPX Express");
+  const [editResidentId, setEditResidentId] = useState("");
+  const [editSize, setEditSize] = useState<ParcelSize>("Medium");
+  const [editNotes, setEditNotes] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   const trackingInputRef = useRef<HTMLInputElement | null>(null);
 
   // Load residents from DB with real-time updates
@@ -136,7 +146,7 @@ export default function ParcelsInventoryPage() {
 
     const resident = residents.find((r) => r.id === selectedResidentId);
     if (!resident) {
-      setIntakeError("Please select a registered condo resident.");
+      setIntakeError("Please select a registered condo resident from the Condo Resident & Unit dropdown.");
       return;
     }
 
@@ -301,6 +311,68 @@ export default function ParcelsInventoryPage() {
     }
   };
 
+  // Open Edit Parcel Modal
+  const handleOpenEditModal = (parcel: Parcel) => {
+    setEditModalParcel(parcel);
+    setEditTracking(parcel.trackingNumber);
+    setEditCourier(parcel.courier);
+    setEditResidentId(parcel.residentId);
+    setEditSize((parcel.size as ParcelSize) || "Medium");
+    setEditNotes(parcel.notes || "");
+    setEditError(null);
+  };
+
+  // Save Edited Parcel Details
+  const handleSaveEditParcel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModalParcel) return;
+
+    const cleanTracking = editTracking.trim().toUpperCase();
+    if (!cleanTracking) {
+      setEditError("Tracking number cannot be empty.");
+      return;
+    }
+
+    const resident = residents.find((r) => r.id === editResidentId);
+    if (!resident) {
+      setEditError("Please select a registered resident.");
+      return;
+    }
+
+    const courierColors: Record<string, string> = {
+      "SPX Express": "#EE4D2D",
+      "Flash Express": "#FFB800",
+      "J&T Express": "#D21F1F",
+      "YTO Express": "#592780",
+      "LBC Express": "#E31837",
+      "STO Express": "#FF6600",
+      "Other Courier": "#6B7280",
+    };
+
+    setIsSavingEdit(true);
+    try {
+      await updateParcel(editModalParcel.id, {
+        trackingNumber: cleanTracking,
+        courier: editCourier,
+        courierColor: courierColors[editCourier] || "#6B7280",
+        residentId: resident.id,
+        residentName: resident.name,
+        unit: `${resident.unit} - ${resident.branch || resident.tower}`,
+        size: editSize,
+        notes: editNotes.trim() || undefined,
+      });
+
+      setIntakeSuccess(`✓ Parcel ${cleanTracking} successfully updated in inventory!`);
+      setEditModalParcel(null);
+      setTimeout(() => setIntakeSuccess(null), 5000);
+    } catch (err) {
+      console.error(err);
+      setEditError("Failed to update parcel. Please try again.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       {/* Top Header Card */}
@@ -325,18 +397,6 @@ export default function ParcelsInventoryPage() {
             <p className="text-xs text-white/80">
               Scan barcode with USB gun or type tracking number. The parcel will immediately reflect on the inventory below.
             </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => {
-                const sampleNumber = "SPX-PH-" + Math.floor(100000 + Math.random() * 900000);
-                handleTrackingChange(sampleNumber);
-              }}
-              className="text-[11px] bg-white text-brand-red font-bold uppercase px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-100 cursor-pointer"
-            >
-              + Quick Fill Sample
-            </button>
           </div>
         </div>
 
@@ -466,23 +526,30 @@ export default function ParcelsInventoryPage() {
               </div>
             </div>
 
-            {/* Notes Input */}
+            {/* Notes Input (Fully Optional) */}
             <div className="lg:col-span-4">
               <label className="block text-xs font-bold uppercase text-brand-text mb-1.5">
-                Package Note (Optional)
+                Package Note <span className="text-gray-400 font-normal lowercase">(optional)</span>
               </label>
               <input
                 type="text"
+                name="packageNote"
                 placeholder="e.g. Fragile, Perishable, Shopee Pay..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="input text-xs w-full border border-gray-300 bg-white h-10 font-medium"
                 disabled={isSubmitting}
+                required={false}
               />
             </div>
 
             {/* Submit Button */}
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4 flex flex-col justify-end">
+              {intakeError && (
+                <p className="text-[11px] text-brand-red font-bold mb-1 animate-in fade-in">
+                  ⚠️ {intakeError}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -721,7 +788,15 @@ export default function ParcelsInventoryPage() {
                       </td>
 
                       {/* Tools */}
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(parcel)}
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer mr-3"
+                          title="Edit parcel details"
+                        >
+                          Edit
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(parcel)}
@@ -933,6 +1008,140 @@ export default function ParcelsInventoryPage() {
                   className="btn btn-primary btn-sm font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Verify &amp; Release ➔
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Parcel Modal */}
+      {editModalParcel && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-brand-border">
+              <h3 className="font-[family-name:var(--font-heading)] text-xl uppercase tracking-wider text-brand-black">
+                EDIT PARCEL DETAILS
+              </h3>
+              <button
+                onClick={() => setEditModalParcel(null)}
+                className="text-brand-text-muted hover:text-brand-black cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditParcel} className="space-y-4">
+              {/* Tracking Number */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Courier Tracking / Barcode <span className="text-brand-red">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editTracking}
+                  onChange={(e) => setEditTracking(e.target.value.toUpperCase())}
+                  className="input font-mono uppercase text-xs w-full font-bold border border-gray-300 bg-white"
+                  required
+                  disabled={isSavingEdit}
+                />
+              </div>
+
+              {/* Courier Partner */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Courier Partner
+                </label>
+                <select
+                  value={editCourier}
+                  onChange={(e) => setEditCourier(e.target.value)}
+                  className="input text-xs w-full cursor-pointer border border-gray-300 bg-white"
+                  disabled={isSavingEdit}
+                >
+                  <option value="SPX Express">SPX Express</option>
+                  <option value="Flash Express">Flash Express</option>
+                  <option value="J&T Express">J&T Express</option>
+                  <option value="YTO Express">YTO Express</option>
+                  <option value="LBC Express">LBC Express</option>
+                  <option value="STO Express">STO Express</option>
+                  <option value="Other Courier">Other Courier (SM / Appliances / Brands)</option>
+                </select>
+              </div>
+
+              {/* Resident Selector */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Condo Resident &amp; Unit <span className="text-brand-red">*</span>
+                </label>
+                <ResidentTypeaheadSelect
+                  residents={residents}
+                  selectedResidentId={editResidentId}
+                  onSelect={(r) => setEditResidentId(r.id)}
+                  disabled={isSavingEdit}
+                  required={true}
+                />
+              </div>
+
+              {/* Parcel Size */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Parcel Size
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(["Small", "Medium", "Large", "Oversize"] as ParcelSize[]).map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => setEditSize(sz)}
+                      className={`h-9 text-xs rounded-lg border font-bold transition-all cursor-pointer ${
+                        editSize === sz
+                          ? "bg-brand-black text-white border-brand-black shadow-xs"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                      }`}
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Package Note */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-brand-text mb-1">
+                  Package Note <span className="text-gray-400 font-normal lowercase">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Fragile, Perishable, Shopee Pay..."
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="input text-xs w-full border border-gray-300 bg-white h-9"
+                  disabled={isSavingEdit}
+                  required={false}
+                />
+              </div>
+
+              {editError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-brand-red text-xs font-semibold animate-in fade-in">
+                  {editError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-brand-border">
+                <button
+                  type="button"
+                  onClick={() => setEditModalParcel(null)}
+                  className="btn btn-outline btn-sm cursor-pointer"
+                  disabled={isSavingEdit}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="btn btn-primary btn-sm font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  {isSavingEdit ? "Saving Changes..." : "Save Changes ✓"}
                 </button>
               </div>
             </form>

@@ -18,18 +18,29 @@ export default function AdminInquiriesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  // Non-demo clean inquiries
+  const cleanInquiries = useMemo(() => {
+    return inquiries.filter(
+      (i) =>
+        i.residentName !== "Juan Dela Cruz" &&
+        i.residentName !== "Maria Santos" &&
+        i.residentId !== "usr-resident-1" &&
+        i.residentId !== "usr-resident-2"
+    );
+  }, [inquiries]);
+
   // Statistics
   const stats = useMemo(() => {
-    const total = inquiries.length;
-    const newCount = inquiries.filter((i) => i.status === "NEW").length;
-    const inProgressCount = inquiries.filter((i) => i.status === "IN_PROGRESS").length;
-    const resolvedCount = inquiries.filter((i) => i.status === "RESOLVED").length;
+    const total = cleanInquiries.length;
+    const newCount = cleanInquiries.filter((i) => i.status === "NEW").length;
+    const inProgressCount = cleanInquiries.filter((i) => i.status === "IN_PROGRESS").length;
+    const resolvedCount = cleanInquiries.filter((i) => i.status === "RESOLVED").length;
     return { total, newCount, inProgressCount, resolvedCount };
-  }, [inquiries]);
+  }, [cleanInquiries]);
 
   // Filtered List
   const filteredInquiries = useMemo(() => {
-    return inquiries.filter((inq) => {
+    return cleanInquiries.filter((inq) => {
       const matchesStatus = statusFilter === "ALL" || inq.status === statusFilter;
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch =
@@ -41,7 +52,7 @@ export default function AdminInquiriesPage() {
         inq.message.toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
-  }, [inquiries, statusFilter, searchQuery]);
+  }, [cleanInquiries, statusFilter, searchQuery]);
 
   // 5-item pagination for lobby inquiries
   const [currentPage, setCurrentPage] = useState(1);

@@ -649,18 +649,24 @@ export class FirestoreDatabaseService implements IDatabaseService {
     return item;
   }
 
-  // --- Desk Inquiries ---
-
   async getInquiries(): Promise<DeskInquiry[]> {
-    if (!firestore) return SEED_INQUIRIES;
+    if (!firestore) return [];
     await this.ensureSeeded();
     try {
       const snap = await getDocs(collection(firestore, "inquiries"));
-      if (snap.empty) return SEED_INQUIRIES;
-      return snap.docs.map((d) => d.data() as DeskInquiry);
+      if (snap.empty) return [];
+      return snap.docs
+        .map((d) => d.data() as DeskInquiry)
+        .filter(
+          (item) =>
+            item.residentName !== "Juan Dela Cruz" &&
+            item.residentName !== "Maria Santos" &&
+            item.residentId !== "usr-resident-1" &&
+            item.residentId !== "usr-resident-2"
+        );
     } catch (err) {
       console.error("Error fetching inquiries:", err);
-      return SEED_INQUIRIES;
+      return [];
     }
   }
 
@@ -907,7 +913,14 @@ export function subscribeToInquiries(callback: (inquiries: DeskInquiry[]) => voi
           const list: DeskInquiry[] = [];
           snap.forEach((d) => {
             const item = d.data() as DeskInquiry;
-            list.push({ ...item, id: d.id });
+            if (
+              item.residentName !== "Juan Dela Cruz" &&
+              item.residentName !== "Maria Santos" &&
+              item.residentId !== "usr-resident-1" &&
+              item.residentId !== "usr-resident-2"
+            ) {
+              list.push({ ...item, id: d.id });
+            }
           });
           list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           callback(list);
@@ -1115,6 +1128,25 @@ export async function autoMigrateLocalDataToFirestore(): Promise<{ migratedResid
       } catch (err) {
         console.warn(`[AutoMigrate] Failed parsing session key ${sKey}:`, err);
       }
+    }
+
+    // 3. Purge any legacy demo inquiries from Firestore
+    try {
+      const inqSnap = await getDocs(collection(firestore, "inquiries"));
+      for (const d of inqSnap.docs) {
+        const item = d.data() as DeskInquiry;
+        if (
+          item.residentName === "Juan Dela Cruz" ||
+          item.residentName === "Maria Santos" ||
+          item.residentId === "usr-resident-1" ||
+          item.residentId === "usr-resident-2"
+        ) {
+          await deleteDoc(d.ref);
+          console.log(`[AutoMigrate] Purged legacy demo inquiry ${d.id}`);
+        }
+      }
+    } catch (err) {
+      console.warn("[AutoMigrate] Failed checking inquiries to purge:", err);
     }
 
     if (migratedResidents > 0 || migratedParcels > 0) {
