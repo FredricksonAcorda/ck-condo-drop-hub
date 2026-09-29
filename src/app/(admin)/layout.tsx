@@ -223,15 +223,6 @@ export default function AdminLayout({
               Building: <strong>CK Buildersville Condominium</strong>
             </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/admin/parcels" className="btn btn-primary btn-sm">
-              Scanner & Inventory
-            </Link>
-            <Link href="/" className="btn btn-outline btn-sm">
-              Public Site ↗
-            </Link>
-          </div>
         </header>
 
         <main className="flex-1 p-4 lg:p-8 min-w-0">{children}</main>

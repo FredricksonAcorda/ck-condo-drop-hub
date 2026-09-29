@@ -4,10 +4,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useAuth, useParcels } from "@/context";
+import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 
 export default function CustomerDashboardPage() {
   const { user, updateProfile } = useAuth();
   const { parcels, hubSettings } = useParcels();
+
+  const announcements =
+    hubSettings.communityAnnouncements && hubSettings.communityAnnouncements.length > 0
+      ? hubSettings.communityAnnouncements
+      : DEFAULT_HUB_SETTINGS.communityAnnouncements || [];
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -198,8 +204,8 @@ export default function CustomerDashboardPage() {
               <span className="font-semibold text-gray-900">{hubSettings.operatingHours || "Monday – Sunday: 7:00 AM – 10:00 PM Daily"}</span>
             </div>
             <div className="flex justify-between border-b border-gray-200 pb-2.5">
-              <span className="text-gray-500">Hotline Number:</span>
-              <span className="font-semibold text-gray-900">0917 123 4567</span>
+              <span className="text-gray-500">Mobile Phone:</span>
+              <span className="font-semibold text-gray-900">{hubSettings.contactPhone || "0917 123 4567"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Door Delivery:</span>
@@ -235,24 +241,23 @@ export default function CustomerDashboardPage() {
                 </p>
               </div>
             )}
-            <div className="pt-2 first:pt-0">
-              <span className="text-[10px] text-brand-red font-bold uppercase">Oct 1, 2026</span>
-              <h4 className="font-bold text-gray-900 mt-0.5">Flash Express Direct Sorting Added</h4>
-              <p className="text-gray-600 mt-1 leading-relaxed">
-                Flash Express riders now drop packages directly into the Lobby Counter.
-              </p>
-            </div>
+
+            {announcements.map((item, idx) => (
+              <div key={item.id || idx} className="pt-3 first:pt-0">
+                {item.highlight && (
+                  <span className="text-[10px] text-brand-red font-bold uppercase tracking-wider block">
+                    {item.highlight}
+                  </span>
+                )}
+                <h4 className="font-bold text-gray-900 mt-0.5">{item.title}</h4>
+                <p className="text-gray-600 mt-1 leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
 
             <div className="pt-3">
-              <span className="text-[10px] text-gray-400 font-bold uppercase">Sept 25, 2026</span>
-              <h4 className="font-bold text-gray-900 mt-0.5">Lobby Service Schedule</h4>
-              <p className="text-gray-600 mt-1 leading-relaxed">
-                Lobby remains open for pickup: {hubSettings.operatingHours || "7:00 AM – 10:00 PM Daily"}.
-              </p>
-            </div>
-
-            <div className="pt-3">
-              <span className="text-[10px] text-gray-400 font-bold uppercase">Need Assistance?</span>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Need Assistance?</span>
               <p className="text-gray-600 mt-1 leading-relaxed">
                 Visit our{" "}
                 <Link href="/help" className="text-brand-red font-semibold hover:underline">

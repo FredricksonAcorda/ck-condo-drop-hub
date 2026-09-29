@@ -57,6 +57,7 @@
 45. [Universal Real-Time WebSocket Synchronization (Settings, Logged-in User Profile, Inquiries) and Mobile Session Auto-Migration](#45-universal-real-time-websocket-synchronization-settings-logged-in-user-profile-inquiries-and-mobile-session-auto-migration-feature--fix)
 46. [Codebase Refactoring (Hakbang 3): Component Decomposition of Admin Modals and Centralized Formatting Utilities](#46-codebase-refactoring-hakbang-3-component-decomposition-of-admin-modals-and-centralized-formatting-utilities-refactor)
 47. [Admin Inquiries Demo Account Purge, Customer Directory Membership/Sort Filters, Typeahead Bottom Clearance, and Parcel Re-Edit Engine](#47-admin-inquiries-demo-account-purge-customer-directory-membershipsort-filters-typeahead-bottom-clearance-and-parcel-re-edit-engine-fix--modification--feature)
+48. [Staff Admin UI Cleanup, Live Mobile Phone Synchronization, and Fully Editable Hub Announcements](#48-staff-admin-ui-cleanup-live-mobile-phone-synchronization-and-fully-editable-hub-announcements-modification--fix)
 
 ---
 
@@ -1126,6 +1127,37 @@
   Zero demo inquiries in lobby communications, instantaneous access to newly registered resident accounts on Page 1, frictionless parcel intake with zero false-mandatory validations, 100% full-height typeahead directory visibility, and full operational capability to correct parcel details without database re-entry.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When designing operations-critical staff consoles (inventory intake, customer directories), always default records to reverse chronological order (`createdAt` desc) so recent user actions require zero pagination clicks. Pair universal search bars with multi-dimensional dropdown filters rather than fragmented text fields, and place form validation notices immediately beside the submit action to prevent user confusion.
+
+---
+
+## 48. Staff Admin UI Cleanup, Live Mobile Phone Synchronization, and Fully Editable Hub Announcements (Modification / Fix)
+
+- **Current State**:
+  1. In the Residents & Units directory (`src/app/(admin)/admin/customers/page.tsx`), the filter selects had redundant prefix labels (`Branch:` and `Membership:`), and a `+ Register New Resident` button was positioned in the header.
+  2. In the Admin desktop header (`src/app/(admin)/layout.tsx`), secondary buttons `Scanner & Inventory` and `Public Site ↗` were present in the top-right corner.
+  3. On the Customer Dashboard (`src/app/(customer)/dashboard/page.tsx`), the contact phone row displayed the label `Hotline Number:` with a hardcoded static phone number `0917 123 4567` that failed to update when the Staff Admin modified the phone number in Settings.
+  4. In the Customer Dashboard's "Community Updates (Hub Announcements)" card, only the "Lobby Staff Bulletin" was dynamically editable via settings, while all subsequent announcement entries below it ("Flash Express Direct Sorting Added", "Lobby Service Schedule", etc.) were hardcoded static HTML elements that could not be modified or updated by staff.
+- **The Problem**:
+  Redundant header actions and label prefixes consumed unnecessary screen real estate in the staff administration workspace. More critically, residents saw hardcoded contact information and static placeholder announcements on their dashboard that did not reflect administrative updates made by staff in the hub management settings.
+- **What to Do (Solution)**:
+  1. **Purged Redundant Prefix Labels in Residents & Units Toolbar**:
+     - Removed the `Branch:` and `Membership:` text label spans in [`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx), allowing the dropdowns to render cleanly and save horizontal width.
+  2. **Removed Register Button from Residents Header**:
+     - Removed the `+ Register New Resident` link button from the header of [`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx) to streamline directory viewing.
+  3. **Removed Unnecessary Desktop Admin Header Buttons**:
+     - Stripped the `Scanner & Inventory` and `Public Site ↗` action buttons from the top-right navigation header in [`src/app/(admin)/layout.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/layout.tsx).
+  4. **Dynamic Mobile Phone Binding on Resident Dashboard**:
+     - Updated the label in [`src/app/(customer)/dashboard/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/dashboard/page.tsx) from `Hotline Number:` to `Mobile Phone:`.
+     - Bound the phone value directly to `{hubSettings.contactPhone || "0917 123 4567"}`, ensuring real-time synchronization whenever Staff Admin updates the contact number in Hub Settings.
+     - Updated Section 4 titles and helper text in [`src/app/(admin)/admin/settings/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/settings/page.tsx) to explicitly indicate "Mobile Phone / Contact Number" displayed on both the resident dashboard and public footer.
+  5. **Fully Editable Hub Announcements via Centralized Settings CMS**:
+     - Replaced the hardcoded static announcements in [`src/app/(customer)/dashboard/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(customer)/dashboard/page.tsx) with a dynamic array mapping over `hubSettings.communityAnnouncements` (falling back to `DEFAULT_HUB_SETTINGS.communityAnnouncements`).
+     - Displayed dynamic highlight tags, titles, and descriptions for all hub announcements managed in Admin Settings (Section 5).
+     - Enhanced Section 5 in [`src/app/(admin)/admin/settings/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/settings/page.tsx) with clear descriptive copy denoting that announcements update both the public website and the resident dashboard.
+- **Result**:
+  Clean, focused Admin navigation without clutter; instantaneous propagation of the staff admin's mobile phone number across resident screens; and 100% editable community announcements allowing staff to publish live advisories, promos, and operational schedules directly to all logged-in residents.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Never leave static placeholder lists or hardcoded contact data in end-user portals when an administrative CMS settings model exists. Always bind customer-facing advisories and contact points to centralized reactive state so non-developer operations teams can manage content live without code deployments.
 
 ---
 

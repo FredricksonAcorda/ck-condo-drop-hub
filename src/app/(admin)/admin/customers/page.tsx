@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResidentProfile, InvoiceRecord } from "@/types";
 import { db, subscribeToResidents } from "@/lib/db";
@@ -287,7 +286,7 @@ export default function AdminCustomersPage() {
   return (
     <div className="space-y-6 w-full">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
         <div>
           <h1 className="font-[family-name:var(--font-heading)] text-3xl sm:text-4xl text-brand-black uppercase tracking-wide">
             RESIDENTS & <span className="text-brand-red">UNITS</span>
@@ -295,12 +294,6 @@ export default function AdminCustomersPage() {
           <p className="text-xs sm:text-sm text-brand-text-secondary mt-0.5">
             Condominium unit directory, resident subscription tiers, and connected billing receipts ledger.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link href="/register" className="btn btn-primary btn-sm font-bold uppercase">
-            + Register New Resident
-          </Link>
         </div>
       </div>
 
@@ -375,37 +368,27 @@ export default function AdminCustomersPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-start xl:justify-end">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
-                  Branch:
-                </span>
-                <select
-                  value={branchFilter}
-                  onChange={(e) => setBranchFilter(e.target.value)}
-                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
-                >
-                  <option value="ALL">All Branches</option>
-                  {BRANCHES.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+                className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
+              >
+                <option value="ALL">All Branches</option>
+                {BRANCHES.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
-                  Membership:
-                </span>
-                <select
-                  value={membershipFilter}
-                  onChange={(e) => setMembershipFilter(e.target.value as any)}
-                  className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
-                >
-                  <option value="ALL">All Memberships</option>
-                  <option value="PREMIUM">VIP Premium</option>
-                  <option value="REGULAR">Regular Pass</option>
-                  <option value="PER_PARCEL">Pay Per Parcel</option>
-                </select>
-              </div>
+              <select
+                value={membershipFilter}
+                onChange={(e) => setMembershipFilter(e.target.value as any)}
+                className="input text-xs py-1.5 cursor-pointer border border-gray-300 bg-white"
+              >
+                <option value="ALL">All Memberships</option>
+                <option value="PREMIUM">VIP Premium</option>
+                <option value="REGULAR">Regular Pass</option>
+                <option value="PER_PARCEL">Pay Per Parcel</option>
+              </select>
 
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">

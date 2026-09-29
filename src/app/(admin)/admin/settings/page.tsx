@@ -398,19 +398,19 @@ export default function HubSettingsPage() {
           </div>
         </div>
 
-        {/* Section 4: Home Page Footer & Contact Information */}
+        {/* Section 4: Contact Information & Mobile Phone */}
         <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
           <div className="border-b border-brand-border pb-3">
-            <h2 className="text-base font-bold text-brand-black">Home Page Footer & Contact Information</h2>
+            <h2 className="text-base font-bold text-brand-black">Contact Information & Resident Mobile Phone</h2>
             <p className="text-xs text-brand-text-secondary">
-              Edit the contact details displayed in the website footer on the Home Page and across public portals.
+              Edit the official contact phone and email displayed across the website footer and resident dashboard.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block font-bold uppercase text-brand-text mb-1.5">
-                Contact Phone Number
+                Mobile Phone / Contact Number
               </label>
               <PhilippinePhoneInput
                 value={formData.contactPhone || ""}
@@ -418,7 +418,7 @@ export default function HubSettingsPage() {
                 placeholder="+63 9XX XXX XXXX"
               />
               <span className="text-[10px] text-brand-text-muted mt-1 block">
-                Official contact number shown in the website footer.
+                Official mobile phone displayed on the resident dashboard and website footer.
               </span>
             </div>
 
@@ -455,13 +455,13 @@ export default function HubSettingsPage() {
           </div>
         </div>
 
-        {/* Section 5: Community Board Announcements (Home Page) */}
+        {/* Section 5: Community Board & Hub Announcements (Home Page & Resident Dashboard) */}
         <div className="bg-white p-6 rounded-2xl border border-brand-border shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-brand-border pb-3">
             <div>
-              <h2 className="text-base font-bold text-brand-black">Community Board Announcements (Home Page)</h2>
+              <h2 className="text-base font-bold text-brand-black">Community Board & Hub Announcements (Home Page & Resident Dashboard)</h2>
               <p className="text-xs text-brand-text-secondary">
-                Add, edit, or remove the announcement cards published on the home page community board.
+                Add, edit, or remove the announcement cards published on the home page and resident dashboard hub announcements.
               </p>
             </div>
             <button
