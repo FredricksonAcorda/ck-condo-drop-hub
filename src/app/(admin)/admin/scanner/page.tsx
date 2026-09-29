@@ -17,7 +17,7 @@ export default function ScannerStationPage() {
         Redirecting to the integrated <strong>Parcel Inventory & Scanner Station</strong>...
       </p>
       <Link href="/admin/parcels" className="btn btn-primary btn-sm">
-        Go to Parcel Inventory & Scanner ➔
+        Go to Parcel Inventory & Scanner
       </Link>
     </div>
   );

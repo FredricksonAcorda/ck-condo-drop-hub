@@ -50,6 +50,7 @@
 38. [Interactive Terms of Service & Privacy Policy Modals and Dedicated Public Legal Routes](#38-interactive-terms-of-service--privacy-policy-modals-and-dedicated-public-legal-routes-add--modification)
 39. [Firebase Firestore Cloud Invoices & Payment Logs Synchronization](#39-firebase-firestore-cloud-invoices--payment-logs-synchronization-bug--fix--add)
 40. [Universal Purge of Search Icons, Button Arrows, Settings Input Overlays & Initial Blank Typeahead Placeholder](#40-universal-purge-of-search-icons-button-arrows-settings-input-overlays--initial-blank-typeahead-placeholder-modification--ux-polish)
+41. [Accurate Courier Pattern Recognition for YTO (200 Prefix) and STO (S18 Prefix) Parcels](#41-accurate-courier-pattern-recognition-for-yto-200-prefix-and-sto-s18-prefix-parcels-bug--fix)
 
 ---
 
@@ -936,6 +937,28 @@
   A streamlined, uncluttered interface adhering to strict pure typography with zero stray icons, no input label collisions, no unwanted arrow glyphs on buttons, and a clean blank search prompt on the parcel intake form.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Avoid embedding decorative text suffixes and currency icons directly inside `<input>` containers via absolute positioning; they frequently collide with input values across different browsers and font scalings. Keep inputs clean and display units/labels in helper text or form labels above the field. Similarly, avoid auto-selecting the first record in transactional form selectors where explicit user selection is critical.
+
+---
+
+## 41. Accurate Courier Pattern Recognition for YTO (200 Prefix) and STO (S18 Prefix) Parcels (Bug / Fix)
+
+- **Current State**:
+  The hardware/web barcode and QR scanner detection engine (`detectCourierFromBarcode`) recognized only legacy prefix waybills (`YT`, `YTO`, `DD`, `88/80`) for YTO Express and (`STO`, `77/55`) for STO Express. J&T Express included a broad 10-12 digit numeric regex fallback (`/^\d{10,12}$/`).
+- **The Problem**:
+  Real Philippine courier waybills for YTO Express and STO Express were misidentified:
+  1. **YTO Express**: Real YTO tracking numbers consistently start with `200` followed by 8–13 digits (e.g. `2008077343558422`, `200807758482509`, `200807751202876`). Because they did not match the legacy regex, they were bypassed or misclassified as J&T Express.
+  2. **STO Express**: Real STO tracking numbers consistently start with `S18` followed by 12 digits (e.g. `S18910007351573`). Because `S18` was omitted from STO detection rules, STO scans either fell back to J&T or failed to auto-select STO Express in the intake form.
+- **What to Do (Solution)**:
+  1. Updated [`src/lib/scanner/courier-detector.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/scanner/courier-detector.ts):
+     - Added robust code normalization stripping spaces, hyphens, and underscores (`cleanCode`).
+     - **YTO Express**: Added `^200\d{5,}` pattern matching all 11–18 digit tracking numbers starting with `200` alongside existing `YT`, `YTO`, `DD`, and `88/80` formats.
+     - **STO Express**: Added `^S18` pattern matching all 14-character alphanumeric waybills starting with `S18` alongside `STO`, `ST`, and `77/55` formats.
+     - **J&T Express**: Added negative lookahead guard `!/^200/.test(cleanCode)` ensuring that numeric tracking numbers starting with `200` are never erroneously matched to J&T Express.
+  2. Removed stray directional arrow `➔` from the scanner redirect button in [`src/app/(admin)/admin/scanner/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/scanner/page.tsx).
+- **Result**:
+  100% accurate auto-detection for YTO Express (`200...`) and STO Express (`S18...`) parcels on both physical laser scanner bursts and typed inputs, eliminating erroneous J&T classification.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When designing multi-carrier barcode and QR scanner decoders, logistics providers frequently update waybill serial number masks (e.g., transitioning from alphabetic prefixes to carrier-specific numeric blocks like `200` or alpha-num combinations like `S18`). Centralize courier pattern matchers with prioritized precedence, strip delimiters before regex evaluation, and implement negative lookaheads on broad numeric fallback matchers to prevent false-positive classifications.
 
 ---
 

@@ -17,9 +17,12 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
     };
   }
 
+  // Normalize code by stripping spaces, hyphens, and underscores for robust barcode reading
+  const cleanCode = code.replace(/[\s-_]/g, "");
+
   // 1. SPX Express (Shopee Xpress)
   // Prefixes: SPX, SPE, SPXPH, SPEPH, or PH followed by digits
-  if (/^SPX/i.test(code) || /^SPE/i.test(code) || /^PH\d{6,}/i.test(code)) {
+  if (/^SPX/i.test(cleanCode) || /^SPE/i.test(cleanCode) || /^PH\d{6,}/i.test(cleanCode)) {
     return {
       name: "SPX Express",
       code: "SPX",
@@ -29,8 +32,15 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
   }
 
   // 2. YTO Express
-  // Prefixes: YT, YTO, DD, or digits starting with 88 or 80 (common YTO waybills)
-  if (/^YT/i.test(code) || /^YTO/i.test(code) || /^DD\d{6,}/i.test(code) || /^(88|80)\d{10,16}$/.test(code)) {
+  // Patterns: Always starts with '200' (e.g., 2008077343558422, 200807758482509, 200807751202876),
+  // or classic prefixes YT, YTO, DD, or digits starting with 88 or 80
+  if (
+    /^200\d{5,}/.test(cleanCode) ||
+    /^YT/i.test(cleanCode) ||
+    /^YTO/i.test(cleanCode) ||
+    /^DD\d{6,}/i.test(cleanCode) ||
+    /^(88|80)\d{10,16}$/.test(cleanCode)
+  ) {
     return {
       name: "YTO Express",
       code: "YTO",
@@ -40,8 +50,14 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
   }
 
   // 3. STO Express
-  // Prefixes: STO, ST, or digits starting with 77 or 55 (common STO waybills)
-  if (/^STO/i.test(code) || /^(77|55)\d{10,14}$/.test(code)) {
+  // Patterns: Always starts with 'S18' (e.g., S18910007351573),
+  // or classic prefixes STO, ST followed by digits, or digits starting with 77 or 55
+  if (
+    /^S18/i.test(cleanCode) ||
+    /^STO/i.test(cleanCode) ||
+    /^ST\d{6,}/i.test(cleanCode) ||
+    /^(77|55)\d{10,14}$/.test(cleanCode)
+  ) {
     return {
       name: "STO Express",
       code: "STO",
@@ -52,7 +68,13 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
 
   // 4. Flash Express
   // Prefixes: FL, FLASH, TH, KEX, or digits starting with 00 or 01
-  if (/^FL/i.test(code) || /^TH\d{6,}/i.test(code) || /^FLASH/i.test(code) || /^KEX/i.test(code) || /^(00|01)\d{10,14}$/.test(code)) {
+  if (
+    /^FL/i.test(cleanCode) ||
+    /^TH\d{6,}/i.test(cleanCode) ||
+    /^FLASH/i.test(cleanCode) ||
+    /^KEX/i.test(cleanCode) ||
+    /^(00|01)\d{10,14}$/.test(cleanCode)
+  ) {
     return {
       name: "Flash Express",
       code: "FLASH",
@@ -63,7 +85,7 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
 
   // 5. LBC Express
   // Prefixes: LBC, 1000-, or 12 digits starting with 1
-  if (/^LBC/i.test(code) || /^1000\d{6,}/.test(code) || /^1\d{11}$/.test(code)) {
+  if (/^LBC/i.test(cleanCode) || /^1000\d{6,}/.test(cleanCode) || /^1\d{11}$/.test(cleanCode)) {
     return {
       name: "LBC Express",
       code: "LBC",
@@ -73,14 +95,14 @@ export function detectCourierFromBarcode(rawCode: string): DetectedCourier {
   }
 
   // 6. J&T Express (JNT)
-  // Prefixes: JT, JNT, J&T, or numeric waybills (10-14 digits, typically starting with 7, 8, 9, 5, 6, 3, etc.)
-  // This prevents JNT from incorrectly detecting as DHL or failing if not starting with JT0.
+  // Prefixes: JT, JNT, J&T, or numeric waybills (10-14 digits starting with 7, 8, 9, 5, 6, 3, etc.)
+  // Explicitly excludes waybills starting with 200 (reserved for YTO) or S18 (reserved for STO)
   if (
-    /^JT/i.test(code) ||
-    /^JNT/i.test(code) ||
-    /^J&T/i.test(code) ||
-    /^(7|8|9|5|6|3)\d{9,13}$/.test(code) ||
-    /^\d{10,12}$/.test(code)
+    /^JT/i.test(cleanCode) ||
+    /^JNT/i.test(cleanCode) ||
+    /^J&T/i.test(cleanCode) ||
+    (/^(7|8|9|5|6|3)\d{9,13}$/.test(cleanCode) && !/^200/.test(cleanCode)) ||
+    (/^\d{10,14}$/.test(cleanCode) && !/^200/.test(cleanCode))
   ) {
     return {
       name: "J&T Express",
