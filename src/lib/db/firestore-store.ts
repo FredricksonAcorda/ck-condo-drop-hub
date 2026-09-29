@@ -36,6 +36,16 @@ import {
 } from "./seed-data";
 
 /**
+ * Normalizes any Philippine or international phone number to its core digits (last 10 digits for PH mobile).
+ * Ensures matching works seamlessly whether stored as "+63 9XX", "09XX", or "9XX".
+ */
+export function normalizePhone(rawPhone?: string): string {
+  if (!rawPhone) return "";
+  const digits = rawPhone.replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+/**
  * Recursively strips any keys whose value is undefined.
  * Firestore strictly rejects undefined field values at the SDK level.
  */
@@ -405,11 +415,13 @@ export class FirestoreDatabaseService implements IDatabaseService {
   async getResidentByEmailOrPhone(emailOrPhone: string): Promise<ResidentProfile | null> {
     const all = await this.getAllResidents();
     const clean = emailOrPhone.trim().toLowerCase();
+    const cleanNormPhone = normalizePhone(clean);
+
     return (
       all.find(
         (r) =>
           r.email.toLowerCase() === clean ||
-          r.phone.replace(/\s+/g, "") === clean.replace(/\s+/g, "")
+          (cleanNormPhone.length >= 7 && normalizePhone(r.phone) === cleanNormPhone)
       ) || null
     );
   }
@@ -487,14 +499,13 @@ export class FirestoreDatabaseService implements IDatabaseService {
 
   async findUserByCredentials(emailOrPhone: string): Promise<AuthUser | null> {
     const clean = emailOrPhone.trim().toLowerCase();
-    const cleanDigits = clean.replace(/\D/g, "").replace(/^63/, "0");
+    const cleanNormPhone = normalizePhone(clean);
     const cleanUser = clean.split("@")[0];
 
-    const matchIdentifier = (email: string, phone: string) => {
-      const emailLower = email.toLowerCase();
-      const phoneDigits = phone.replace(/\D/g, "").replace(/^63/, "0");
-      if (emailLower === clean) return true;
-      if (cleanDigits && phoneDigits === cleanDigits) return true;
+    const matchIdentifier = (email?: string, phone?: string) => {
+      const emailLower = (email || "").toLowerCase();
+      if (clean && emailLower === clean) return true;
+      if (cleanNormPhone.length >= 7 && normalizePhone(phone) === cleanNormPhone) return true;
       if (clean.includes("@") && emailLower.split("@")[0] === cleanUser) return true;
       if (!clean.includes("@") && !clean.startsWith("+") && emailLower.split("@")[0] === clean) return true;
       return false;
@@ -845,4 +856,115 @@ export function subscribeToParcels(callback: (parcels: Parcel[]) => void): () =>
     }
   }
   return () => {};
+}
+
+/**
+ * Automatically inspects browser localStorage for any resident or parcel records
+ * created prior to cloud synchronization and transparently uploads them to Firestore.
+ */
+export async function autoMigrateLocalDataToFirestore(): Promise<{ migratedResidents: number; migratedParcels: number }> {
+  if (typeof window === "undefined" || !isFirebaseConfigured() || !firestore) {
+    return { migratedResidents: 0, migratedParcels: 0 };
+  }
+
+  let migratedResidents = 0;
+  let migratedParcels = 0;
+
+  try {
+    // 1. Scan and migrate local resident accounts
+    const residentStorageKeys = ["ck_hub_residents_v2", "ck_hub_residents_v1", "ck_residents"];
+    for (const key of residentStorageKeys) {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (
+              item &&
+              item.id &&
+              item.id !== "usr-resident-1" &&
+              item.id !== "usr-resident-2" &&
+              item.name !== "Juan Dela Cruz" &&
+              item.name !== "Maria Santos"
+            ) {
+              const resDocRef = doc(firestore, "residents", item.id);
+              const existingSnap = await getDoc(resDocRef);
+              if (!existingSnap.exists()) {
+                await setDoc(resDocRef, sanitizeForFirestore(item));
+
+                // Also ensure mirrored users collection has the account
+                const userDoc: AuthUser = {
+                  id: item.id,
+                  email: item.email || "",
+                  name: item.name || "Resident",
+                  phone: item.phone || "",
+                  role: "resident",
+                  unit: item.unit || "",
+                  tower: item.tower || "Tower A",
+                  branch: item.branch || "Malinta Branch",
+                  buildingNumber: item.buildingNumber,
+                  floorNumber: item.floorNumber,
+                  unitNumber: item.unitNumber,
+                  plan: item.plan || "PER_PARCEL",
+                  planStatus: item.planStatus || "ACTIVE",
+                  paymentMethod: item.paymentMethod || "CASH_COUNTER",
+                  paymentReference: item.paymentReference,
+                  residentCode: item.residentCode,
+                  authorizedClaimants: item.authorizedClaimants || [],
+                  createdAt: item.createdAt || new Date().toISOString(),
+                };
+                await setDoc(doc(firestore, "users", item.id), sanitizeForFirestore(userDoc));
+                migratedResidents++;
+                console.log(`[AutoMigrate] Uploaded resident ${item.name} (${item.id}) to Firestore`);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[AutoMigrate] Failed parsing key ${key}:`, err);
+      }
+    }
+
+    // 2. Scan and migrate local parcels
+    const parcelStorageKeys = ["ck_hub_parcels_v2", "ck_hub_parcels_v1", "ck_parcels"];
+    for (const key of parcelStorageKeys) {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const p of parsed) {
+            if (
+              p &&
+              p.id &&
+              p.residentId !== "usr-resident-1" &&
+              p.residentId !== "usr-resident-2" &&
+              p.residentName !== "Juan Dela Cruz" &&
+              p.residentName !== "Maria Santos"
+            ) {
+              const parcelDocRef = doc(firestore, "parcels", p.id);
+              const existingSnap = await getDoc(parcelDocRef);
+              if (!existingSnap.exists()) {
+                await setDoc(parcelDocRef, sanitizeForFirestore(p));
+                migratedParcels++;
+                console.log(`[AutoMigrate] Uploaded parcel ${p.trackingNumber} (${p.id}) to Firestore`);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[AutoMigrate] Failed parsing parcel key ${key}:`, err);
+      }
+    }
+
+    if (migratedResidents > 0 || migratedParcels > 0) {
+      notifyLocalUpdate();
+      console.log(`[AutoMigrate] Successfully migrated ${migratedResidents} resident(s) and ${migratedParcels} parcel(s) to Firestore`);
+    }
+  } catch (err) {
+    console.warn("[AutoMigrate] Exception during localStorage migration:", err);
+  }
+
+  return { migratedResidents, migratedParcels };
 }

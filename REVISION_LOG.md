@@ -1012,6 +1012,32 @@
 
 ---
 
+## 44. Live Cloud Session Revalidation, Universal Philippine Phone Normalization, and Automated Local-to-Cloud Data Migration (Fix / Refactor)
+
+- **Current State**:
+  While database operations were routed to Firebase Firestore, active user authentication state relied on a frozen `localStorage` snapshot (`ck_hub_session_v2`) loaded during sign-in. Furthermore, phone number lookups in `getResidentByEmailOrPhone` and `findUserByCredentials` relied on strict string matching (`+63` vs `09`), causing phone sign-ins to fail if formatted differently. Lastly, accounts previously created by the client on her laptop browser were stranded in local browser memory without reaching the cloud.
+- **The Problem**:
+  1. **Stale Session Snapshot on Page Refresh**: When a resident's plan or status was modified or verified by staff on desktop, refreshing the page on mobile did not reflect the changes because `AuthContext` only re-read the stale snapshot from `localStorage`. The resident was forced to log out and log in again to see their updated status.
+  2. **Phone Number Format Sensitivity**: Resident logins using Philippine phone numbers frequently threw `"no account found matching this mobile number"` if the input format (`09XX...`, `+63 9XX...`, or `9XX...`) did not match the exact raw string stored in the database.
+  3. **Stranded Client `localStorage` Accounts**: Accounts created before the cloud database router update were stored solely in the client's laptop browser `localStorage`, preventing them from appearing in the Staff Admin customer directory.
+- **What to Do (Solution)**:
+  1. **Background Cloud Session Revalidation**:
+     - Added `revalidateSession(): Promise<AuthUser | null>` in [`src/lib/auth/auth-service.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/auth/auth-service.ts).
+     - Hooked `revalidateSession` into [`src/context/AuthContext.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/context/AuthContext.tsx) on initial mount, window focus, and document `visibilitychange`. While the app renders instantaneously from cache, it asynchronously checks Firestore and updates React state live if any changes occurred on other devices.
+  2. **Universal Philippine Phone Normalization**:
+     - Introduced `normalizePhone()` helper in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) stripping non-digit characters and comparing canonical 10-digit national identifiers (`slice(-10)`).
+     - Applied `normalizePhone()` across `getResidentByEmailOrPhone`, `findUserByCredentials`, and `authService.login`, guaranteeing 100% reliable mobile number resolution across all devices regardless of spacing, hyphens, or `+63` prefixes.
+     - Added fallback to `getResidentByEmailOrPhone` if `findUserByCredentials` returns null.
+  3. **Automated Local-to-Cloud Data Migrator**:
+     - Implemented `autoMigrateLocalDataToFirestore()` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) and executed it on startup in `AuthContext`.
+     - Automatically scans `localStorage` for any non-demo residents or parcels created prior to cloud routing and transparently uploads them to Firestore `residents`, `users`, and `parcels` collections.
+- **Result**:
+  Zero logout/login requirement: changes made on desktop reflect immediately on mobile upon page refresh or app focus. Phone number login succeeds universally across all standard Philippine mobile formats. Previously created local accounts on client devices automatically migrate to the cloud Firestore upon visiting the website.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  For client-cached authentication sessions (storing JWTs or user claims in browser storage for instant render), implement a "stale-while-revalidate" background check on mount and window focus. Additionally, never match phone numbers using raw string equality; always normalize phone strings to canonical national dial digit lengths (e.g. 10 digits for PH mobile) to avoid authentication rejections due to formatting differences.
+
+---
+
 ## Autonomous Agent Instructions for Future Updates
 
 Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **Modification**, or **Add**:

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { AuthUser, LoginCredentials, RegisterData, ResidentProfile, UserRole } from "@/types";
 import { authService } from "@/lib/auth/auth-service";
-import { db } from "@/lib/db";
+import { db, autoMigrateLocalDataToFirestore } from "@/lib/db";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -30,18 +30,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // 1. Instant synchronous load from session cache (zero-lag initial paint)
     refreshSession();
 
+    // 2. Asynchronously revalidate with Firestore in the background
+    authService.revalidateSession().then((fresh) => {
+      if (fresh) {
+        setUser(fresh);
+      }
+    });
+
+    // 3. One-time auto-migrator: upload any orphaned accounts on client devices to cloud Firestore
+    autoMigrateLocalDataToFirestore().catch((err) => {
+      console.warn("Background migration notice:", err);
+    });
+
+    // 4. Reactive listeners for cross-tab and cross-device events
     const handleAuthChange = () => {
       refreshSession();
+      authService.revalidateSession().then((fresh) => {
+        if (fresh) setUser(fresh);
+      });
+    };
+
+    const handleWindowFocus = () => {
+      authService.revalidateSession().then((fresh) => {
+        if (fresh) setUser(fresh);
+      });
     };
 
     window.addEventListener("ck_auth_updated", handleAuthChange);
     window.addEventListener("storage", handleAuthChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        handleWindowFocus();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("ck_auth_updated", handleAuthChange);
       window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refreshSession]);
 

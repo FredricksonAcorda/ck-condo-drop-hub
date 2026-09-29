@@ -59,6 +59,62 @@ class AuthService {
     this.setSession(user);
   }
 
+  /**
+   * Asynchronously verifies the active session against Firestore in the background.
+   * If a profile was modified on another device (or by an admin), it updates the local
+   * session and dispatches an update event so the UI refreshes live without requiring logout.
+   */
+  async revalidateSession(): Promise<AuthUser | null> {
+    const current = this.getCurrentSession();
+    if (!current) return null;
+    if (current.role === "admin") return current;
+
+    try {
+      let freshResident: ResidentProfile | null = null;
+      if (current.id) {
+        freshResident = await db.getResidentById(current.id);
+      }
+      if (!freshResident && current.email) {
+        freshResident = await db.getResidentByEmailOrPhone(current.email);
+      }
+
+      if (freshResident) {
+        const updatedUser: AuthUser = {
+          ...current,
+          name: freshResident.name,
+          email: freshResident.email,
+          phone: freshResident.phone,
+          unit: freshResident.unit,
+          tower: freshResident.tower,
+          branch: freshResident.branch || current.branch,
+          buildingNumber: freshResident.buildingNumber,
+          floorNumber: freshResident.floorNumber,
+          unitNumber: freshResident.unitNumber,
+          plan: freshResident.plan,
+          pendingPlan: freshResident.pendingPlan,
+          planStatus: freshResident.planStatus,
+          paymentMethod: freshResident.paymentMethod,
+          paymentReference: freshResident.paymentReference,
+          residentCode: freshResident.residentCode,
+          authorizedClaimants: freshResident.authorizedClaimants || [],
+          deliveryCreditsLeft: freshResident.deliveryCreditsLeft,
+          subscriptionExpiry: freshResident.subscriptionExpiry,
+        };
+
+        const currentSerialized = JSON.stringify(current);
+        const updatedSerialized = JSON.stringify(updatedUser);
+        if (currentSerialized !== updatedSerialized) {
+          this.setSession(updatedUser);
+          return updatedUser;
+        }
+        return current;
+      }
+    } catch (err) {
+      console.warn("Session background revalidation notice:", err);
+    }
+    return current;
+  }
+
   async login(credentials: LoginCredentials): Promise<{ user: AuthUser; token: string }> {
     const { emailOrPhone, password, role } = credentials;
 
@@ -130,7 +186,34 @@ class AuthService {
       targetEmail = cleanInput.toLowerCase();
     } else {
       // User entered Philippine mobile number (+63 9XX XXX XXXX)
-      const foundResident = await db.findUserByCredentials(cleanInput);
+      let foundResident = await db.findUserByCredentials(cleanInput);
+      if (!foundResident) {
+        const foundFromResidents = await db.getResidentByEmailOrPhone(cleanInput);
+        if (foundFromResidents) {
+          foundResident = {
+            id: foundFromResidents.id,
+            email: foundFromResidents.email,
+            name: foundFromResidents.name,
+            phone: foundFromResidents.phone,
+            role: "resident",
+            unit: foundFromResidents.unit,
+            tower: foundFromResidents.tower,
+            branch: foundFromResidents.branch || "Malinta Branch",
+            buildingNumber: foundFromResidents.buildingNumber,
+            floorNumber: foundFromResidents.floorNumber,
+            unitNumber: foundFromResidents.unitNumber,
+            plan: foundFromResidents.plan,
+            planStatus: foundFromResidents.planStatus || "ACTIVE",
+            paymentMethod: foundFromResidents.paymentMethod || "CASH_COUNTER",
+            paymentReference: foundFromResidents.paymentReference,
+            residentCode: foundFromResidents.residentCode,
+            authorizedClaimants: foundFromResidents.authorizedClaimants || [],
+            deliveryCreditsLeft: foundFromResidents.deliveryCreditsLeft,
+            subscriptionExpiry: foundFromResidents.subscriptionExpiry,
+            createdAt: foundFromResidents.createdAt,
+          };
+        }
+      }
       if (!foundResident) {
         throw new Error("No account found matching this mobile number. Please check your credentials or register.");
       }
