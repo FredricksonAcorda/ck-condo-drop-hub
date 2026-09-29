@@ -251,37 +251,51 @@ export default function ResidentTypeaheadSelect({
                           : "hover:bg-gray-50 text-gray-800"
                       }`}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold truncate">
-                            {renderHighlightedText(res.name, searchQuery)}
-                          </span>
-                          {res.plan === "PREMIUM" ? (
-                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0">
-                              VIP
+                      <div className="flex-1 min-w-0 space-y-1">
+                        {/* Line 1: Name + Membership Badge (left), CK-Code Pill (right) */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs font-bold text-gray-900 truncate">
+                              {renderHighlightedText(res.name, searchQuery)}
                             </span>
-                          ) : res.plan === "REGULAR" ? (
-                            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0">
-                              REGULAR
-                            </span>
-                          ) : null}
-                        </div>
+                            {res.plan === "PREMIUM" ? (
+                              <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0">
+                                VIP
+                              </span>
+                            ) : res.plan === "REGULAR" ? (
+                              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0">
+                                REGULAR
+                              </span>
+                            ) : null}
+                          </div>
 
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500">
-                          <span className="font-medium text-gray-700">
-                            {renderHighlightedText(res.unit, searchQuery)} ({res.branch || res.tower})
-                          </span>
-                          <span>•</span>
-                          <span className="font-mono text-[10px] text-gray-400">
+                          {/* CK Code Badge - Unwrapped, monospace pill */}
+                          <span className="font-mono text-[10px] font-bold text-gray-700 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded shrink-0 whitespace-nowrap tracking-wide">
                             {renderHighlightedText(res.residentCode, searchQuery)}
                           </span>
-                          {res.phone && (
-                            <>
-                              <span>•</span>
-                              <span className="text-[10px] text-gray-400">{res.phone}</span>
-                            </>
-                          )}
                         </div>
+
+                        {/* Line 2: Condo Unit & Branch */}
+                        <div className="text-[11px] text-gray-600 font-medium leading-tight">
+                          <span className="text-gray-800 font-semibold">
+                            {renderHighlightedText(res.unit, searchQuery)}
+                          </span>
+                          <span className="text-gray-500 ml-1.5 font-normal">
+                            ({res.branch || res.tower})
+                          </span>
+                        </div>
+
+                        {/* Line 3: Mobile Phone Number - Dedicated row with whitespace-nowrap */}
+                        {res.phone && (
+                          <div className="text-[11px] text-gray-500 flex items-center gap-1.5 pt-0.5">
+                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                              Mobile:
+                            </span>
+                            <span className="font-mono text-gray-700 font-semibold whitespace-nowrap">
+                              {renderHighlightedText(res.phone, searchQuery)}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Selected Checkmark */}

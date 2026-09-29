@@ -60,6 +60,7 @@
 48. [Staff Admin UI Cleanup, Live Mobile Phone Synchronization, and Fully Editable Hub Announcements](#48-staff-admin-ui-cleanup-live-mobile-phone-synchronization-and-fully-editable-hub-announcements-modification--fix)
 49. [Residents Directory Toolbar Layout Rectification & Single-Line Filter Row Restoration](#49-residents-directory-toolbar-layout-rectification--single-line-filter-row-restoration-fix--ux-polish)
 50. [Condo Directory Typeahead Container Overflow Unclipping & Bottom Clearance Spacer](#50-condo-directory-typeahead-container-overflow-unclipping--bottom-clearance-spacer-bug--fix)
+51. [Resident Typeahead Metadata Layout Decomposition & Code/Phone Wrap Prevention](#51-resident-typeahead-metadata-layout-decomposition--codephone-wrap-prevention-fix--ux-polish)
 
 ---
 
@@ -1199,6 +1200,26 @@
   The typeahead directory dropdown now floats freely down over lower sections without being clipped by parent cards. All residents—including their name, unit, branch, CK-code, and mobile number—are 100% visible and completely legible all the way to the bottom of the list.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   Never place `overflow-hidden` on parent card wrappers that contain absolute or popup menus (typeaheads, datepickers, custom selects), as the card boundaries will aggressively slice overflowing dropdowns. Instead, assign `rounded-t-*` and `rounded-b-*` directly to header and footer children, and insert a physical spacer element (`<div className="h-X" />`) inside scroll containers to guarantee bottom clearance across all browser engines.
+
+---
+
+## 51. Resident Typeahead Metadata Layout Decomposition & Code/Phone Wrap Prevention (Fix / UX Polish)
+
+- **Current State**:
+  In the Condo Resident & Unit typeahead selector ([`src/components/admin/ResidentTypeaheadSelect.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/components/admin/ResidentTypeaheadSelect.tsx)), resident profile items attempted to squeeze the resident's condo unit, branch, CK-code, and mobile phone number into a single flex row separated by bullet points (`•`).
+- **The Problem**:
+  Due to the compact width of the typeahead dropdown container, combining condo address with alphanumeric CK-codes and 12-digit phone numbers caused severe horizontal collisions. The browser forced mid-word breaks (`CK-` on one line, `894799` on another) and split telephone numbers (`+63 926 460` on one line, `1244` below it), creating an unsightly and confusing display for staff intake operators.
+- **What to Do (Solution)**:
+  1. **Clean 3-Tier Information Hierarchy Architecture**:
+     - **Tier 1 (Header)**: Resident Name on the left, plan status badge (`VIP` / `REGULAR`), and the resident's **CK-Code** as a dedicated, right-aligned monospace badge with `whitespace-nowrap font-mono text-[10px] font-bold text-gray-700 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded`.
+     - **Tier 2 (Location)**: Full-width Condo Unit (`res.unit`) and Branch (`res.branch`) with enhanced readability and zero horizontal crowding.
+     - **Tier 3 (Contact)**: Dedicated bottom metadata line for **Mobile Phone** (`MOBILE: +63 9XX XXX XXXX`) styled with `whitespace-nowrap font-mono text-gray-700 font-semibold`, guaranteed to never wrap or break across lines.
+  2. **Retained Dynamic Query Highlighting**:
+     - Maintained full keyword highlighting across all tiers (name, unit, branch, code, phone), lighting up matched keystrokes in bright yellow as staff type.
+- **Result**:
+  100% unwrapped CK-codes and phone numbers, pristine monospace badge styling, clear visual separation between identity, residence, and contact details, and an uncluttered, modern UI for rapid resident intake.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  When displaying multi-attribute entity search results in narrow dropdowns (<400px), avoid inline bullet-separated rows that mix variable-length text (addresses) with fixed-format identifiers (codes, phones). Deconstruct attributes into a primary title/badge row, a subtitle location row, and a dedicated contact/identifier tier with strict `whitespace-nowrap` enforcement.
 
 ---
 
