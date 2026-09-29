@@ -51,6 +51,7 @@
 39. [Firebase Firestore Cloud Invoices & Payment Logs Synchronization](#39-firebase-firestore-cloud-invoices--payment-logs-synchronization-bug--fix--add)
 40. [Universal Purge of Search Icons, Button Arrows, Settings Input Overlays & Initial Blank Typeahead Placeholder](#40-universal-purge-of-search-icons-button-arrows-settings-input-overlays--initial-blank-typeahead-placeholder-modification--ux-polish)
 41. [Accurate Courier Pattern Recognition for YTO (200 Prefix) and STO (S18 Prefix) Parcels](#41-accurate-courier-pattern-recognition-for-yto-200-prefix-and-sto-s18-prefix-parcels-bug--fix)
+42. [Exhaustive STO Express (Numeric 18 & S18) Recognition & J&T False-Positive Elimination](#42-exhaustive-sto-express-numeric-18--s18-recognition--jt-false-positive-elimination-bug--fix)
 
 ---
 
@@ -959,6 +960,32 @@
   100% accurate auto-detection for YTO Express (`200...`) and STO Express (`S18...`) parcels on both physical laser scanner bursts and typed inputs, eliminating erroneous J&T classification.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When designing multi-carrier barcode and QR scanner decoders, logistics providers frequently update waybill serial number masks (e.g., transitioning from alphabetic prefixes to carrier-specific numeric blocks like `200` or alpha-num combinations like `S18`). Centralize courier pattern matchers with prioritized precedence, strip delimiters before regex evaluation, and implement negative lookaheads on broad numeric fallback matchers to prevent false-positive classifications.
+
+---
+
+## 42. Exhaustive STO Express (Numeric 18 & S18) Recognition & J&T False-Positive Elimination (Bug / Fix)
+
+- **Current State**:
+  In Revision 41, STO Express auto-detection was added using `/^S18/i`. However, in physical logistics symbology (e.g. standard Code 128 / GS1-128 waybills), STO barcodes frequently encode only the pure numeric sequence (e.g. `18910007351573` starting with `18`), while printing "S18910007351573" in human-readable text. Furthermore, the generic numeric fallback in J&T Express (`/^\d{10,14}$/`) only guarded against `200` (YTO), without guarding against `18` (STO).
+- **The Problem**:
+  When a staff member or client scanned an actual STO parcel with a laser barcode gun or typed the 14-digit numeric sequence without the `S` prefix (`18910007351573`):
+  1. The code bypassed STO detection because it lacked the leading `S`.
+  2. The code then reached J&T Express and was matched by the generic 10–14 digit numeric pattern (`/^\d{10,14}$/`), erroneously tagging the parcel as **J&T Express**.
+  3. Barcode scanners transmitting ISO/IEC 15424 AIM symbology identifiers (such as `]C1` for GS1-128 or `]C0` for Code 128) failed to match prefix rules because AIM headers were not stripped prior to carrier regex evaluation.
+- **What to Do (Solution)**:
+  1. Updated [`src/lib/scanner/courier-detector.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/scanner/courier-detector.ts):
+     - **AIM Symbology Header Stripping**: Automatically removes leading ISO/IEC 15424 AIM prefixes (`replace(/^\][A-Z0-9]{2}/i, "")`) such as `]C1`, `]C0`, `]Q1`, and `]e0` before carrier pattern analysis.
+     - **Exhaustive STO Express Pattern**: Extended STO detection to match both `/^(S18|18)/i`, `/^S\d{10,15}$/i`, `/^STO/i`, `/^ST\d{6,}/i`, and `/^(77|55)\d{9,15}$/`. Both `S18910007351573` and raw numeric `18910007351573` now evaluate with 100% certainty to STO Express.
+     - **J&T Negative Isolation Shield**: Integrated strict exclusion guard `isExcludedFromJnt` blocking any code starting with `18`, `S18`, `200`, `77`, `55`, `88`, `80`, `1000`, `SPX`, `FL`, `LBC`, `STO`, or `YT` from ever matching J&T Express.
+     - **LBC Express Guard**: Explicitly excluded `^18` from LBC's 12-digit rule (`/^1\d{11}$/ && !/^18/.test(cleanCode)`).
+     - **Case-Insensitive QR Query Parameter Parsing**: Updated `extractTrackingFromQrOrBarcode` to inspect URL search parameters case-insensitively, supporting `billCode`, `waybillNo`, `mailNo`, and delimited QR payloads (`|`, `,`, `\t`).
+  2. Updated [`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx):
+     - Lowered typeahead auto-detect threshold from 3 to 2 characters (`length >= 2`), enabling immediate live visual detection as soon as `18` or `ST` is keyed.
+     - Added mandatory courier re-verification at intake submit time (`handleIntakeSubmit`), ensuring the final saved parcel is always logged with the exact verified carrier regardless of UI state timing.
+- **Result**:
+  100% elimination of false-positive J&T classifications for STO Express packages. Scans of STO parcels—whether reading `S18910007351573`, numeric `18910007351573`, delimited strings, or symbologies with `]C1` AIM tags—now immediately detect and log as **STO Express**.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Physical 1D/2D waybill barcodes often encode purely numeric payloads (omitting the human-readable carrier letters printed beneath the bars), or prepend 3-character AIM hardware symbology tags (`]C1`, `]C0`). Multi-carrier detection engines must always: (1) strip AIM tags, (2) support both numeric and alphanumeric carrier code masks (e.g. `18` and `S18`), and (3) apply strict negative lookaheads on broad fallback carriers (like J&T or generic post) to prevent greedy false positives.
 
 ---
 

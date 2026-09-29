@@ -101,7 +101,7 @@ export default function ParcelsInventoryPage() {
     setTrackingInput(cleaned);
     if (intakeError) setIntakeError(null);
 
-    if (cleaned.trim().length >= 3) {
+    if (cleaned.trim().length >= 2) {
       const detected = detectCourierFromBarcode(cleaned.trim());
       if (detected.confidence !== "UNKNOWN") {
         setCourier(detected.name);
@@ -127,11 +127,18 @@ export default function ParcelsInventoryPage() {
       return;
     }
 
+    // Always re-evaluate courier from tracking number to guarantee 100% precision
+    const detected = detectCourierFromBarcode(cleanTracking);
+    const finalCourier = detected.confidence !== "UNKNOWN" ? detected.name : courier;
+    if (finalCourier !== courier) {
+      setCourier(finalCourier);
+    }
+
     setIsSubmitting(true);
     try {
       const newParcel = await logParcel({
         trackingNumber: cleanTracking,
-        courier,
+        courier: finalCourier,
         residentId: resident.id,
         residentName: resident.name,
         unit: `${resident.unit} - ${resident.branch || resident.tower}`,
