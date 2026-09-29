@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResidentProfile, InvoiceRecord } from "@/types";
-import { db } from "@/lib/db/local-store";
+import { db, subscribeToResidents } from "@/lib/db";
 import { useParcels } from "@/context";
 import { getAllInvoices, subscribeToInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
 import { BRANCHES } from "@/constants";
@@ -58,6 +58,11 @@ export default function AdminCustomersPage() {
       loadInvoices();
     };
 
+    const unsubscribeResidents = subscribeToResidents((liveResidents) => {
+      setResidents(liveResidents);
+      setLoadingResidents(false);
+    });
+
     const unsubscribeInvoices = subscribeToInvoices((updatedInvoices) => {
       setInvoices(updatedInvoices);
       setLoadingInvoices(false);
@@ -66,6 +71,7 @@ export default function AdminCustomersPage() {
     window.addEventListener("ck_db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
     return () => {
+      unsubscribeResidents();
       unsubscribeInvoices();
       window.removeEventListener("ck_db_updated", handleDbUpdate);
       window.removeEventListener("storage", handleDbUpdate);

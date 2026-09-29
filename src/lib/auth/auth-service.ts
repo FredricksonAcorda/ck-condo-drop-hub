@@ -1,5 +1,5 @@
 import { AuthUser, LoginCredentials, RegisterData, ResidentProfile } from "@/types";
-import { db } from "../db/local-store";
+import { db } from "../db";
 import { SEED_USERS } from "../db/seed-data";
 import { auth } from "../firebase/config";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";

@@ -1,6 +1,10 @@
 import { IDatabaseService } from "./db-interface";
 import { LocalDatabaseService } from "./local-store";
-import { FirestoreDatabaseService } from "./firestore-store";
+import {
+  FirestoreDatabaseService,
+  subscribeToResidents,
+  subscribeToParcels,
+} from "./firestore-store";
 import { isFirebaseConfigured } from "../firebase/config";
 
 let dbInstance: IDatabaseService;
@@ -12,4 +16,9 @@ if (isFirebaseConfigured()) {
 }
 
 export const db: IDatabaseService = dbInstance;
-export { LocalDatabaseService, FirestoreDatabaseService };
+export {
+  LocalDatabaseService,
+  FirestoreDatabaseService,
+  subscribeToResidents,
+  subscribeToParcels,
+};

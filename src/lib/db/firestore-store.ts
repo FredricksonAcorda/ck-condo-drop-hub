@@ -10,7 +10,7 @@ import {
   DeskInquiry,
   InquiryStatus,
 } from "@/types";
-import { firestore } from "../firebase/config";
+import { firestore, isFirebaseConfigured } from "../firebase/config";
 import {
   collection,
   doc,
@@ -23,6 +23,7 @@ import {
   where,
   orderBy,
   limit,
+  onSnapshot,
 } from "firebase/firestore";
 import {
   SEED_PARCELS,
@@ -57,8 +58,23 @@ export function sanitizeForFirestore<T>(data: T): T {
   return data;
 }
 
+function notifyLocalUpdate(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("ck_db_updated"));
+  }
+}
+
 export class FirestoreDatabaseService implements IDatabaseService {
   private seeded = false;
+
+  private isDemoUser(id?: string, name?: string): boolean {
+    return (
+      id === "usr-resident-1" ||
+      id === "usr-resident-2" ||
+      name === "Juan Dela Cruz" ||
+      name === "Maria Santos"
+    );
+  }
 
   private async ensureSeeded(): Promise<void> {
     if (!firestore || this.seeded) return;
@@ -66,9 +82,11 @@ export class FirestoreDatabaseService implements IDatabaseService {
       // Check if parcels collection exists
       const parcelsSnap = await getDocs(query(collection(firestore, "parcels"), limit(1)));
       if (parcelsSnap.empty) {
-        // Seed Parcels
+        // Seed Parcels (excluding demo)
         for (const p of SEED_PARCELS) {
-          await setDoc(doc(firestore, "parcels", p.id), p);
+          if (!this.isDemoUser(p.residentId, p.residentName)) {
+            await setDoc(doc(firestore, "parcels", p.id), p);
+          }
         }
       }
 
@@ -76,7 +94,9 @@ export class FirestoreDatabaseService implements IDatabaseService {
       const residentsSnap = await getDocs(query(collection(firestore, "residents"), limit(1)));
       if (residentsSnap.empty) {
         for (const r of SEED_RESIDENTS) {
-          await setDoc(doc(firestore, "residents", r.id), r);
+          if (!this.isDemoUser(r.id, r.name)) {
+            await setDoc(doc(firestore, "residents", r.id), r);
+          }
         }
       }
 
@@ -84,7 +104,9 @@ export class FirestoreDatabaseService implements IDatabaseService {
       const usersSnap = await getDocs(query(collection(firestore, "users"), limit(1)));
       if (usersSnap.empty) {
         for (const u of SEED_USERS) {
-          await setDoc(doc(firestore, "users", u.id), u);
+          if (!this.isDemoUser(u.id, u.name)) {
+            await setDoc(doc(firestore, "users", u.id), u);
+          }
         }
       }
 
@@ -127,15 +149,17 @@ export class FirestoreDatabaseService implements IDatabaseService {
   // --- Parcels ---
 
   async getAllParcels(): Promise<Parcel[]> {
-    if (!firestore) return SEED_PARCELS;
+    if (!firestore) return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
     await this.ensureSeeded();
     try {
       const snap = await getDocs(collection(firestore, "parcels"));
-      if (snap.empty) return SEED_PARCELS;
-      return snap.docs.map((d) => d.data() as Parcel);
+      if (snap.empty) return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
+      return snap.docs
+        .map((d) => d.data() as Parcel)
+        .filter((p) => !this.isDemoUser(p.residentId, p.residentName));
     } catch (err) {
       console.error("Error fetching parcels from Firestore:", err);
-      return SEED_PARCELS;
+      return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
     }
   }
 
@@ -243,6 +267,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       });
     }
 
+    notifyLocalUpdate();
     return newParcel;
   }
 
@@ -323,6 +348,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       });
     }
 
+    notifyLocalUpdate();
     return updated;
   }
 
@@ -333,12 +359,14 @@ export class FirestoreDatabaseService implements IDatabaseService {
     const all = await this.getAllParcels();
     const target = all.find((p) => p.id === parcelId);
     if (!target) throw new Error("Parcel not found");
+    notifyLocalUpdate();
     return { ...target, ...updates };
   }
 
   async deleteParcel(parcelId: string): Promise<boolean> {
     if (firestore) {
       await deleteDoc(doc(firestore, "parcels", parcelId));
+      notifyLocalUpdate();
       return true;
     }
     return false;
@@ -347,15 +375,17 @@ export class FirestoreDatabaseService implements IDatabaseService {
   // --- Residents ---
 
   async getAllResidents(): Promise<ResidentProfile[]> {
-    if (!firestore) return SEED_RESIDENTS;
+    if (!firestore) return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
     await this.ensureSeeded();
     try {
       const snap = await getDocs(collection(firestore, "residents"));
-      if (snap.empty) return SEED_RESIDENTS;
-      return snap.docs.map((d) => d.data() as ResidentProfile);
+      if (snap.empty) return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
+      return snap.docs
+        .map((d) => d.data() as ResidentProfile)
+        .filter((r) => !this.isDemoUser(r.id, r.name));
     } catch (err) {
       console.error("Error fetching residents from Firestore:", err);
-      return SEED_RESIDENTS;
+      return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
     }
   }
 
@@ -433,6 +463,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       badgeColor: "bg-purple-600",
     });
 
+    notifyLocalUpdate();
     return newResident;
   }
 
@@ -448,6 +479,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     }
     const target = await this.getResidentById(id);
     if (!target) throw new Error("Resident not found");
+    notifyLocalUpdate();
     return { ...target, ...updates };
   }
 
@@ -647,6 +679,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       badgeColor: "bg-purple-600",
     });
 
+    notifyLocalUpdate();
     return newInquiry;
   }
 
@@ -657,6 +690,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
     const all = await this.getInquiries();
     const target = all.find((i) => i.id === id);
     if (!target) throw new Error("Inquiry not found");
+    notifyLocalUpdate();
     return { ...target, ...updates };
   }
 
@@ -682,12 +716,14 @@ export class FirestoreDatabaseService implements IDatabaseService {
       badgeColor: status === "RESOLVED" ? "bg-green-600" : "bg-blue-600",
     });
 
+    notifyLocalUpdate();
     return { ...target, ...updates };
   }
 
   async deleteInquiry(id: string): Promise<boolean> {
     if (firestore) {
       await deleteDoc(doc(firestore, "inquiries", id));
+      notifyLocalUpdate();
       return true;
     }
     return false;
@@ -734,6 +770,79 @@ export class FirestoreDatabaseService implements IDatabaseService {
       badgeColor: "bg-gray-600",
     });
 
+    notifyLocalUpdate();
     return updated;
   }
+}
+
+/**
+ * Real-time listener for residents collection from Firestore.
+ * Allows Staff Admin to receive updates live across devices without refreshing.
+ */
+export function subscribeToResidents(callback: (residents: ResidentProfile[]) => void): () => void {
+  if (isFirebaseConfigured() && firestore) {
+    try {
+      const unsubscribe = onSnapshot(
+        collection(firestore, "residents"),
+        (snap) => {
+          const list: ResidentProfile[] = [];
+          snap.forEach((d) => {
+            const data = d.data() as ResidentProfile;
+            if (
+              data.id !== "usr-resident-1" &&
+              data.id !== "usr-resident-2" &&
+              data.name !== "Juan Dela Cruz" &&
+              data.name !== "Maria Santos"
+            ) {
+              list.push({ ...data, id: d.id });
+            }
+          });
+          callback(list);
+        },
+        (err) => {
+          console.warn("Firestore residents onSnapshot notice:", err);
+        }
+      );
+      return unsubscribe;
+    } catch (err) {
+      console.warn("Firestore subscribeToResidents failed:", err);
+    }
+  }
+  return () => {};
+}
+
+/**
+ * Real-time listener for parcels collection from Firestore.
+ * Allows residents and staff to receive package arrivals live across devices.
+ */
+export function subscribeToParcels(callback: (parcels: Parcel[]) => void): () => void {
+  if (isFirebaseConfigured() && firestore) {
+    try {
+      const unsubscribe = onSnapshot(
+        collection(firestore, "parcels"),
+        (snap) => {
+          const list: Parcel[] = [];
+          snap.forEach((d) => {
+            const data = d.data() as Parcel;
+            if (
+              data.residentId !== "usr-resident-1" &&
+              data.residentId !== "usr-resident-2" &&
+              data.residentName !== "Juan Dela Cruz" &&
+              data.residentName !== "Maria Santos"
+            ) {
+              list.push({ ...data, id: d.id });
+            }
+          });
+          callback(list);
+        },
+        (err) => {
+          console.warn("Firestore parcels onSnapshot notice:", err);
+        }
+      );
+      return unsubscribe;
+    } catch (err) {
+      console.warn("Firestore subscribeToParcels failed:", err);
+    }
+  }
+  return () => {};
 }

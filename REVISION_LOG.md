@@ -989,6 +989,29 @@
 
 ---
 
+## 43. Universal Cloud Database Routing & Real-Time Cross-Device Firestore Subscriptions (Purge Direct `local-store` Imports) (Bug / Fix)
+
+- **Current State**:
+  The application implemented both `LocalDatabaseService` (backed by browser `localStorage` and `CustomEvent("ck_db_updated")`) and `FirestoreDatabaseService` (cloud Firestore backed by Google Firebase). However, multiple key administrative and auth entry points (`src/lib/auth/auth-service.ts`, `src/app/(admin)/admin/customers/page.tsx`, `src/app/(admin)/admin/parcels/page.tsx`, `src/app/(admin)/admin/page.tsx`, `src/context/ParcelContext.tsx`, `src/context/AuthContext.tsx`, and `src/lib/db/invoices.ts`) imported `db` directly from `@/lib/db/local-store` instead of going through the unified database factory at `@/lib/db`.
+- **The Problem**:
+  When users or clients created resident accounts or managed parcels on a mobile phone, all write operations were written directly and solely to that individual mobile phone's browser `localStorage`. When the user or staff checked the system on their laptop, the laptop's browser accessed only its own isolated local storage; neither the laptop nor the phone was synchronized with the central cloud database or each other. Accounts registered on mobile did not appear on the laptop, and modifications made on the laptop were invisible on other devices.
+- **What to Do (Solution)**:
+  1. **Purged Direct `local-store` Imports Across the Repository**:
+     - Updated [`src/lib/auth/auth-service.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/auth/auth-service.ts), [`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx), [`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx), [`src/app/(admin)/admin/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/page.tsx), [`src/context/ParcelContext.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/context/ParcelContext.tsx), [`src/context/AuthContext.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/context/AuthContext.tsx), and [`src/lib/db/invoices.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/invoices.ts) to import `db` from `@/lib/db` (or `./index`).
+  2. **Implemented Real-Time Cross-Device Firestore Subscriptions**:
+     - Added `subscribeToResidents` and `subscribeToParcels` in [`src/lib/db/firestore-store.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/firestore-store.ts) and exported them via [`src/lib/db/index.ts`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/lib/db/index.ts).
+     - Hooked real-time Firestore listeners into `AdminCustomersPage`, `ParcelsInventoryPage`, `AdminDashboardPage`, and `ParcelProvider`, ensuring any newly created accounts, parcel scans, or status changes instantly propagate live across all open sessions and devices via Firestore's WebSocket connection without requiring manual page reloads.
+  3. **Added Dual Local & Cross-Device Event Dispatching**:
+     - Integrated `notifyLocalUpdate()` in `FirestoreDatabaseService` so local tabs receive `ck_db_updated` immediately on mutation while cloud listeners propagate data seamlessly across external mobile and desktop devices.
+  4. **Demo Account Filtering**:
+     - Added `isDemoUser` filter to exclude hardcoded demo users (`usr-resident-1` / Juan Dela Cruz, `usr-resident-2` / Maria Santos) from seeding or polluting live client directories.
+- **Result**:
+  Every registration, parcel intake, customer update, and payment action now persists directly to the central cloud Google Firebase Firestore database and synchronizes instantly across phones, tablets, laptops, and administrative portals.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  In applications supporting dual runtime storage (such as offline local-first or fallback `localStorage` alongside cloud databases like Firestore or Supabase), enforce strict linting or barrel exports ensuring that UI components and services NEVER import directly from the local store file. Always funnel database calls through an abstraction factory (`@/lib/db`) and establish reactive real-time push listeners (`onSnapshot`) to guarantee instant cross-device data parity.
+
+---
+
 ## Autonomous Agent Instructions for Future Updates
 
 Whenever processing any user prompt containing the keywords **Bug**, **Fix**, **Modification**, or **Add**:

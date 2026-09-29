@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useParcels, useAuth } from "@/context";
 import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
-import { db } from "@/lib/db/local-store";
+import { db, subscribeToResidents } from "@/lib/db";
 import { detectCourierFromBarcode, extractTrackingFromQrOrBarcode } from "@/lib/scanner/courier-detector";
 import ResidentTypeaheadSelect from "@/components/admin/ResidentTypeaheadSelect";
 
@@ -40,7 +40,7 @@ export default function ParcelsInventoryPage() {
 
   const trackingInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load residents from DB
+  // Load residents from DB with real-time updates
   useEffect(() => {
     async function loadResidents() {
       try {
@@ -51,7 +51,20 @@ export default function ParcelsInventoryPage() {
       }
     }
     loadResidents();
-  }, [selectedResidentId]);
+
+    const unsubscribe = subscribeToResidents((liveResidents) => {
+      setResidents(liveResidents);
+    });
+
+    const handleUpdate = () => loadResidents();
+    window.addEventListener("ck_db_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("ck_db_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
 
   // Global Hardware Barcode & QR Scanner Gun Listener
   useEffect(() => {

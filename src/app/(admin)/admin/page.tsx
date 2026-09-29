@@ -4,15 +4,15 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useParcels } from "@/context";
 import { ResidentProfile, InvoiceRecord } from "@/types";
-import { db } from "@/lib/db/local-store";
-import { getAllInvoices } from "@/lib/db/invoices";
+import { db, subscribeToResidents } from "@/lib/db";
+import { getAllInvoices, subscribeToInvoices } from "@/lib/db/invoices";
 
 export default function AdminDashboardPage() {
   const { parcels, inquiries } = useParcels();
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
 
-  // Load residents and invoices
+  // Load residents and invoices with live cloud subscriptions
   useEffect(() => {
     async function loadData() {
       try {
@@ -26,9 +26,23 @@ export default function AdminDashboardPage() {
     }
     loadData();
 
+    const unsubscribeResidents = subscribeToResidents((liveResidents) => {
+      setResidents(liveResidents);
+    });
+
+    const unsubscribeInvoices = subscribeToInvoices((liveInvoices) => {
+      setInvoices(liveInvoices);
+    });
+
     const handleUpdate = () => loadData();
     window.addEventListener("ck_db_updated", handleUpdate);
-    return () => window.removeEventListener("ck_db_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      unsubscribeResidents();
+      unsubscribeInvoices();
+      window.removeEventListener("ck_db_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
   }, []);
 
   // Compute live KPIs

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
-import { db } from "@/lib/db/local-store";
+import { db, subscribeToParcels } from "@/lib/db";
 import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 import { scannerAudio } from "@/lib/scanner/audio-feedback";
 
@@ -72,10 +72,15 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
       refresh();
     };
 
+    const unsubscribeParcels = subscribeToParcels((liveParcels) => {
+      setParcels(liveParcels);
+    });
+
     window.addEventListener("ck_db_updated", handleDbUpdate);
     window.addEventListener("storage", refresh);
 
     return () => {
+      unsubscribeParcels();
       window.removeEventListener("ck_db_updated", handleDbUpdate);
       window.removeEventListener("storage", refresh);
     };

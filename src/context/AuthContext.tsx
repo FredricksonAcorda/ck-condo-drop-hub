@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { AuthUser, LoginCredentials, RegisterData, ResidentProfile, UserRole } from "@/types";
 import { authService } from "@/lib/auth/auth-service";
-import { db } from "@/lib/db/local-store";
+import { db } from "@/lib/db";
 
 interface AuthContextType {
   user: AuthUser | null;

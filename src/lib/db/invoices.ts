@@ -1,5 +1,5 @@
 import { InvoiceRecord } from "@/types";
-import { db } from "./local-store";
+import { db } from "./index";
 import { firestore, isFirebaseConfigured } from "../firebase/config";
 import {
   collection,
