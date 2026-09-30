@@ -6,6 +6,20 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } f
 
 const SESSION_KEY = "ck_hub_session_v2";
 
+export const AUTHORIZED_ADMIN_EMAILS = [
+  "ckcondodrophub@gmail.com",
+  "admin@ckcondohub.com",
+];
+
+export function isStaffAdminEmail(email: string): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return (
+    AUTHORIZED_ADMIN_EMAILS.includes(normalized) ||
+    normalized.startsWith("admin@")
+  );
+}
+
 class AuthService {
   private isClient(): boolean {
     return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -127,8 +141,13 @@ class AuthService {
     // ==========================================================
     // 1. STAFF ADMIN AUTHENTICATION (STRICT FIREBASE AUTH VALIDATION)
     // ==========================================================
-    if (role === "admin" || cleanInput.toLowerCase() === "admin@ckcondohub.com") {
+    if (role === "admin") {
       const adminEmail = cleanInput.includes("@") ? cleanInput.toLowerCase() : "admin@ckcondohub.com";
+
+      // STRICT ROLE GATE: Reject any non-admin email from logging in as Staff Admin
+      if (!isStaffAdminEmail(adminEmail)) {
+        throw new Error("Access denied: This account does not have Staff Admin privileges. Please sign in via the Resident Portal.");
+      }
 
       if (auth) {
         try {
@@ -221,6 +240,11 @@ class AuthService {
       residentProfile = foundResident;
     }
 
+    // STRICT ROLE GATE: Reject any Staff Admin email from logging in as a resident
+    if (isStaffAdminEmail(targetEmail)) {
+      throw new Error("Access denied: This is a Staff Admin account. Please switch to the Staff Admin portal to sign in.");
+    }
+
     // Authenticate with Firebase Authentication
     if (auth && targetEmail) {
       try {
@@ -311,6 +335,10 @@ class AuthService {
   async register(data: RegisterData): Promise<{ user: AuthUser; token: string }> {
     if (!data.fullName || !data.email || !data.phone || !data.unit || !data.password) {
       throw new Error("Please fill in all required fields.");
+    }
+
+    if (isStaffAdminEmail(data.email)) {
+      throw new Error("This email is reserved for Staff Admin. Please choose another email to register as a resident.");
     }
 
     // Check if email already registered in database
