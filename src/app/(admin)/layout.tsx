@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, useParcels } from "@/context";
 
 const adminNav = [
@@ -21,9 +21,20 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { inquiries } = useParcels();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user || user.role !== "admin") {
+        router.replace("/login?portal=staff");
+      } else {
+        setIsAuthorized(true);
+      }
+    }
+  }, [user, loading, router]);
 
   const newInquiriesCount = inquiries.filter((i) => i.status === "NEW").length;
 
@@ -39,6 +50,21 @@ export default function AdminLayout({
     await logout();
     router.push("/login?portal=staff");
   };
+
+  // Immediate Route Guard: prevent unauthenticated users or residents from viewing the staff admin dashboard
+  if (loading || !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-brand-surface flex flex-col items-center justify-center p-6 select-none">
+        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-xs font-bold text-gray-700 tracking-widest uppercase animate-pulse">
+          Verifying Staff Admin Access...
+        </p>
+        <p className="text-[11px] text-gray-500 mt-1">
+          Redirecting unauthorized access to Staff Login.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-surface flex flex-col">
