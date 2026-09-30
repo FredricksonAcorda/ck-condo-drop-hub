@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context";
 
 const navItems = [
@@ -21,8 +21,26 @@ export default function CustomerLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(pathname === "/track");
+
+  useEffect(() => {
+    if (!loading) {
+      if (pathname === "/track") {
+        setIsAuthorized(true);
+        return;
+      }
+      if (!user) {
+        router.replace("/login");
+      } else if (user.role === "admin") {
+        // Staff Admins should remain in the Admin Portal, not resident pages
+        router.replace("/admin");
+      } else {
+        setIsAuthorized(true);
+      }
+    }
+  }, [user, loading, router, pathname]);
 
   const displayName = user?.name || "Resident";
   const displayCode = user?.residentCode || "";
@@ -38,6 +56,24 @@ export default function CustomerLayout({
     await logout();
     router.push("/login");
   };
+
+  // Route Guard: protect resident pages from unauthenticated access or admin crossover
+  if (loading || !isAuthorized) {
+    if (pathname === "/track") {
+      return <>{children}</>;
+    }
+    return (
+      <div className="min-h-screen bg-brand-surface flex flex-col items-center justify-center p-6 select-none">
+        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-xs font-bold text-gray-700 tracking-widest uppercase animate-pulse">
+          Verifying Resident Credentials...
+        </p>
+        <p className="text-[11px] text-gray-500 mt-1">
+          Redirecting unauthorized access to Resident Login.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-brand-surface flex flex-col overflow-hidden">
