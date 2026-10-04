@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useParcels, useAuth } from "@/context";
 import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
-import { db, subscribeToResidents } from "@/lib/db";
+import { db, subscribeToResidents, getParcelTimestamp } from "@/lib/db";
 import { detectCourierFromBarcode, extractTrackingFromQrOrBarcode } from "@/lib/scanner/courier-detector";
 import ResidentTypeaheadSelect from "@/components/admin/ResidentTypeaheadSelect";
 
@@ -226,8 +226,16 @@ export default function ParcelsInventoryPage() {
 
       const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
       return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+      // Priority 1: Newly logged item in current session always pinned to very top
+      if (newlyLoggedId) {
+        if (a.id === newlyLoggedId) return -1;
+        if (b.id === newlyLoggedId) return 1;
+      }
+      // Priority 2: Newest arrival / ingestion time first
+      return getParcelTimestamp(b) - getParcelTimestamp(a);
     });
-  }, [parcels, searchQuery, statusFilter, quickPasscodeSearch]);
+  }, [parcels, searchQuery, statusFilter, quickPasscodeSearch, newlyLoggedId]);
 
   // 5-item pagination for Inventory Table
   const [currentPage, setCurrentPage] = useState(1);

@@ -13,6 +13,7 @@ export interface Parcel {
   shelf: string;
   size?: "Small" | "Medium" | "Large" | "Bulky" | "Oversize";
   dateArrived: string;
+  createdAt?: string;
   deadline: string;
   holdingFee: string;
   status: ParcelStatus;

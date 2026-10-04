@@ -2,9 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
-import { db, subscribeToParcels, subscribeToHubSettings, subscribeToInquiries } from "@/lib/db";
+import { db, subscribeToParcels, subscribeToHubSettings, subscribeToInquiries, getParcelTimestamp } from "@/lib/db";
 import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 import { scannerAudio } from "@/lib/scanner/audio-feedback";
+
+const sortNewestFirst = (list: Parcel[]): Parcel[] =>
+  [...list].sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
 
 interface ParcelContextType {
   parcels: Parcel[];
@@ -51,7 +54,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
         db.getInquiries(),
         db.getHubSettings(),
       ]);
-      setParcels(allParcels);
+      setParcels(sortNewestFirst(allParcels));
       setActivityLogs(logs);
       setSmsLogs(sms);
       setInquiries(inqs);
@@ -73,7 +76,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     };
 
     const unsubscribeParcels = subscribeToParcels((liveParcels) => {
-      setParcels(liveParcels);
+      setParcels(sortNewestFirst(liveParcels));
     });
 
     const unsubscribeSettings = subscribeToHubSettings((liveSettings) => {

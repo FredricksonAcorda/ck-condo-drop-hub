@@ -74,6 +74,24 @@ function notifyLocalUpdate(): void {
   }
 }
 
+export function getParcelTimestamp(p: Parcel): number {
+  if (p.createdAt) {
+    const t = new Date(p.createdAt).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  const match = p.id?.match(/^pcl-(\d+)/);
+  if (match) {
+    const t = Number(match[1]);
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (p.dateArrived) {
+    const clean = p.dateArrived.replace("•", "").trim();
+    const t = new Date(clean).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
+}
+
 export class FirestoreDatabaseService implements IDatabaseService {
   private seeded = false;
 
@@ -164,9 +182,10 @@ export class FirestoreDatabaseService implements IDatabaseService {
     try {
       const snap = await getDocs(collection(firestore, "parcels"));
       if (snap.empty) return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
-      return snap.docs
+      const list = snap.docs
         .map((d) => d.data() as Parcel)
         .filter((p) => !this.isDemoUser(p.residentId, p.residentName));
+      return list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
     } catch (err) {
       console.error("Error fetching parcels from Firestore:", err);
       return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
@@ -236,6 +255,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       shelf: input.shelf,
       size: input.size || "Medium",
       dateArrived: dateArrivedStr,
+      createdAt: now.toISOString(),
       deadline: deadlineStr,
       holdingFee: "₱0.00 (Free)",
       status: "READY",
@@ -850,6 +870,7 @@ export function subscribeToParcels(callback: (parcels: Parcel[]) => void): () =>
               list.push({ ...data, id: d.id });
             }
           });
+          list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
           callback(list);
         },
         (err) => {

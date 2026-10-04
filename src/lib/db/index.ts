@@ -9,6 +9,7 @@ import {
   subscribeToUserDoc,
   autoMigrateLocalDataToFirestore,
   normalizePhone,
+  getParcelTimestamp,
 } from "./firestore-store";
 import { isFirebaseConfigured } from "../firebase/config";
 
@@ -31,4 +32,5 @@ export {
   subscribeToUserDoc,
   autoMigrateLocalDataToFirestore,
   normalizePhone,
+  getParcelTimestamp,
 };
