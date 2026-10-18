@@ -7,6 +7,7 @@ import { useParcels } from "@/context";
 import { getAllInvoices, subscribeToInvoices, confirmCashPayment, verifyAndActivateMembership, rejectMembershipPayment } from "@/lib/db/invoices";
 import { BRANCHES } from "@/constants";
 import { ResidentDetailsModal, InvoiceReceiptModal } from "@/components/admin/customers";
+import { TablePagination } from "@/components/ui";
 
 export default function AdminCustomersPage() {
   const { parcels } = useParcels();
@@ -142,18 +143,18 @@ export default function AdminCustomersPage() {
     return list;
   }, [residents, searchQuery, branchFilter, membershipFilter, sortBy]);
 
-  // 5-item pagination for registered residents
+  // Dynamic pagination for registered residents
   const [residentPage, setResidentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const [residentPageSize, setResidentPageSize] = useState(10);
 
   useEffect(() => {
     setResidentPage(1);
-  }, [searchQuery, branchFilter, membershipFilter, sortBy]);
+  }, [searchQuery, branchFilter, membershipFilter, sortBy, residentPageSize]);
 
-  const totalResidentPages = Math.ceil(filteredResidents.length / ITEMS_PER_PAGE) || 1;
+  const totalResidentPages = Math.ceil(filteredResidents.length / residentPageSize) || 1;
   const validResidentPage = Math.min(Math.max(1, residentPage), totalResidentPages);
-  const startResIndex = (validResidentPage - 1) * ITEMS_PER_PAGE;
-  const endResIndex = Math.min(startResIndex + ITEMS_PER_PAGE, filteredResidents.length);
+  const startResIndex = (validResidentPage - 1) * residentPageSize;
+  const endResIndex = Math.min(startResIndex + residentPageSize, filteredResidents.length);
   const paginatedResidents = filteredResidents.slice(startResIndex, endResIndex);
 
   // Active parcels per resident
@@ -183,17 +184,18 @@ export default function AdminCustomersPage() {
     });
   }, [invoices, invoiceSearch, invoiceStatusFilter]);
 
-  // 5-item pagination for Invoices
+  // Dynamic pagination for Invoices
   const [invoicePage, setInvoicePage] = useState(1);
+  const [invoicePageSize, setInvoicePageSize] = useState(10);
 
   useEffect(() => {
     setInvoicePage(1);
-  }, [invoiceSearch, invoiceStatusFilter]);
+  }, [invoiceSearch, invoiceStatusFilter, invoicePageSize]);
 
-  const totalInvoicePages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE) || 1;
+  const totalInvoicePages = Math.ceil(filteredInvoices.length / invoicePageSize) || 1;
   const validInvoicePage = Math.min(Math.max(1, invoicePage), totalInvoicePages);
-  const startInvIndex = (validInvoicePage - 1) * ITEMS_PER_PAGE;
-  const endInvIndex = Math.min(startInvIndex + ITEMS_PER_PAGE, filteredInvoices.length);
+  const startInvIndex = (validInvoicePage - 1) * invoicePageSize;
+  const endInvIndex = Math.min(startInvIndex + invoicePageSize, filteredInvoices.length);
   const paginatedInvoices = filteredInvoices.slice(startInvIndex, endInvIndex);
 
   const pendingSettlementCount = invoices.filter((i) => i.status === "PENDING").length;
@@ -520,72 +522,22 @@ export default function AdminCustomersPage() {
               </table>
             </div>
 
-            {/* 5-Item Pagination Controls Footer */}
-            {filteredResidents.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-brand-border bg-white">
-                <div className="text-xs text-brand-text-secondary font-medium text-center sm:text-left">
-                  Showing{" "}
-                  <span className="font-bold text-brand-black">
-                    {filteredResidents.length === 0 ? 0 : startResIndex + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-bold text-brand-black">{endResIndex}</span>{" "}
-                  of{" "}
-                  <span className="font-bold text-brand-black">{filteredResidents.length}</span>{" "}
-                  residents
-                  {totalResidentPages > 1 && (
-                    <span className="ml-1 text-brand-text-muted font-semibold">
-                      (Page {validResidentPage} of {totalResidentPages})
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setResidentPage((p) => Math.max(1, p - 1))}
-                    disabled={validResidentPage <= 1}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                      validResidentPage <= 1
-                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                    }`}
-                    title="Previous page"
-                  >
-                    Prev
-                  </button>
-
-                  {Array.from({ length: totalResidentPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      type="button"
-                      onClick={() => setResidentPage(pageNum)}
-                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        validResidentPage === pageNum
-                          ? "bg-brand-red text-white shadow-xs"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => setResidentPage((p) => Math.min(totalResidentPages, p + 1))}
-                    disabled={validResidentPage >= totalResidentPages}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                      validResidentPage >= totalResidentPages
-                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                    }`}
-                    title="Next page"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Smart TablePagination Controls Footer */}
+            <TablePagination
+              currentPage={validResidentPage}
+              totalPages={totalResidentPages}
+              totalItems={filteredResidents.length}
+              startIndex={startResIndex}
+              endIndex={endResIndex}
+              pageSize={residentPageSize}
+              pageSizeOptions={[10, 25, 50, 100]}
+              onPageChange={setResidentPage}
+              onPageSizeChange={(newSize) => {
+                setResidentPageSize(newSize);
+                setResidentPage(1);
+              }}
+              itemLabel="residents"
+            />
           </div>
         </div>
       )}
@@ -754,72 +706,22 @@ export default function AdminCustomersPage() {
               </table>
             </div>
 
-            {/* 5-Item Pagination Controls Footer */}
-            {filteredInvoices.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-brand-border bg-white">
-                <div className="text-xs text-brand-text-secondary font-medium text-center sm:text-left">
-                  Showing{" "}
-                  <span className="font-bold text-brand-black">
-                    {filteredInvoices.length === 0 ? 0 : startInvIndex + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-bold text-brand-black">{endInvIndex}</span>{" "}
-                  of{" "}
-                  <span className="font-bold text-brand-black">{filteredInvoices.length}</span>{" "}
-                  payment records
-                  {totalInvoicePages > 1 && (
-                    <span className="ml-1 text-brand-text-muted font-semibold">
-                      (Page {validInvoicePage} of {totalInvoicePages})
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setInvoicePage((p) => Math.max(1, p - 1))}
-                    disabled={validInvoicePage <= 1}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                      validInvoicePage <= 1
-                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                    }`}
-                    title="Previous page"
-                  >
-                    Prev
-                  </button>
-
-                  {Array.from({ length: totalInvoicePages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      type="button"
-                      onClick={() => setInvoicePage(pageNum)}
-                      className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        validInvoicePage === pageNum
-                          ? "bg-brand-red text-white shadow-xs"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => setInvoicePage((p) => Math.min(totalInvoicePages, p + 1))}
-                    disabled={validInvoicePage >= totalInvoicePages}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                      validInvoicePage >= totalInvoicePages
-                        ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                    }`}
-                    title="Next page"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Smart TablePagination Controls Footer */}
+            <TablePagination
+              currentPage={validInvoicePage}
+              totalPages={totalInvoicePages}
+              totalItems={filteredInvoices.length}
+              startIndex={startInvIndex}
+              endIndex={endInvIndex}
+              pageSize={invoicePageSize}
+              pageSizeOptions={[10, 25, 50, 100]}
+              onPageChange={setInvoicePage}
+              onPageSizeChange={(newSize) => {
+                setInvoicePageSize(newSize);
+                setInvoicePage(1);
+              }}
+              itemLabel="payment records"
+            />
           </div>
         </div>
       )}

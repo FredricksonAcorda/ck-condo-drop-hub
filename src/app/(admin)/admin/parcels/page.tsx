@@ -7,6 +7,7 @@ import { Parcel, ParcelStatus, ResidentProfile, ParcelSize } from "@/types";
 import { db, subscribeToResidents, getParcelTimestamp } from "@/lib/db";
 import { detectCourierFromBarcode, extractTrackingFromQrOrBarcode } from "@/lib/scanner/courier-detector";
 import ResidentTypeaheadSelect from "@/components/admin/ResidentTypeaheadSelect";
+import { TablePagination } from "@/components/ui";
 
 export default function ParcelsInventoryPage() {
   const { parcels, logParcel, releaseParcel, updateParcel, deleteParcel } = useParcels();
@@ -237,18 +238,18 @@ export default function ParcelsInventoryPage() {
     });
   }, [parcels, searchQuery, statusFilter, quickPasscodeSearch, newlyLoggedId]);
 
-  // 5-item pagination for Inventory Table
+  // Dynamic pagination for Inventory Table
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, quickPasscodeSearch]);
+  }, [searchQuery, statusFilter, quickPasscodeSearch, pageSize]);
 
-  const totalPages = Math.ceil(filteredParcels.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.ceil(filteredParcels.length / pageSize) || 1;
   const validPage = Math.min(Math.max(1, currentPage), totalPages);
-  const startIndex = (validPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredParcels.length);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredParcels.length);
 
   const paginatedParcels = useMemo(() => {
     return filteredParcels.slice(startIndex, endIndex);
@@ -821,72 +822,22 @@ export default function ParcelsInventoryPage() {
           </table>
         </div>
 
-        {/* 5-Item Pagination Controls Footer */}
-        {filteredParcels.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-brand-border">
-            <div className="text-xs text-brand-text-secondary font-medium text-center sm:text-left">
-              Showing{" "}
-              <span className="font-bold text-brand-black">
-                {filteredParcels.length === 0 ? 0 : startIndex + 1}
-              </span>{" "}
-              to{" "}
-              <span className="font-bold text-brand-black">{endIndex}</span>{" "}
-              of{" "}
-              <span className="font-bold text-brand-black">{filteredParcels.length}</span>{" "}
-              packages
-              {totalPages > 1 && (
-                <span className="ml-1 text-brand-text-muted font-semibold">
-                  (Page {validPage} of {totalPages})
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={validPage <= 1}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                  validPage <= 1
-                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                }`}
-                title="Previous page"
-              >
-                Prev
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  type="button"
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-7 h-7 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    validPage === pageNum
-                      ? "bg-brand-red text-white shadow-xs"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={validPage >= totalPages}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                  validPage >= totalPages
-                    ? "border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                    : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:text-black shadow-2xs"
-                }`}
-                title="Next page"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Smart TablePagination Controls Footer */}
+        <TablePagination
+          currentPage={validPage}
+          totalPages={totalPages}
+          totalItems={filteredParcels.length}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          itemLabel="packages"
+        />
       </div>
 
       {/* Release Confirmation Modal */}
