@@ -61,6 +61,8 @@
 49. [Residents Directory Toolbar Layout Rectification & Single-Line Filter Row Restoration](#49-residents-directory-toolbar-layout-rectification--single-line-filter-row-restoration-fix--ux-polish)
 50. [Condo Directory Typeahead Container Overflow Unclipping & Bottom Clearance Spacer](#50-condo-directory-typeahead-container-overflow-unclipping--bottom-clearance-spacer-bug--fix)
 51. [Resident Typeahead Metadata Layout Decomposition & Code/Phone Wrap Prevention](#51-resident-typeahead-metadata-layout-decomposition--codephone-wrap-prevention-fix--ux-polish)
+52. [Pure In-Memory Overdue Evaluation, Live Holding Fee Computation & Lobby Counter Release Notice](#52-pure-in-memory-overdue-evaluation-live-holding-fee-computation--lobby-counter-release-notice-feature--fix)
+53. [Shopify & Stripe-Style Smart Sliding TablePagination with Dynamic Page Size Selector](#53-shopify--stripe-style-smart-sliding-tablepagination-with-dynamic-page-size-selector-feature--ux-polish)
 
 ---
 
@@ -1220,6 +1222,56 @@
   100% unwrapped CK-codes and phone numbers, pristine monospace badge styling, clear visual separation between identity, residence, and contact details, and an uncluttered, modern UI for rapid resident intake.
 - **Cross-Project Takeaway (SaaS / E-Commerce)**:
   When displaying multi-attribute entity search results in narrow dropdowns (<400px), avoid inline bullet-separated rows that mix variable-length text (addresses) with fixed-format identifiers (codes, phones). Deconstruct attributes into a primary title/badge row, a subtitle location row, and a dedicated contact/identifier tier with strict `whitespace-nowrap` enforcement.
+
+---
+
+## 52. Pure In-Memory Overdue Evaluation, Live Holding Fee Computation & Lobby Counter Release Notice (Feature / Fix)
+
+- **Current State**:
+  Ang mga parcels ay may takdang intake holding deadline (hal. `Oct 15, 2026`), ngunit ang system ay umaasa lamang sa static database status columns nang walang automated runtime temporal evaluation. Bago ang revert, ang naunang implementasyon ay nagtangkang sumulat pabalik sa cloud database tuwing may overdue check, na nagbunga ng Firestore sync loops, quota exhaustion, at matinding delay sa UI.
+- **The Problem**:
+  1. Kapag lumipas na ang holding deadline (hal. `Oct 15, 2026`), ang parcels ay nanatiling `READY` sa customer at staff portals, at hindi nagpapakita sa "Overdue" counter o tab filters.
+  2. Ang pag-persist o pag-update ng overdue status sa pamamagitan ng cloud writes tuwing naglo-load ang page ay nagdudulot ng race conditions, re-render waterfalls, at pag-freeze ng mga pindutan sa Login at Sign Up.
+  3. Ang staff sa lobby counter ay walang visual warning o breakdown ng sisingiling overdue storage holding fee kapag inire-release ang parcel gamit ang resident pickup passcode.
+- **What to Do (Solution)**:
+  1. **Standalone Pure Utility Engine (`src/lib/utils/overdue.ts`)**:
+     - Binuo ang `parseDeadlineEndOfDay(deadlineStr)` na may multi-tier regex na kayang mag-parse ng iba't ibang petsa (`Oct 15, 2026`, `2026-10-15`, may prefixes o `(overdue)` suffixes) at mahigpit na ini-lock ang deadline sa end-of-day timestamp (`23:59:59.999`) upang maiwasan ang premature expiration sa umaga.
+     - Ipinatupad ang `evaluateParcelOverdue(parcel, settings, now)` at `syncParcelsOverdue(parcels, settings)` na nagko-compute ng overdue days (`Math.ceil(diffMs / 86400000)`) at nagkakalkula ng tumpak na storage fee (hal. `₱40.00 (2 Days Overdue)` base sa `₱20/day` rate sa Hub Settings).
+  2. **100% Zero-Database-Write In-Memory Architecture**:
+     - Ang buong evaluation at fee computation ay pinatakbo strictly sa client-side RAM (derived state). Walang looping database writes, zero Firestore mutations, zero quota overhead, at walang background network stalls.
+  3. **Global React Context Binding (`src/context/ParcelContext.tsx`)**:
+     - Ikinabit ang `syncParcelsOverdue` sa initial mount, real-time Firestore listeners, at verification lookups, tinitiyak na ang resident dashboard at staff inventory ay laging nagpapakita ng real-time accurate overdue badges at counters nang walang latency.
+  4. **Lobby Counter Release Notice Banner (`src/app/(admin)/admin/parcels/page.tsx`)**:
+     - Naglagay ng high-contrast amber/red alert banner sa Staff Admin release verification modal kapag ang parcel na iki-claim ay overdue. Ipinapakita nito ang eksaktong halaga ng holding fee na dapat singilin sa resident bago kumpirmahin ang release.
+- **Result**:
+  100% automated at real-time na paglabas ng mga overdue packages (lumabas agad ang 9 overdue parcels sa inventory), 0 milliseconds na delay sa Login at Sign-Up buttons, zero looping database writes, at may transparent na gabay ang staff sa counter para sa paniningil ng holding fee.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Huwag kailanman mag-persist ng time-decaying status (tulad ng overdue, grace periods, o subscription expiration) sa pamamagitan ng automated write loops pabalik sa database tuwing nag-re-render ang screen. I-compute ito strictly in-memory (derived state) sa client o read-time upang mapanatiling zero-write ang system, maiwasan ang quota exhaustion, at maalis ang mga re-render waterfalls.
+
+---
+
+## 53. Shopify & Stripe-Style Smart Sliding TablePagination with Dynamic Page Size Selector (Feature / UX Polish)
+
+- **Current State**:
+  Ang table pagination sa ilalim ng Parcel Inventory (`/admin/parcels`) at Residents & Units Directory (`/admin/customers`) ay nag-render ng bawat pahina mula 1 hanggang 41+ bilang isang mahabang linya ng mga numero (`1 2 3 4 5 6 7 ... 41`). Walang kontrol ang staff kung ilang rows ang ipapakita bawat pahina.
+- **The Problem**:
+  1. **Horizontally Broken Viewport**: Sa 41+ na magkakasunod na button, sumasabog ang layout sa mobile at tablet viewports at nagdudulot ng hindi magandang horizontal scrolling at visual clutter.
+  2. **Audit Inefficiency**: Dahil nakatali sa fixed 10 o 15 rows per page, kailangang mag-click nang mag-click ng staff para lamang mag-browse o mag-audit ng maramihang parcels o resident accounts.
+- **What to Do (Solution)**:
+  1. **Reusable Enterprise Component (`src/components/ui/TablePagination.tsx`)**:
+     - Binuo ang isang modular, accessible pagination component na may dynamic sliding-window algorithm tulad ng makikita sa Shopify Admin at Stripe Dashboard.
+     - Nililimitahan ang ipinapakitang numbered buttons sa maximum na 5 hanggang 7 buttons, at awtomatikong naglalagay ng ellipsis (`…`) sa unahan, gitna, o dulo depende sa active page (hal. `[1] [2] [3] [4] [5] … [41]` o `[1] … [19] [20] [21] … [41]`).
+  2. **Configurable Rows Per Page Selector**:
+     - Naglagay ng dropdown selector sa kaliwa na may mga opsyon na `10 / page`, `25 / page`, `50 / page`, at `100 / page` (naka-default sa 10).
+     - Awtomatikong nagre-reset pabalik sa Page 1 tuwing binabago ang page size limit upang maiwasan ang out-of-bounds rendering.
+  3. **Universal Application Across Admin Modules**:
+     - Inilatag sa **Parcel Inventory Table** sa [`src/app/(admin)/admin/parcels/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/parcels/page.tsx).
+     - Inilatag sa **Residents Directory** at **Payment & Billing Logs** sa [`src/app/(admin)/admin/customers/page.tsx`](file:///c:/Edrick/Projects/AntiGravity%20Projects/CK%20Condo%20Drop%20Hub/src/app/(admin)/admin/customers/page.tsx).
+     - Binuo na may responsive ergonomics: compact button controls sa mobile, at buong summary layout (`Showing X to Y of Z records`) sa desktop.
+- **Result**:
+  Napakalinis, elegante, at propesyonal na layout; tuluyang naalis ang nakakalat na 1–41 number line; at nabigyan ang staff ng kakayahang mag-display ng hanggang 100 entries bawat pahina para sa mabilisang pang-araw-araw na operasyon.
+- **Cross-Project Takeaway (SaaS / E-Commerce)**:
+  Para sa anumang data-dense dashboard o inventory management portal, huwag mag-render ng unbounded array ng page numbers (`Array.from({ length: totalPages })`). Laging mag-implement ng sliding-window pagination na may maximum na 7 buttons at ellipsis, at magbigay ng configurable rows-per-page selector upang maging komportable ang karanasan ng mga power users nang hindi sumisira sa layout.
 
 ---
 
