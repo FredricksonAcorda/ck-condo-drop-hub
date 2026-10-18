@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Service Level & Maintenance Agreement - CK Condo Drop Hub</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 18mm 16mm 18mm 16mm;
+      @bottom-right {
+        content: "Page " counter(page);
+        font-size: 9pt;
+        color: #718096;
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a202c;
+      line-height: 1.5;
+      font-size: 10pt;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+
+    .header-table {
+      width: 100%;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .brand-title {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #1a365d;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      font-size: 9.5pt;
+      color: #4a5568;
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      background: #ebf8ff;
+      color: #2b6cb0;
+      border: 1px solid #bee3f8;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-box {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      font-size: 9pt;
+    }
+
+    .meta-item strong {
+      color: #2d3748;
+      display: inline-block;
+      min-width: 110px;
+    }
+
+    h2 {
+      font-size: 12pt;
+      color: #2b6cb0;
+      border-bottom: 1.5px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-top: 18px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      color: #2d3748;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin: 0 0 8px 0;
+    }
+
+    ul, ol {
+      margin: 0 0 10px 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* Price Table */
+    table.pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 9pt;
+    }
+
+    table.pricing-table th {
+      background: #2b6cb0;
+      color: #ffffff;
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 700;
+      font-size: 8.5pt;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border: 1px solid #2b6cb0;
+    }
+
+    table.pricing-table td {
+      padding: 8px 10px;
+      border: 1px solid #cbd5e0;
+      vertical-align: top;
+    }
+
+    table.pricing-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .price-tag {
+      font-size: 10pt;
+      font-weight: 800;
+      color: #22543d;
+      white-space: nowrap;
+    }
+
+    .badge-covered {
+      background: #c6f6d5;
+      color: #22543d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 8pt;
+    }
+
+    .badge-billable {
+      background: #feebc8;
+      color: #7b341e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 8pt;
+    }
+
+    .callout {
+      background: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 8px 12px;
+      margin: 12px 0;
+      font-size: 9pt;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    /* Signature Section */
+    .signatures {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      page-break-inside: avoid;
+    }
+
+    .sig-block {
+      border-top: 1.5px solid #4a5568;
+      padding-top: 8px;
+      text-align: left;
+    }
+
+    .sig-name {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #1a202c;
+    }
+
+    .sig-title {
+      font-size: 8.5pt;
+      color: #4a5568;
+      margin-bottom: 4px;
+    }
+
+    .sig-date {
+      font-size: 8.5pt;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <table class="header-table">
+    <tr>
+      <td style="vertical-align: middle;">
+        <div class="brand-title">CK CONDO DROP HUB</div>
+        <div class="brand-subtitle">Automated Lobby Parcel Intake & Verification Management System</div>
+      </td>
+      <td style="text-align: right; vertical-align: middle;">
+        <span class="doc-badge">Official Agreement</span>
+        <div style="font-size: 8.5pt; color: #718096; margin-top: 4px;">Doc Ref: SLA-2026-CK01</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Meta Info Box -->
+  <div class="meta-box">
+    <div class="meta-item"><strong>Client / Project:</strong> CK Condo Drop Hub (Kesha)</div>
+    <div class="meta-item"><strong>Developer:</strong> Fredrickson (Edrick) Acorda</div>
+    <div class="meta-item"><strong>Location:</strong> Buildersville Condominium, Valenzuela</div>
+    <div class="meta-item"><strong>Effective Date:</strong> October 2026</div>
+    <div class="meta-item"><strong>Initial Core Contract:</strong> ₱10,500.00 (Delivered &amp; Live)</div>
+    <div class="meta-item"><strong>Free Warranty Period:</strong> 3 Months (Technical Bug-Fixing)</div>
+  </div>
+
+  <!-- Section 1 -->
+  <h2>1. Project Status &amp; Core Deliverables</h2>
+  <p>The core web application for <strong>CK Condo Drop Hub</strong> has been successfully engineered, tested across multiple devices, and deployed to live production (<a href="https://ck-condo-drop-parcel.vercel.app" style="color: #2b6cb0;">ck-condo-drop-parcel.vercel.app</a>).</p>
+  <ul>
+    <li><strong>Delivered Core Features:</strong> Staff Admin parcel intake with instant barcode scanning, automated SMS notification logic, digital 4-digit claim code verification, resident directory, community announcements, and multi-device real-time cloud database synchronization.</li>
+    <li><strong>3-Month Warranty Scope:</strong> Strictly covers <strong>Technical Defect Resolution</strong> (e.g., system crashes, cloud connectivity failures, or broken existing logic). Does <em>not</em> cover new visual redesigns, new features, manual resident encoding, or 24/7 on-call availability.</li>
+  </ul>
+
+  <!-- Section 2 -->
+  <h2>2. Post-Warranty &amp; Out-of-Scope Pricing Schedule</h2>
+  <p>To ensure high system reliability and transparent operational boundaries, work beyond the core deliverables and complimentary warranty is billed under the following official schedule:</p>
+
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Service Category</th>
+        <th style="width: 40%;">Scope &amp; Inclusions</th>
+        <th style="width: 17%;">Standard Fee</th>
+        <th style="width: 18%;">Turnaround SLA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Monthly Maintenance Retainer</strong></td>
+        <td>
+          • Continuous cloud database health &amp; quota monitoring<br>
+          • Proactive local storage and sync optimization<br>
+          • Priority technical support &amp; bug resolution (up to 3 tickets/mo)<br>
+          • Monthly server uptime and deployment updates
+        </td>
+        <td><span class="price-tag">₱2,500.00</span><br><small style="color: #718096;">Fixed / Month</small></td>
+        <td>Response: &le; 6 hrs<br>Fix: 24–48 hrs</td>
+      </tr>
+      <tr>
+        <td><strong>Per-Incident Fix / Bug Ticket</strong><br><small style="color: #718096;">(Without Retainer)</small></td>
+        <td>
+          • Single isolated technical software investigation<br>
+          • Diagnosis of user-reported operational roadblocks<br>
+          • Third-party API adjustments (SMS gateway, Firebase rules)
+        </td>
+        <td><span class="price-tag">₱800.00</span><br><small style="color: #718096;">Per Incident</small></td>
+        <td>24–48 business hrs upon error proof</td>
+      </tr>
+      <tr>
+        <td><strong>Minor Feature Addition</strong></td>
+        <td>
+          • Adding minor UI elements (buttons, filters, search fields)<br>
+          • Customizing automated SMS notification message text<br>
+          • Minor field additions to resident/parcel profiles
+        </td>
+        <td><span class="price-tag">₱1,000.00</span><br><small style="color: #718096;">Per Feature</small></td>
+        <td>2–3 business days</td>
+      </tr>
+      <tr>
+        <td><strong>Major Feature Addition</strong></td>
+        <td>
+          • GCash / Maya online digital payment gateway integration<br>
+          • Dedicated executive analytics or financial accounting module<br>
+          • Multi-branch management or complex role permission matrix
+        </td>
+        <td><span class="price-tag">₱2,000 – ₱3,000</span><br><small style="color: #718096;">Per Module</small></td>
+        <td>4–7 business days</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Page Break for clean 2-page document -->
+  <div class="page-break"></div>
+
+  <!-- Header on Page 2 -->
+  <table class="header-table" style="margin-bottom: 12px;">
+    <tr>
+      <td>
+        <span style="font-weight: 700; color: #1a365d; font-size: 11pt;">CK CONDO DROP HUB</span> &mdash; <span style="font-size: 9pt; color: #718096;">Maintenance &amp; Support Agreement</span>
+      </td>
+      <td style="text-align: right; font-size: 8.5pt; color: #718096;">Page 2 of 2</td>
+    </tr>
+  </table>
+
+  <!-- Section 3 -->
+  <h2>3. Work Classification Matrix</h2>
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Category</th>
+        <th style="width: 55%;">Description &amp; Real-World Examples</th>
+        <th style="width: 20%;">Billing Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Technical Bug / Defect</strong></td>
+        <td>An existing feature fails unexpectedly without client changes (e.g., submit button hangs, admin login fails on a supported browser with valid credentials).</td>
+        <td><span class="badge-covered">Covered in Warranty</span></td>
+      </tr>
+      <tr>
+        <td><strong>User Error &amp; 3rd-Party Outage</strong></td>
+        <td>Issues caused by local Wi-Fi drop at lobby counter, forgotten staff credentials, depleted SMS gateway credits, or physical scanner hardware failure.</td>
+        <td><span class="badge-billable">₱800 / Incident</span></td>
+      </tr>
+      <tr>
+        <td><strong>Scope Revisions &amp; New Features</strong></td>
+        <td>Modifying previously approved layouts, requesting new business workflows, or adding tools not in the original reference brief.</td>
+        <td><span class="badge-billable">₱1,000 – ₱3,000</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 4 -->
+  <h2>4. Support Hours &amp; Ticket Reporting Guidelines</h2>
+  <div class="callout">
+    <strong>Official Support Window:</strong> Monday to Friday, <strong>9:00 AM &ndash; 5:00 PM (PST)</strong>. Inquiries or tickets sent during evenings, weekends, or national holidays will be queued and processed on the following business morning.
+  </div>
+  <p>To enable rapid troubleshooting without guesswork, all reported issues must include:</p>
+  <ol>
+    <li><strong>Device &amp; Browser:</strong> Laptop/PC, iPhone, or Android (with browser version).</li>
+    <li><strong>Visual Evidence:</strong> Clear screenshot or screen video showing the exact error.</li>
+    <li><strong>Context Details:</strong> The exact Tracking Number, Resident Name, or Action performed immediately prior to the issue.</li>
+  </ol>
+
+  <!-- Section 5 -->
+  <h2>5. Payment Terms &amp; Conditions</h2>
+  <ul>
+    <li><strong>Monthly Retainer:</strong> Billed at the beginning of each billing cycle (1st of the month).</li>
+    <li><strong>Feature Additions:</strong> 50% mobilization downpayment upon project approval, and 50% upon successful live deployment and acceptance.</li>
+    <li><strong>Per-Incident Tickets:</strong> Payable immediately upon verified resolution of the ticket.</li>
+  </ul>
+
+  <!-- Signature Section -->
+  <h2 style="margin-top: 35px;">6. Conforme &amp; Formal Acceptance</h2>
+  <p style="font-size: 8.5pt; color: #4a5568;">By signing or confirming acceptance via written or digital communication, both parties agree to adhere to the terms, rates, and operational protocols outlined above.</p>
+
+  <div class="signatures">
+    <div class="sig-block">
+      <div class="sig-name">Fredrickson (Edrick) Acorda</div>
+      <div class="sig-title">Lead Web Developer &amp; Systems Engineer</div>
+      <div class="sig-date">Date: __________________________________</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-name">Kesha / Authorized Representative</div>
+      <div class="sig-title">CK Condo Drop Hub Management</div>
+      <div class="sig-date">Date: __________________________________</div>
+    </div>
+  </div>
+
+</body>
+</html>
