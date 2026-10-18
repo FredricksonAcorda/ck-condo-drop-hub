@@ -1,10 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { Parcel, CreateParcelInput, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus } from "@/types";
 import { db, subscribeToParcels, subscribeToHubSettings, subscribeToInquiries, getParcelTimestamp } from "@/lib/db";
 import { DEFAULT_HUB_SETTINGS } from "@/lib/db/seed-data";
 import { scannerAudio } from "@/lib/scanner/audio-feedback";
+import { syncParcelsOverdue, evaluateParcelOverdue } from "@/lib/utils/overdue";
 
 const sortNewestFirst = (list: Parcel[]): Parcel[] =>
   [...list].sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
@@ -44,6 +45,9 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const overdueFeeRef = useRef(hubSettings.overdueFeePerDay);
+  overdueFeeRef.current = hubSettings.overdueFeePerDay;
+
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
@@ -54,7 +58,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
         db.getInquiries(),
         db.getHubSettings(),
       ]);
-      setParcels(sortNewestFirst(allParcels));
+      setParcels(sortNewestFirst(syncParcelsOverdue(allParcels, settings.overdueFeePerDay)));
       setActivityLogs(logs);
       setSmsLogs(sms);
       setInquiries(inqs);
@@ -76,7 +80,7 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     };
 
     const unsubscribeParcels = subscribeToParcels((liveParcels) => {
-      setParcels(sortNewestFirst(liveParcels));
+      setParcels(sortNewestFirst(syncParcelsOverdue(liveParcels, overdueFeeRef.current)));
     });
 
     const unsubscribeSettings = subscribeToHubSettings((liveSettings) => {
@@ -125,11 +129,13 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyClaimCode = async (code: string): Promise<Parcel | null> => {
-    return db.verifyClaimCode(code);
+    const raw = await db.verifyClaimCode(code);
+    return raw ? evaluateParcelOverdue(raw, overdueFeeRef.current) : null;
   };
 
   const getParcelByTracking = async (tracking: string): Promise<Parcel | null> => {
-    return db.getParcelByTracking(tracking);
+    const raw = await db.getParcelByTracking(tracking);
+    return raw ? evaluateParcelOverdue(raw, overdueFeeRef.current) : null;
   };
 
   const getResidentParcels = (residentId: string): Parcel[] => {

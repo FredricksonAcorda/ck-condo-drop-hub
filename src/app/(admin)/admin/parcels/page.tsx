@@ -928,6 +928,19 @@ export default function ParcelsInventoryPage() {
               </div>
             </div>
 
+            {/* Overdue Storage Fee Notice */}
+            {releaseModalParcel.status === "OVERDUE" && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-xs animate-in fade-in">
+                <div>
+                  <span className="font-bold text-red-900 block">⚠️ Overdue Storage Fee Due</span>
+                  <span className="text-[11px] text-red-700">Please collect holding fee at the lobby counter before release.</span>
+                </div>
+                <span className="font-mono font-black text-sm text-brand-red bg-white px-2.5 py-1 rounded-md border border-red-200 shadow-2xs">
+                  {releaseModalParcel.holdingFee || "₱20.00"}
+                </span>
+              </div>
+            )}
+
             {/* Quick Fill Authorized Claimants if registered */}
             {(() => {
               const resObj = residents.find((r) => r.id === releaseModalParcel.residentId);
