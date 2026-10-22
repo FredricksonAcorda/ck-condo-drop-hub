@@ -1,29 +1,10 @@
 import { IDatabaseService } from "./db-interface";
 import {
-  Parcel,
-  CreateParcelInput,
-  ResidentProfile,
-  AuthUser,
-  ActivityLogItem,
-  SmsLogItem,
-  HubSettings,
-  DeskInquiry,
-  InquiryStatus,
+  Parcel, CreateParcelInput, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSettings, DeskInquiry, InquiryStatus,
 } from "@/types";
 import { firestore, isFirebaseConfigured } from "../firebase/config";
 import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  onSnapshot,
+  collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot,
 } from "firebase/firestore";
 import {
   SEED_PARCELS,
@@ -34,6 +15,7 @@ import {
   DEFAULT_HUB_SETTINGS,
   SEED_INQUIRIES,
 } from "./seed-data";
+import { localStoreFallback, STORAGE_KEYS } from "./local-store";
 
 /**
  * Normalizes any Philippine or international phone number to its core digits (last 10 digits for PH mobile).
@@ -43,6 +25,60 @@ export function normalizePhone(rawPhone?: string): string {
   if (!rawPhone) return "";
   const digits = rawPhone.replace(/\D/g, "");
   return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+let quotaExhaustedUntil: number = 0;
+
+export function isFirestoreQuotaExhausted(): boolean {
+  if (typeof window === "undefined") return false;
+  if (Date.now() < quotaExhaustedUntil) return true;
+  try {
+    const stored = window.localStorage.getItem("ck_hub_quota_exhausted_until");
+    if (stored) {
+      const until = parseInt(stored, 10);
+      if (Date.now() < until) {
+        quotaExhaustedUntil = until;
+        return true;
+      }
+    }
+  } catch { }
+  return false;
+}
+
+export function markFirestoreQuotaExhausted(durationMs: number = 5 * 60 * 1000): void {
+  quotaExhaustedUntil = Date.now() + durationMs;
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      window.localStorage.setItem("ck_hub_quota_exhausted_until", quotaExhaustedUntil.toString());
+    } catch { }
+  }
+  console.warn(`[Firestore] Quota limit active. Falling back to local offline cache for ${durationMs / 1000}s.`);
+}
+
+/**
+ * Helper to race any Firestore promise with an aggressive timeout to prevent UI freezes.
+ */
+export async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs: number = 2500): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Firestore timeout")), timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+/**
+ * Universal error handler that catches Firebase quota / network limits and triggers circuit breaker.
+ */
+export function handleFirestoreError(err: unknown, contextMsg: string): void {
+  const errorObj = err as { code?: string; message?: string };
+  const msg = String(errorObj?.message || err || "").toLowerCase();
+  const code = String(errorObj?.code || "").toLowerCase();
+  console.warn(`[Firestore] ${contextMsg}:`, msg || err);
+  if (msg.includes("quota") || msg.includes("resource-exhausted") || code.includes("resource-exhausted")) {
+    markFirestoreQuotaExhausted();
+  }
 }
 
 /**
@@ -92,6 +128,117 @@ export function getParcelTimestamp(p: Parcel): number {
   return 0;
 }
 
+/**
+ * Safely parses a parcel's holding deadline string into an end-of-day Date (23:59:59.999).
+ * Supports standard format "Oct 15, 2026", "October 15, 2026", or with trailing tags.
+ */
+export function parseDeadlineEndOfDay(deadlineStr?: string): Date | null {
+  if (!deadlineStr) return null;
+  const clean = deadlineStr.replace(/\s*\(overdue\)/i, "").trim();
+
+  // 1. Regex to extract "Month Day, Year" even if prefixed (e.g. "Holding Deadline: Oct 15, 2026")
+  const months: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, okt: 9, nov: 10, dec: 11,
+  };
+  const textMatch = clean.match(/([a-zA-Z]{3,})\s+(\d{1,2}),?\s+(\d{4})/);
+  if (textMatch) {
+    const monthKey = textMatch[1].toLowerCase().slice(0, 3);
+    const monthIndex = months[monthKey];
+    const day = parseInt(textMatch[2], 10);
+    const year = parseInt(textMatch[3], 10);
+    if (monthIndex !== undefined && !isNaN(day) && !isNaN(year)) {
+      return new Date(year, monthIndex, day, 23, 59, 59, 999);
+    }
+  }
+
+  // 2. Direct standard Date parse with end-of-day
+  const d = new Date(`${clean} 23:59:59`);
+  if (!isNaN(d.getTime())) return d;
+
+  // 3. Fallback to generic Date
+  const fallback = new Date(clean);
+  if (!isNaN(fallback.getTime())) {
+    fallback.setHours(23, 59, 59, 999);
+    return fallback;
+  }
+  return null;
+}
+
+/**
+ * Evaluates whether an unclaimed parcel has exceeded its free holding deadline.
+ * If current date/time is past deadline:
+ *   - Updates status to "OVERDUE"
+ *   - Computes exact days overdue and accrued storage holding fee.
+ * If parcel is already claimed / picked up, its status is never altered.
+ */
+export function evaluateParcelOverdue(
+  parcel: Parcel,
+  feePerDay: number = 20,
+  now: Date = new Date()
+): { parcel: Parcel; changed: boolean } {
+  // Never alter status of completed/archived parcels
+  if (
+    parcel.status === "PICKED_UP" ||
+    parcel.status === "DELIVERED_DOOR" ||
+    parcel.status === "RETURNED"
+  ) {
+    return { parcel, changed: false };
+  }
+
+  const deadlineEnd = parseDeadlineEndOfDay(parcel.deadline);
+  if (!deadlineEnd) {
+    return { parcel, changed: false };
+  }
+
+  const diffMs = now.getTime() - deadlineEnd.getTime();
+  if (diffMs > 0) {
+    // Current time is past holding deadline -> OVERDUE
+    const overdueDays = Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+    const totalFee = overdueDays * (feePerDay || 20);
+    const feeStr = `₱${totalFee.toFixed(2)} (${overdueDays} ${overdueDays === 1 ? "Day" : "Days"})`;
+
+    const needsStatusUpdate = parcel.status !== "OVERDUE";
+    const needsFeeUpdate = parcel.holdingFee !== feeStr;
+
+    if (needsStatusUpdate || needsFeeUpdate) {
+      return {
+        parcel: {
+          ...parcel,
+          status: "OVERDUE",
+          holdingFee: feeStr,
+        },
+        changed: true,
+      };
+    }
+    return { parcel, changed: false };
+  } else {
+    // Still within free holding period
+    if (parcel.status === "OVERDUE") {
+      return {
+        parcel: {
+          ...parcel,
+          status: "READY",
+          holdingFee: "₱0.00 (Free)",
+        },
+        changed: true,
+      };
+    }
+    return { parcel, changed: false };
+  }
+}
+
+/**
+ * Runs all parcels through the overdue evaluator purely in memory.
+ * Computes exact overdue status and accrued holding fees dynamically without making any database writes.
+ */
+export function syncParcelsOverdue(
+  parcels: Parcel[],
+  feePerDay: number = 20
+): Parcel[] {
+  return parcels.map((p) => evaluateParcelOverdue(p, feePerDay).parcel);
+}
+
 export class FirestoreDatabaseService implements IDatabaseService {
   private seeded = false;
 
@@ -105,12 +252,12 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   private async ensureSeeded(): Promise<void> {
-    if (!firestore || this.seeded) return;
+    if (!firestore || this.seeded || isFirestoreQuotaExhausted()) return;
+    this.seeded = true;
     try {
       // Check if parcels collection exists
-      const parcelsSnap = await getDocs(query(collection(firestore, "parcels"), limit(1)));
+      const parcelsSnap = await withFirestoreTimeout(getDocs(query(collection(firestore, "parcels"), limit(1))), 2000);
       if (parcelsSnap.empty) {
-        // Seed Parcels (excluding demo)
         for (const p of SEED_PARCELS) {
           if (!this.isDemoUser(p.residentId, p.residentName)) {
             await setDoc(doc(firestore, "parcels", p.id), p);
@@ -119,7 +266,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       }
 
       // Check residents collection
-      const residentsSnap = await getDocs(query(collection(firestore, "residents"), limit(1)));
+      const residentsSnap = await withFirestoreTimeout(getDocs(query(collection(firestore, "residents"), limit(1))), 2000);
       if (residentsSnap.empty) {
         for (const r of SEED_RESIDENTS) {
           if (!this.isDemoUser(r.id, r.name)) {
@@ -129,7 +276,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       }
 
       // Check users collection
-      const usersSnap = await getDocs(query(collection(firestore, "users"), limit(1)));
+      const usersSnap = await withFirestoreTimeout(getDocs(query(collection(firestore, "users"), limit(1))), 2000);
       if (usersSnap.empty) {
         for (const u of SEED_USERS) {
           if (!this.isDemoUser(u.id, u.name)) {
@@ -139,70 +286,62 @@ export class FirestoreDatabaseService implements IDatabaseService {
       }
 
       // Check settings doc
-      const settingsDoc = await getDoc(doc(firestore, "settings", "default"));
+      const settingsDoc = await withFirestoreTimeout(getDoc(doc(firestore, "settings", "default")), 2000);
       if (!settingsDoc.exists()) {
         await setDoc(doc(firestore, "settings", "default"), DEFAULT_HUB_SETTINGS);
       }
-
-      // Check activity logs
-      const actSnap = await getDocs(query(collection(firestore, "activity_logs"), limit(1)));
-      if (actSnap.empty) {
-        for (const a of SEED_ACTIVITY_LOGS) {
-          await setDoc(doc(firestore, "activity_logs", a.id), a);
-        }
-      }
-
-      // Check SMS logs
-      const smsSnap = await getDocs(query(collection(firestore, "sms_logs"), limit(1)));
-      if (smsSnap.empty) {
-        for (const s of SEED_SMS_LOGS) {
-          await setDoc(doc(firestore, "sms_logs", s.id), s);
-        }
-      }
-
-      // Check inquiries
-      const inqSnap = await getDocs(query(collection(firestore, "inquiries"), limit(1)));
-      if (inqSnap.empty) {
-        for (const i of SEED_INQUIRIES) {
-          await setDoc(doc(firestore, "inquiries", i.id), i);
-        }
-      }
-
-      this.seeded = true;
     } catch (err) {
-      console.warn("Firestore auto-seed notice (may already exist or offline):", err);
+      handleFirestoreError(err, "ensureSeeded");
     }
   }
 
   // --- Parcels ---
 
   async getAllParcels(): Promise<Parcel[]> {
-    if (!firestore) return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
+    if (!firestore || isFirestoreQuotaExhausted()) {
+      return syncParcelsOverdue(await localStoreFallback.getAllParcels());
+    }
     await this.ensureSeeded();
     try {
-      const snap = await getDocs(collection(firestore, "parcels"));
-      if (snap.empty) return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
-      const list = snap.docs
-        .map((d) => d.data() as Parcel)
-        .filter((p) => !this.isDemoUser(p.residentId, p.residentName));
-      return list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
+      const snap = await withFirestoreTimeout(getDocs(collection(firestore, "parcels")), 2500);
+      let list: Parcel[] = [];
+      if (!snap.empty) {
+        list = snap.docs
+          .map((d) => d.data() as Parcel)
+          .filter((p) => !this.isDemoUser(p.residentId, p.residentName));
+      }
+
+      // Bidirectional reconciliation: Push any locally created parcels that haven't reached Firestore yet
+      const currentFirestore = firestore;
+      if (currentFirestore) {
+        try {
+          const localList = await localStoreFallback.getAllParcels();
+          const cloudIds = new Set(list.map((p) => p.id));
+          const unpushed = localList.filter((lp) => !cloudIds.has(lp.id) && !this.isDemoUser(lp.residentId, lp.residentName));
+          if (unpushed.length > 0) {
+            unpushed.forEach((lp) => {
+              setDoc(doc(currentFirestore, "parcels", lp.id), sanitizeForFirestore(lp)).catch(() => { });
+            });
+            list.push(...unpushed);
+          }
+        } catch { }
+      }
+
+      if (list.length === 0) {
+        return syncParcelsOverdue(await localStoreFallback.getAllParcels());
+      }
+
+      const sorted = list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
+      localStoreFallback.save(STORAGE_KEYS.PARCELS, sorted);
+      return syncParcelsOverdue(sorted);
     } catch (err) {
-      console.error("Error fetching parcels from Firestore:", err);
-      return SEED_PARCELS.filter((p) => !this.isDemoUser(p.residentId, p.residentName));
+      handleFirestoreError(err, "getAllParcels");
+      return syncParcelsOverdue(await localStoreFallback.getAllParcels());
     }
   }
 
   async getParcelsByResident(residentId: string): Promise<Parcel[]> {
-    if (!firestore) return SEED_PARCELS.filter((p) => p.residentId === residentId);
-    await this.ensureSeeded();
-    try {
-      const q = query(collection(firestore, "parcels"), where("residentId", "==", residentId));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => d.data() as Parcel);
-    } catch (err) {
-      console.error("Error fetching resident parcels:", err);
-      return (await this.getAllParcels()).filter((p) => p.residentId === residentId);
-    }
+    return (await this.getAllParcels()).filter((p) => p.residentId === residentId);
   }
 
   async getParcelByTracking(trackingNumber: string): Promise<Parcel | null> {
@@ -212,89 +351,46 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   async createParcel(input: CreateParcelInput): Promise<Parcel> {
-    const residents = await this.getAllResidents();
-    const resident = residents.find((r) => r.id === input.residentId);
-    const settings = await this.getHubSettings();
+    // 1. Instantly create and persist in local storage (zero UI lag, works offline & quota-proof)
+    const newParcel = await localStoreFallback.createParcel(input);
 
-    const courierColors: Record<string, string> = {
-      "SPX Express": "#EE4D2D",
-      "Flash Express": "#FFB800",
-      "J&T Express": "#D21F1F",
-      "YTO Express": "#592780",
-      "LBC Express": "#E31837",
-      "STO Express": "#FF6600",
-      "Other Courier": "#6B7280",
-    };
-
-    const courierColor = courierColors[input.courier] || "#6B7280";
-    const now = new Date();
-    const dateArrivedStr =
-      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " • " +
-      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-
-    const freeDays = resident?.plan === "PREMIUM" ? settings.freeDaysPremium : settings.freeDaysRegular;
-    const deadlineDate = new Date(now.getTime() + freeDays * 24 * 60 * 60 * 1000);
-    const deadlineStr = deadlineDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-    const claimCode = `CK-${randomSuffix}`;
-
-    const newParcel: Parcel = {
-      id: `pcl-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      trackingNumber: input.trackingNumber.trim().toUpperCase(),
-      courier: input.courier,
-      courierColor,
-      residentId: input.residentId,
-      residentName: input.residentName,
-      unit: input.unit,
-      shelf: input.shelf,
-      size: input.size || "Medium",
-      dateArrived: dateArrivedStr,
-      createdAt: now.toISOString(),
-      deadline: deadlineStr,
-      holdingFee: "₱0.00 (Free)",
-      status: "READY",
-      claimCode,
-      notes: input.notes,
-    };
-
-    if (firestore) {
-      await setDoc(doc(firestore, "parcels", newParcel.id), sanitizeForFirestore(newParcel));
-    }
-
-    if (resident) {
-      await this.updateResidentProfile(resident.id, {
-        activeParcelsCount: (resident.activeParcelsCount || 0) + 1,
-        totalParcelsReceived: (resident.totalParcelsReceived || 0) + 1,
-      });
-    }
-
-    await this.recordActivity({
-      type: "PARCEL_INGESTED",
-      title: `Parcel Ingested: ${newParcel.trackingNumber}`,
-      description: `Ingested from ${newParcel.courier} for ${newParcel.residentName} (${newParcel.unit}). Assigned to ${newParcel.shelf}.`,
-      actor: settings.stationName,
-      trackingNumber: newParcel.trackingNumber,
-      residentId: newParcel.residentId,
-      badgeColor: "bg-orange-500",
-    });
-
-    const wantsSms = resident?.notifications?.smsArrival ?? true;
-    if (resident?.phone && wantsSms) {
-      const smsMessage = `${settings.hubName}: Package ${newParcel.trackingNumber} from ${newParcel.courier} has arrived at ${newParcel.shelf}. Claim passcode: ${newParcel.claimCode}. Free holding until ${newParcel.deadline}.`;
-      await this.recordSms({
-        recipientPhone: resident.phone,
-        recipientName: resident.name,
-        messageText: smsMessage,
-        status: "DELIVERED",
-        trackingNumber: newParcel.trackingNumber,
-        costEstimate: "₱0.40",
-      });
+    // 2. Non-blocking asynchronous cloud write to Firestore with timeout
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "parcels", newParcel.id), sanitizeForFirestore(newParcel)),
+            3000
+          );
+          const resident = (await this.getAllResidents()).find((r) => r.id === input.residentId);
+          if (resident) {
+            await withFirestoreTimeout(
+              updateDoc(doc(firestore, "residents", resident.id), {
+                activeParcelsCount: (resident.activeParcelsCount || 0) + 1,
+                totalParcelsReceived: (resident.totalParcelsReceived || 0) + 1,
+              }),
+              3000
+            ).catch(() => { });
+          }
+          const settings = await this.getHubSettings();
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "activity_logs", `act-${Date.now()}`), sanitizeForFirestore({
+              id: `act-${Date.now()}`,
+              type: "PARCEL_INGESTED",
+              title: `Parcel Ingested: ${newParcel.trackingNumber}`,
+              description: `Ingested from ${newParcel.courier} for ${newParcel.residentName} (${newParcel.unit}). Assigned to ${newParcel.shelf}.`,
+              timestamp: new Date().toISOString(),
+              actor: settings.stationName,
+              trackingNumber: newParcel.trackingNumber,
+              residentId: newParcel.residentId,
+              badgeColor: "bg-orange-500",
+            })),
+            3000
+          ).catch(() => { });
+        } catch (err) {
+          handleFirestoreError(err, "createParcel cloud write");
+        }
+      })();
     }
 
     notifyLocalUpdate();
@@ -321,61 +417,24 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   async releaseParcel(parcelId: string, claimedBy: string): Promise<Parcel> {
-    const all = await this.getAllParcels();
-    const target = all.find((p) => p.id === parcelId);
-    if (!target) throw new Error("Parcel not found");
+    const updated = await localStoreFallback.releaseParcel(parcelId, claimedBy);
 
-    const settings = await this.getHubSettings();
-    const now = new Date();
-    const claimedAtStr =
-      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " • " +
-      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-
-    const updated: Parcel = {
-      ...target,
-      status: "PICKED_UP",
-      shelf: "Archived (Released)",
-      claimedAt: claimedAtStr,
-      claimedBy: claimedBy.trim() || "Resident",
-    };
-
-    if (firestore) {
-      await updateDoc(doc(firestore, "parcels", parcelId), {
-        status: "PICKED_UP",
-        shelf: "Archived (Released)",
-        claimedAt: claimedAtStr,
-        claimedBy: updated.claimedBy,
-      });
-    }
-
-    const residents = await this.getAllResidents();
-    const resident = residents.find((r) => r.id === updated.residentId);
-    if (resident && resident.activeParcelsCount > 0) {
-      await this.updateResidentProfile(resident.id, {
-        activeParcelsCount: resident.activeParcelsCount - 1,
-      });
-    }
-
-    await this.recordActivity({
-      type: "PARCEL_RELEASED",
-      title: `Parcel Released: ${updated.trackingNumber}`,
-      description: `Package released to ${updated.claimedBy} (${updated.unit}).`,
-      actor: settings.stationName,
-      trackingNumber: updated.trackingNumber,
-      badgeColor: "bg-green-600",
-    });
-
-    if (resident?.phone) {
-      const smsMessage = `${settings.hubName}: Package ${updated.trackingNumber} has been successfully released to ${updated.claimedBy}. Thank you!`;
-      await this.recordSms({
-        recipientPhone: resident.phone,
-        recipientName: resident.name,
-        messageText: smsMessage,
-        status: "DELIVERED",
-        trackingNumber: updated.trackingNumber,
-        costEstimate: "₱0.40",
-      });
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            updateDoc(doc(firestore, "parcels", parcelId), {
+              status: "PICKED_UP",
+              shelf: "Archived (Released)",
+              claimedAt: updated.claimedAt,
+              claimedBy: updated.claimedBy,
+            }),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "releaseParcel cloud write");
+        }
+      })();
     }
 
     notifyLocalUpdate();
@@ -383,49 +442,94 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   async updateParcel(parcelId: string, updates: Partial<Parcel>): Promise<Parcel> {
-    if (firestore) {
-      await updateDoc(doc(firestore, "parcels", parcelId), sanitizeForFirestore(updates));
+    const updated = await localStoreFallback.updateParcel(parcelId, updates);
+
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            updateDoc(doc(firestore, "parcels", parcelId), sanitizeForFirestore(updates)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "updateParcel cloud write");
+        }
+      })();
     }
-    const all = await this.getAllParcels();
-    const target = all.find((p) => p.id === parcelId);
-    if (!target) throw new Error("Parcel not found");
+
     notifyLocalUpdate();
-    return { ...target, ...updates };
+    return updated;
   }
 
   async deleteParcel(parcelId: string): Promise<boolean> {
-    if (firestore) {
-      await deleteDoc(doc(firestore, "parcels", parcelId));
-      notifyLocalUpdate();
-      return true;
+    const res = await localStoreFallback.deleteParcel(parcelId);
+
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            deleteDoc(doc(firestore, "parcels", parcelId)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "deleteParcel cloud write");
+        }
+      })();
     }
-    return false;
+
+    notifyLocalUpdate();
+    return res;
   }
 
   // --- Residents ---
 
   async getAllResidents(): Promise<ResidentProfile[]> {
-    if (!firestore) return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
+    if (!firestore || isFirestoreQuotaExhausted()) return localStoreFallback.getAllResidents();
     await this.ensureSeeded();
     try {
-      const snap = await getDocs(collection(firestore, "residents"));
-      if (snap.empty) return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
-      return snap.docs
-        .map((d) => d.data() as ResidentProfile)
-        .filter((r) => !this.isDemoUser(r.id, r.name));
+      const snap = await withFirestoreTimeout(getDocs(collection(firestore, "residents")), 2500);
+      let list: ResidentProfile[] = [];
+      if (!snap.empty) {
+        list = snap.docs
+          .map((d) => d.data() as ResidentProfile)
+          .filter((r) => !this.isDemoUser(r.id, r.name));
+      }
+
+      // Bidirectional reconciliation: Push any locally registered residents that haven't reached Firestore yet
+      const currentFirestore = firestore;
+      if (currentFirestore) {
+        try {
+          const localList = await localStoreFallback.getAllResidents();
+          const cloudIds = new Set(list.map((r) => r.id));
+          const unpushed = localList.filter((lr) => !cloudIds.has(lr.id) && !this.isDemoUser(lr.id, lr.name));
+          if (unpushed.length > 0) {
+            unpushed.forEach((lr) => {
+              setDoc(doc(currentFirestore, "residents", lr.id), sanitizeForFirestore(lr)).catch(() => { });
+            });
+            list.push(...unpushed);
+          }
+        } catch { }
+      }
+
+      if (list.length === 0) {
+        return localStoreFallback.getAllResidents();
+      }
+
+      localStoreFallback.save(STORAGE_KEYS.RESIDENTS, list);
+      return list;
     } catch (err) {
-      console.error("Error fetching residents from Firestore:", err);
-      return SEED_RESIDENTS.filter((r) => !this.isDemoUser(r.id, r.name));
+      handleFirestoreError(err, "getAllResidents");
+      return localStoreFallback.getAllResidents();
     }
   }
 
   async getResidentById(id: string): Promise<ResidentProfile | null> {
-    if (firestore) {
+    if (firestore && !isFirestoreQuotaExhausted()) {
       try {
-        const snap = await getDoc(doc(firestore, "residents", id));
+        const snap = await withFirestoreTimeout(getDoc(doc(firestore, "residents", id)), 2000);
         if (snap.exists()) return snap.data() as ResidentProfile;
       } catch (err) {
-        console.error("Error fetching resident by id:", err);
+        handleFirestoreError(err, "getResidentById");
       }
     }
     const all = await this.getAllResidents();
@@ -433,86 +537,112 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   async getResidentByEmailOrPhone(emailOrPhone: string): Promise<ResidentProfile | null> {
-    const all = await this.getAllResidents();
     const clean = emailOrPhone.trim().toLowerCase();
     const cleanNormPhone = normalizePhone(clean);
 
-    return (
-      all.find(
-        (r) =>
-          r.email.toLowerCase() === clean ||
-          (cleanNormPhone.length >= 7 && normalizePhone(r.phone) === cleanNormPhone)
-      ) || null
-    );
+    // 1. Instant check in local browser storage (0 cloud reads)
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem("ck_hub_residents_v2");
+        if (raw) {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list)) {
+            const match = list.find(
+              (r) =>
+                r.email?.toLowerCase() === clean ||
+                (cleanNormPhone.length >= 7 && normalizePhone(r.phone) === cleanNormPhone)
+            );
+            if (match) return match;
+          }
+        }
+      } catch (e) {
+        // continue
+      }
+    }
+
+    // 2. Targeted Firestore query (1 document read maximum)
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      try {
+        const q = clean.includes("@")
+          ? query(collection(firestore, "residents"), where("email", "==", clean), limit(1))
+          : cleanNormPhone.length >= 7
+            ? query(collection(firestore, "residents"), where("phone", "==", cleanNormPhone), limit(1))
+            : null;
+        if (q) {
+          const snap = await withFirestoreTimeout(getDocs(q), 2000);
+          if (!snap.empty) {
+            return snap.docs[0].data() as ResidentProfile;
+          }
+        }
+      } catch (err: unknown) {
+        handleFirestoreError(err, "getResidentByEmailOrPhone");
+      }
+    }
+
+    return null;
   }
 
   async createResident(
     profile: Omit<ResidentProfile, "id" | "createdAt" | "activeParcelsCount" | "totalParcelsReceived">
   ): Promise<ResidentProfile> {
-    const id = `usr-resident-${Date.now()}`;
-    const newResident: ResidentProfile = {
-      ...profile,
-      id,
-      activeParcelsCount: 0,
-      totalParcelsReceived: 0,
-      createdAt: new Date().toISOString(),
-    };
+    const newResident = await localStoreFallback.createResident(profile);
 
-    if (firestore) {
-      const sanitized = sanitizeForFirestore(newResident);
-      await setDoc(doc(firestore, "residents", id), sanitized);
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          const sanitized = sanitizeForFirestore(newResident);
+          await withFirestoreTimeout(setDoc(doc(firestore, "residents", newResident.id), sanitized), 3000);
 
-      // Also mirror to users collection so findUserByCredentials and auth lookup find them instantly
-      const userDoc: AuthUser = {
-        id: newResident.id,
-        email: newResident.email,
-        name: newResident.name,
-        phone: newResident.phone,
-        role: "resident",
-        unit: newResident.unit,
-        tower: newResident.tower,
-        branch: newResident.branch || "Malinta Branch",
-        buildingNumber: newResident.buildingNumber,
-        floorNumber: newResident.floorNumber,
-        unitNumber: newResident.unitNumber,
-        plan: newResident.plan,
-        planStatus: newResident.planStatus || "ACTIVE",
-        paymentMethod: newResident.paymentMethod,
-        paymentReference: newResident.paymentReference,
-        residentCode: newResident.residentCode,
-        authorizedClaimants: newResident.authorizedClaimants || [],
-        createdAt: newResident.createdAt,
-      };
-      await setDoc(doc(firestore, "users", id), sanitizeForFirestore(userDoc));
+          const userDoc: AuthUser = {
+            id: newResident.id,
+            email: newResident.email,
+            name: newResident.name,
+            phone: newResident.phone,
+            role: "resident",
+            unit: newResident.unit,
+            tower: newResident.tower,
+            branch: newResident.branch || "Malinta Branch",
+            buildingNumber: newResident.buildingNumber,
+            floorNumber: newResident.floorNumber,
+            unitNumber: newResident.unitNumber,
+            plan: newResident.plan,
+            planStatus: newResident.planStatus || "ACTIVE",
+            paymentMethod: newResident.paymentMethod,
+            paymentReference: newResident.paymentReference,
+            residentCode: newResident.residentCode,
+            authorizedClaimants: newResident.authorizedClaimants || [],
+            createdAt: newResident.createdAt,
+          };
+          await withFirestoreTimeout(setDoc(doc(firestore, "users", newResident.id), sanitizeForFirestore(userDoc)), 3000);
+        } catch (err) {
+          handleFirestoreError(err, "createResident cloud write");
+        }
+      })();
     }
-
-    await this.recordActivity({
-      type: "RESIDENT_REGISTERED",
-      title: `Resident Registered: ${newResident.name}`,
-      description: `Registered for unit ${newResident.unit} with plan ${newResident.plan}.`,
-      actor: "Registration System",
-      residentId: newResident.id,
-      badgeColor: "bg-purple-600",
-    });
 
     notifyLocalUpdate();
     return newResident;
   }
 
   async updateResidentProfile(id: string, updates: Partial<ResidentProfile>): Promise<ResidentProfile> {
-    if (firestore) {
-      const sanitized = sanitizeForFirestore(updates);
-      await updateDoc(doc(firestore, "residents", id), sanitized);
-      try {
-        await updateDoc(doc(firestore, "users", id), sanitized);
-      } catch {
-        // user doc might not exist in users collection, that is fine
-      }
+    const updated = await localStoreFallback.updateResidentProfile(id, updates);
+
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          const sanitized = sanitizeForFirestore(updates);
+          await withFirestoreTimeout(updateDoc(doc(firestore, "residents", id), sanitized), 3000);
+          try {
+            await withFirestoreTimeout(updateDoc(doc(firestore, "users", id), sanitized), 3000);
+          } catch { }
+        } catch (err) {
+          handleFirestoreError(err, "updateResidentProfile cloud write");
+        }
+      })();
     }
-    const target = await this.getResidentById(id);
-    if (!target) throw new Error("Resident not found");
+
     notifyLocalUpdate();
-    return { ...target, ...updates };
+    return updated;
   }
 
   // --- Users & Credentials ---
@@ -531,49 +661,109 @@ export class FirestoreDatabaseService implements IDatabaseService {
       return false;
     };
 
-    let users: AuthUser[] = SEED_USERS;
-    if (firestore) {
+    // 1. Instant check in local browser storage (0 cloud reads)
+    if (typeof window !== "undefined" && window.localStorage) {
       try {
-        const snap = await getDocs(collection(firestore, "users"));
-        if (!snap.empty) {
-          users = snap.docs.map((d) => d.data() as AuthUser);
+        const rawResidents = window.localStorage.getItem("ck_hub_residents_v2");
+        if (rawResidents) {
+          const list = JSON.parse(rawResidents);
+          if (Array.isArray(list)) {
+            const match = list.find((r) => matchIdentifier(r.email, r.phone));
+            if (match) {
+              return {
+                id: match.id,
+                email: match.email,
+                name: match.name,
+                phone: match.phone,
+                role: "resident",
+                unit: match.unit,
+                tower: match.tower,
+                branch: match.branch || "Malinta Branch",
+                buildingNumber: match.buildingNumber,
+                floorNumber: match.floorNumber,
+                unitNumber: match.unitNumber,
+                plan: match.plan,
+                planStatus: match.planStatus,
+                paymentMethod: match.paymentMethod,
+                paymentReference: match.paymentReference,
+                residentCode: match.residentCode,
+                authorizedClaimants: match.authorizedClaimants || [],
+                deliveryCreditsLeft: match.deliveryCreditsLeft,
+                subscriptionExpiry: match.subscriptionExpiry,
+                createdAt: match.createdAt,
+              };
+            }
+          }
         }
-      } catch (err) {
-        console.error("Error finding user:", err);
+      } catch (e) {
+        console.warn("Local storage lookup notice:", e);
       }
     }
 
-    const userMatch = users.find((u) => matchIdentifier(u.email, u.phone));
-    if (userMatch) return userMatch;
+    // 2. Targeted query in Firestore (reads at most 1-2 docs, NOT 250 docs!)
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      try {
+        // Query users collection for exact match
+        const qUsers = clean.includes("@")
+          ? query(collection(firestore, "users"), where("email", "==", clean), limit(1))
+          : cleanNormPhone.length >= 7
+            ? query(collection(firestore, "users"), where("phone", "==", cleanNormPhone), limit(1))
+            : null;
 
-    const residents = await this.getAllResidents();
-    const residentMatch = residents.find((r) => matchIdentifier(r.email, r.phone));
-    if (residentMatch) {
-      return {
-        id: residentMatch.id,
-        email: residentMatch.email,
-        name: residentMatch.name,
-        phone: residentMatch.phone,
-        role: "resident",
-        unit: residentMatch.unit,
-        tower: residentMatch.tower,
-        branch: residentMatch.branch || "Malinta Branch",
-        buildingNumber: residentMatch.buildingNumber,
-        floorNumber: residentMatch.floorNumber,
-        unitNumber: residentMatch.unitNumber,
-        plan: residentMatch.plan,
-        planStatus: residentMatch.planStatus,
-        paymentMethod: residentMatch.paymentMethod,
-        paymentReference: residentMatch.paymentReference,
-        residentCode: residentMatch.residentCode,
-        authorizedClaimant: residentMatch.authorizedClaimant,
-        claimantPhone: residentMatch.claimantPhone,
-        authorizedClaimants: residentMatch.authorizedClaimants || [],
-        deliveryCreditsLeft: residentMatch.deliveryCreditsLeft,
-        subscriptionExpiry: residentMatch.subscriptionExpiry,
-        createdAt: residentMatch.createdAt,
-      };
+        if (qUsers) {
+          const uSnap = await getDocs(qUsers);
+          if (!uSnap.empty) {
+            return uSnap.docs[0].data() as AuthUser;
+          }
+        }
+
+        // Query residents collection for exact match
+        const qResidents = clean.includes("@")
+          ? query(collection(firestore, "residents"), where("email", "==", clean), limit(1))
+          : cleanNormPhone.length >= 7
+            ? query(collection(firestore, "residents"), where("phone", "==", cleanNormPhone), limit(1))
+            : null;
+
+        if (qResidents) {
+          const rSnap = await getDocs(qResidents);
+          if (!rSnap.empty) {
+            const r = rSnap.docs[0].data() as ResidentProfile;
+            return {
+              id: r.id,
+              email: r.email,
+              name: r.name,
+              phone: r.phone,
+              role: "resident",
+              unit: r.unit,
+              tower: r.tower,
+              branch: r.branch || "Malinta Branch",
+              buildingNumber: r.buildingNumber,
+              floorNumber: r.floorNumber,
+              unitNumber: r.unitNumber,
+              plan: r.plan,
+              planStatus: r.planStatus,
+              paymentMethod: r.paymentMethod,
+              paymentReference: r.paymentReference,
+              residentCode: r.residentCode,
+              authorizedClaimants: r.authorizedClaimants || [],
+              deliveryCreditsLeft: r.deliveryCreditsLeft,
+              subscriptionExpiry: r.subscriptionExpiry,
+              createdAt: r.createdAt,
+            };
+          }
+        }
+      } catch (err: unknown) {
+        const error = err as { code?: string; message?: string };
+        if (error?.code === "resource-exhausted" || error?.message?.includes("Quota exceeded")) {
+          markFirestoreQuotaExhausted();
+        }
+        console.warn("Targeted Firestore user query notice:", err);
+      }
     }
+
+    // 3. Fallback to SEED_USERS for demo accounts
+    const userMatch = SEED_USERS.find((u) => matchIdentifier(u.email, u.phone));
+    if (userMatch) return userMatch;
 
     return null;
   }
@@ -581,33 +771,37 @@ export class FirestoreDatabaseService implements IDatabaseService {
   // --- Activity Logs ---
 
   async getActivityLogs(): Promise<ActivityLogItem[]> {
-    if (!firestore) return SEED_ACTIVITY_LOGS;
+    if (!firestore || isFirestoreQuotaExhausted()) return localStoreFallback.getActivityLogs();
     await this.ensureSeeded();
     try {
-      const snap = await getDocs(collection(firestore, "activity_logs"));
-      if (snap.empty) return SEED_ACTIVITY_LOGS;
-      return snap.docs.map((d) => d.data() as ActivityLogItem);
+      const snap = await withFirestoreTimeout(
+        getDocs(query(collection(firestore, "activity_logs"), orderBy("timestamp", "desc"), limit(50))),
+        2500
+      );
+      if (snap.empty) return localStoreFallback.getActivityLogs();
+      const list = snap.docs.map((d) => d.data() as ActivityLogItem);
+      localStoreFallback.save(STORAGE_KEYS.ACTIVITY, list);
+      return list;
     } catch (err) {
-      console.error("Error fetching activity logs:", err);
-      return SEED_ACTIVITY_LOGS;
+      handleFirestoreError(err, "getActivityLogs");
+      return localStoreFallback.getActivityLogs();
     }
   }
 
   async recordActivity(item: Omit<ActivityLogItem, "id" | "timestamp">): Promise<ActivityLogItem> {
-    const now = new Date();
-    const timestampStr =
-      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " • " +
-      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const newLog = await localStoreFallback.recordActivity(item);
 
-    const newLog: ActivityLogItem = {
-      ...item,
-      id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      timestamp: timestampStr,
-    };
-
-    if (firestore) {
-      await setDoc(doc(firestore, "activity_logs", newLog.id), sanitizeForFirestore(newLog));
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "activity_logs", newLog.id), sanitizeForFirestore(newLog)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "recordActivity cloud write");
+        }
+      })();
     }
 
     return newLog;
@@ -616,33 +810,37 @@ export class FirestoreDatabaseService implements IDatabaseService {
   // --- SMS Logs ---
 
   async getSmsLogs(): Promise<SmsLogItem[]> {
-    if (!firestore) return SEED_SMS_LOGS;
+    if (!firestore || isFirestoreQuotaExhausted()) return localStoreFallback.getSmsLogs();
     await this.ensureSeeded();
     try {
-      const snap = await getDocs(collection(firestore, "sms_logs"));
-      if (snap.empty) return SEED_SMS_LOGS;
-      return snap.docs.map((d) => d.data() as SmsLogItem);
+      const snap = await withFirestoreTimeout(
+        getDocs(query(collection(firestore, "sms_logs"), orderBy("timestamp", "desc"), limit(50))),
+        2500
+      );
+      if (snap.empty) return localStoreFallback.getSmsLogs();
+      const list = snap.docs.map((d) => d.data() as SmsLogItem);
+      localStoreFallback.save(STORAGE_KEYS.SMS, list);
+      return list;
     } catch (err) {
-      console.error("Error fetching sms logs:", err);
-      return SEED_SMS_LOGS;
+      handleFirestoreError(err, "getSmsLogs");
+      return localStoreFallback.getSmsLogs();
     }
   }
 
   private async recordSms(item: Omit<SmsLogItem, "id" | "timestamp">): Promise<SmsLogItem> {
-    const now = new Date();
-    const timestampStr =
-      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " • " +
-      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const newSms = await (localStoreFallback as any).recordSms(item);
 
-    const newSms: SmsLogItem = {
-      ...item,
-      id: `sms-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      timestamp: timestampStr,
-    };
-
-    if (firestore) {
-      await setDoc(doc(firestore, "sms_logs", newSms.id), sanitizeForFirestore(newSms));
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "sms_logs", newSms.id), sanitizeForFirestore(newSms)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "recordSms cloud write");
+        }
+      })();
     }
 
     return newSms;
@@ -670,12 +868,15 @@ export class FirestoreDatabaseService implements IDatabaseService {
   }
 
   async getInquiries(): Promise<DeskInquiry[]> {
-    if (!firestore) return [];
+    if (!firestore || isFirestoreQuotaExhausted()) return localStoreFallback.getInquiries();
     await this.ensureSeeded();
     try {
-      const snap = await getDocs(collection(firestore, "inquiries"));
-      if (snap.empty) return [];
-      return snap.docs
+      const snap = await withFirestoreTimeout(
+        getDocs(query(collection(firestore, "inquiries"), orderBy("createdAt", "desc"), limit(50))),
+        2500
+      );
+      if (snap.empty) return localStoreFallback.getInquiries();
+      const list = snap.docs
         .map((d) => d.data() as DeskInquiry)
         .filter(
           (item) =>
@@ -684,97 +885,103 @@ export class FirestoreDatabaseService implements IDatabaseService {
             item.residentId !== "usr-resident-1" &&
             item.residentId !== "usr-resident-2"
         );
+      localStoreFallback.save(STORAGE_KEYS.INQUIRIES, list);
+      return list;
     } catch (err) {
-      console.error("Error fetching inquiries:", err);
-      return [];
+      handleFirestoreError(err, "getInquiries");
+      return localStoreFallback.getInquiries();
     }
   }
 
   async createInquiry(input: Omit<DeskInquiry, "id" | "createdAt" | "status">): Promise<DeskInquiry> {
-    const now = new Date();
-    const timestampStr =
-      now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " • " +
-      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const newInquiry = await localStoreFallback.createInquiry(input);
 
-    const newInquiry: DeskInquiry = {
-      ...input,
-      id: `inq-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      createdAt: timestampStr,
-      status: "NEW",
-    };
-
-    if (firestore) {
-      await setDoc(doc(firestore, "inquiries", newInquiry.id), sanitizeForFirestore(newInquiry));
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "inquiries", newInquiry.id), sanitizeForFirestore(newInquiry)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "createInquiry cloud write");
+        }
+      })();
     }
-
-    await this.recordActivity({
-      type: "INQUIRY_RECEIVED",
-      title: `Desk Inquiry from ${newInquiry.residentName} (${newInquiry.residentUnit})`,
-      description: `Category: ${newInquiry.category}${newInquiry.trackingNumber ? ` • Ref: ${newInquiry.trackingNumber}` : ""}`,
-      actor: newInquiry.residentName,
-      badgeColor: "bg-purple-600",
-    });
 
     notifyLocalUpdate();
     return newInquiry;
   }
 
   async updateInquiry(id: string, updates: Partial<DeskInquiry>): Promise<DeskInquiry> {
-    if (firestore) {
-      await updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore(updates));
+    const updated = await localStoreFallback.updateInquiry(id, updates);
+
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore(updates)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "updateInquiry cloud write");
+        }
+      })();
     }
-    const all = await this.getInquiries();
-    const target = all.find((i) => i.id === id);
-    if (!target) throw new Error("Inquiry not found");
+
     notifyLocalUpdate();
-    return { ...target, ...updates };
+    return updated;
   }
 
   async updateInquiryStatus(id: string, status: InquiryStatus, adminReply?: string): Promise<DeskInquiry> {
-    const all = await this.getInquiries();
-    const target = all.find((i) => i.id === id);
-    if (!target) throw new Error("Inquiry not found");
+    const updated = await localStoreFallback.updateInquiryStatus(id, status, adminReply);
 
-    const updates: Partial<DeskInquiry> = {
-      status,
-      ...(adminReply ? { adminReply, repliedAt: new Date().toISOString() } : {}),
-    };
-
-    if (firestore) {
-      await updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore(updates));
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            updateDoc(doc(firestore, "inquiries", id), sanitizeForFirestore({
+              status,
+              ...(adminReply ? { adminReply, repliedAt: new Date().toISOString() } : {}),
+            })),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "updateInquiryStatus cloud write");
+        }
+      })();
     }
 
-    await this.recordActivity({
-      type: "INQUIRY_RESPONDED",
-      title: `Inquiry #${id.slice(-4)} updated: ${status}`,
-      description: `Status changed to ${status} for ${target.residentName} (${target.residentUnit}).`,
-      actor: "Staff Admin",
-      badgeColor: status === "RESOLVED" ? "bg-green-600" : "bg-blue-600",
-    });
-
     notifyLocalUpdate();
-    return { ...target, ...updates };
+    return updated;
   }
 
   async deleteInquiry(id: string): Promise<boolean> {
-    if (firestore) {
-      await deleteDoc(doc(firestore, "inquiries", id));
-      notifyLocalUpdate();
-      return true;
+    const res = await localStoreFallback.deleteInquiry(id);
+
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(deleteDoc(doc(firestore, "inquiries", id)), 3000);
+        } catch (err) {
+          handleFirestoreError(err, "deleteInquiry cloud write");
+        }
+      })();
     }
-    return false;
+
+    notifyLocalUpdate();
+    return res;
   }
 
   // --- Hub Settings ---
 
   async getHubSettings(): Promise<HubSettings> {
-    if (firestore) {
+    if (firestore && !isFirestoreQuotaExhausted()) {
       try {
-        const snap = await getDoc(doc(firestore, "settings", "default"));
+        const snap = await withFirestoreTimeout(getDoc(doc(firestore, "settings", "default")), 2000);
         if (snap.exists()) {
           const loaded = snap.data() as HubSettings;
-          return {
+          const merged: HubSettings = {
             ...DEFAULT_HUB_SETTINGS,
             ...loaded,
             contactPhone: loaded.contactPhone || DEFAULT_HUB_SETTINGS.contactPhone,
@@ -784,33 +991,37 @@ export class FirestoreDatabaseService implements IDatabaseService {
             residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
             communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
           };
+          localStoreFallback.save(STORAGE_KEYS.SETTINGS, merged);
+          return merged;
         }
       } catch (err) {
-        console.error("Error fetching settings:", err);
+        handleFirestoreError(err, "getHubSettings");
       }
     }
-    return DEFAULT_HUB_SETTINGS;
+    return localStoreFallback.getHubSettings();
   }
 
   async updateHubSettings(updates: Partial<HubSettings>): Promise<HubSettings> {
-    const current = await this.getHubSettings();
-    const updated = { ...current, ...updates };
-    if (firestore) {
-      await setDoc(doc(firestore, "settings", "default"), sanitizeForFirestore(updated));
-    }
+    const updated = await localStoreFallback.updateHubSettings(updates);
 
-    await this.recordActivity({
-      type: "SETTINGS_UPDATED",
-      title: "Hub Configuration Updated",
-      description: `Holding policy / station parameters modified.`,
-      actor: "Staff Admin",
-      badgeColor: "bg-gray-600",
-    });
+    if (firestore && !isFirestoreQuotaExhausted()) {
+      (async () => {
+        try {
+          await withFirestoreTimeout(
+            setDoc(doc(firestore, "settings", "default"), sanitizeForFirestore(updated)),
+            3000
+          );
+        } catch (err) {
+          handleFirestoreError(err, "updateHubSettings cloud write");
+        }
+      })();
+    }
 
     notifyLocalUpdate();
     return updated;
   }
 }
+
 
 /**
  * Real-time listener for residents collection from Firestore.
@@ -837,15 +1048,15 @@ export function subscribeToResidents(callback: (residents: ResidentProfile[]) =>
           callback(list);
         },
         (err) => {
-          console.warn("Firestore residents onSnapshot notice:", err);
+          handleFirestoreError(err, "subscribeToResidents onSnapshot");
         }
       );
       return unsubscribe;
     } catch (err) {
-      console.warn("Firestore subscribeToResidents failed:", err);
+      handleFirestoreError(err, "subscribeToResidents init");
     }
   }
-  return () => {};
+  return () => { };
 }
 
 /**
@@ -871,18 +1082,19 @@ export function subscribeToParcels(callback: (parcels: Parcel[]) => void): () =>
             }
           });
           list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
-          callback(list);
+          const evaluated = syncParcelsOverdue(list);
+          callback(evaluated);
         },
         (err) => {
-          console.warn("Firestore parcels onSnapshot notice:", err);
+          handleFirestoreError(err, "subscribeToParcels onSnapshot");
         }
       );
       return unsubscribe;
     } catch (err) {
-      console.warn("Firestore subscribeToParcels failed:", err);
+      handleFirestoreError(err, "subscribeToParcels init");
     }
   }
-  return () => {};
+  return () => { };
 }
 
 /**
@@ -910,15 +1122,15 @@ export function subscribeToHubSettings(callback: (settings: HubSettings) => void
           }
         },
         (err) => {
-          console.warn("Firestore settings onSnapshot notice:", err);
+          handleFirestoreError(err, "subscribeToHubSettings onSnapshot");
         }
       );
       return unsubscribe;
     } catch (err) {
-      console.warn("Firestore subscribeToHubSettings failed:", err);
+      handleFirestoreError(err, "subscribeToHubSettings init");
     }
   }
-  return () => {};
+  return () => { };
 }
 
 /**
@@ -947,15 +1159,15 @@ export function subscribeToInquiries(callback: (inquiries: DeskInquiry[]) => voi
           callback(list);
         },
         (err) => {
-          console.warn("Firestore inquiries onSnapshot notice:", err);
+          handleFirestoreError(err, "subscribeToInquiries onSnapshot");
         }
       );
       return unsubscribe;
     } catch (err) {
-      console.warn("Firestore subscribeToInquiries failed:", err);
+      handleFirestoreError(err, "subscribeToInquiries init");
     }
   }
-  return () => {};
+  return () => { };
 }
 
 /**
@@ -979,23 +1191,29 @@ export function subscribeToUserDoc(
           }
         },
         (err) => {
-          console.warn(`Firestore user ${userId} onSnapshot notice:`, err);
+          handleFirestoreError(err, `subscribeToUserDoc onSnapshot (${userId})`);
         }
       );
       return unsubscribe;
     } catch (err) {
-      console.warn("Firestore subscribeToUserDoc failed:", err);
+      handleFirestoreError(err, "subscribeToUserDoc init");
     }
   }
-  return () => {};
+  return () => { };
 }
+
 
 /**
  * Automatically inspects browser localStorage for any resident or parcel records
  * created prior to cloud synchronization and transparently uploads them to Firestore.
  */
 export async function autoMigrateLocalDataToFirestore(): Promise<{ migratedResidents: number; migratedParcels: number }> {
-  if (typeof window === "undefined" || !isFirebaseConfigured() || !firestore) {
+  if (typeof window === "undefined" || !isFirebaseConfigured() || !firestore || isFirestoreQuotaExhausted()) {
+    return { migratedResidents: 0, migratedParcels: 0 };
+  }
+
+  // One-time execution guard: prevents repeating 750+ checks on every reload/tab open
+  if (window.localStorage.getItem("ck_hub_migrated_v3") === "true") {
     return { migratedResidents: 0, migratedParcels: 0 };
   }
 
@@ -1174,8 +1392,16 @@ export async function autoMigrateLocalDataToFirestore(): Promise<{ migratedResid
       notifyLocalUpdate();
       console.log(`[AutoMigrate] Successfully migrated ${migratedResidents} resident(s) and ${migratedParcels} parcel(s) to Firestore`);
     }
-  } catch (err) {
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error?.code === "resource-exhausted" || error?.message?.includes("Quota exceeded")) {
+      markFirestoreQuotaExhausted();
+    }
     console.warn("[AutoMigrate] Exception during localStorage migration:", err);
+  } finally {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem("ck_hub_migrated_v3", "true");
+    }
   }
 
   return { migratedResidents, migratedParcels };

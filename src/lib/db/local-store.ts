@@ -10,7 +10,7 @@ import {
   SEED_INQUIRIES,
 } from "./seed-data";
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   PARCELS: "ck_hub_parcels_v2",
   RESIDENTS: "ck_hub_residents_v2",
   USERS: "ck_hub_users_v2",
@@ -60,7 +60,7 @@ export class LocalDatabaseService implements IDatabaseService {
     }
   }
 
-  private save<T>(key: string, data: T): void {
+  save<T>(key: string, data: T): void {
     if (!this.isClient()) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(data));
@@ -480,7 +480,7 @@ export class LocalDatabaseService implements IDatabaseService {
     return cleaned;
   }
 
-  private async recordSms(item: Omit<SmsLogItem, "id" | "timestamp">): Promise<SmsLogItem> {
+  async recordSms(item: Omit<SmsLogItem, "id" | "timestamp">): Promise<SmsLogItem> {
     const logs = await this.getSmsLogs();
     const now = new Date();
     const timestampStr =
@@ -745,10 +745,6 @@ export class LocalDatabaseService implements IDatabaseService {
   }
 }
 
-import { isFirebaseConfigured } from "../firebase/config";
-import { FirestoreDatabaseService } from "./firestore-store";
-
-export const db: IDatabaseService = isFirebaseConfigured()
-  ? new FirestoreDatabaseService()
-  : new LocalDatabaseService();
+export const localStoreFallback = new LocalDatabaseService();
+export const db: IDatabaseService = localStoreFallback;
 
