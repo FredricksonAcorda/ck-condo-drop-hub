@@ -67,10 +67,17 @@ export default function ParcelsInventoryPage() {
       setResidents(liveResidents);
     });
 
-    const handleUpdate = () => loadResidents();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handleUpdate = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadResidents();
+      }, 400);
+    };
     window.addEventListener("ck_db_updated", handleUpdate);
     window.addEventListener("storage", handleUpdate);
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       unsubscribe();
       window.removeEventListener("ck_db_updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);

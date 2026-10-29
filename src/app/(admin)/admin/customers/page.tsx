@@ -58,9 +58,13 @@ export default function AdminCustomersPage() {
     loadResidents();
     loadInvoices();
 
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const handleDbUpdate = () => {
-      loadResidents();
-      loadInvoices();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadResidents();
+        loadInvoices();
+      }, 400);
     };
 
     const unsubscribeResidents = subscribeToResidents((liveResidents) => {
@@ -76,6 +80,7 @@ export default function AdminCustomersPage() {
     window.addEventListener("ck_db_updated", handleDbUpdate);
     window.addEventListener("storage", handleDbUpdate);
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       unsubscribeResidents();
       unsubscribeInvoices();
       window.removeEventListener("ck_db_updated", handleDbUpdate);

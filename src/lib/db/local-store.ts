@@ -60,14 +60,20 @@ export class LocalDatabaseService implements IDatabaseService {
     }
   }
 
-  save<T>(key: string, data: T): void {
+  save<T>(key: string, data: T, notify: boolean = true): void {
     if (!this.isClient()) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(data));
-      window.dispatchEvent(new CustomEvent("ck_db_updated", { detail: { key } }));
+      if (notify) {
+        window.dispatchEvent(new CustomEvent("ck_db_updated", { detail: { key } }));
+      }
     } catch (err) {
       console.error("Local storage save error:", err);
     }
+  }
+
+  saveSilent<T>(key: string, data: T): void {
+    this.save(key, data, false);
   }
 
   // --- Parcels ---

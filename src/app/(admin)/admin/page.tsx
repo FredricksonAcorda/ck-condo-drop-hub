@@ -34,10 +34,17 @@ export default function AdminDashboardPage() {
       setInvoices(liveInvoices);
     });
 
-    const handleUpdate = () => loadData();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handleUpdate = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadData();
+      }, 400);
+    };
     window.addEventListener("ck_db_updated", handleUpdate);
     window.addEventListener("storage", handleUpdate);
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       unsubscribeResidents();
       unsubscribeInvoices();
       window.removeEventListener("ck_db_updated", handleUpdate);

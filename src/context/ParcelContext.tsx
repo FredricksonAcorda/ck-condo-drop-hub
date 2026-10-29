@@ -48,7 +48,11 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
   const overdueFeeRef = useRef(hubSettings.overdueFeePerDay);
   overdueFeeRef.current = hubSettings.overdueFeePerDay;
 
+  const isRefreshingRef = useRef(false);
+
   const refresh = useCallback(async () => {
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
     try {
       setLoading(true);
       const [allParcels, logs, sms, inqs, settings] = await Promise.all([
@@ -69,14 +73,19 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
+      isRefreshingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
     refresh();
 
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const handleDbUpdate = () => {
-      refresh();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refresh();
+      }, 400);
     };
 
     const unsubscribeParcels = subscribeToParcels((liveParcels) => {
@@ -93,14 +102,15 @@ export function ParcelProvider({ children }: { children: React.ReactNode }) {
     });
 
     window.addEventListener("ck_db_updated", handleDbUpdate);
-    window.addEventListener("storage", refresh);
+    window.addEventListener("storage", handleDbUpdate);
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       unsubscribeParcels();
       unsubscribeSettings();
       unsubscribeInquiries();
       window.removeEventListener("ck_db_updated", handleDbUpdate);
-      window.removeEventListener("storage", refresh);
+      window.removeEventListener("storage", handleDbUpdate);
     };
   }, [refresh]);
 

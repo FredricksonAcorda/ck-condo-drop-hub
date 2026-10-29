@@ -332,7 +332,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       }
 
       const sorted = list.sort((a, b) => getParcelTimestamp(b) - getParcelTimestamp(a));
-      localStoreFallback.save(STORAGE_KEYS.PARCELS, sorted);
+      localStoreFallback.saveSilent(STORAGE_KEYS.PARCELS, sorted);
       return syncParcelsOverdue(sorted);
     } catch (err) {
       handleFirestoreError(err, "getAllParcels");
@@ -515,7 +515,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
         return localStoreFallback.getAllResidents();
       }
 
-      localStoreFallback.save(STORAGE_KEYS.RESIDENTS, list);
+      localStoreFallback.saveSilent(STORAGE_KEYS.RESIDENTS, list);
       return list;
     } catch (err) {
       handleFirestoreError(err, "getAllResidents");
@@ -780,7 +780,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       );
       if (snap.empty) return localStoreFallback.getActivityLogs();
       const list = snap.docs.map((d) => d.data() as ActivityLogItem);
-      localStoreFallback.save(STORAGE_KEYS.ACTIVITY, list);
+      localStoreFallback.saveSilent(STORAGE_KEYS.ACTIVITY, list);
       return list;
     } catch (err) {
       handleFirestoreError(err, "getActivityLogs");
@@ -819,7 +819,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
       );
       if (snap.empty) return localStoreFallback.getSmsLogs();
       const list = snap.docs.map((d) => d.data() as SmsLogItem);
-      localStoreFallback.save(STORAGE_KEYS.SMS, list);
+      localStoreFallback.saveSilent(STORAGE_KEYS.SMS, list);
       return list;
     } catch (err) {
       handleFirestoreError(err, "getSmsLogs");
@@ -991,7 +991,7 @@ export class FirestoreDatabaseService implements IDatabaseService {
             residentFaqs: loaded.residentFaqs && loaded.residentFaqs.length > 0 ? loaded.residentFaqs : DEFAULT_HUB_SETTINGS.residentFaqs,
             communityAnnouncements: loaded.communityAnnouncements && loaded.communityAnnouncements.length > 0 ? loaded.communityAnnouncements : DEFAULT_HUB_SETTINGS.communityAnnouncements,
           };
-          localStoreFallback.save(STORAGE_KEYS.SETTINGS, merged);
+          localStoreFallback.saveSilent(STORAGE_KEYS.SETTINGS, merged);
           return merged;
         }
       } catch (err) {
