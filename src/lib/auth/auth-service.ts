@@ -142,7 +142,7 @@ class AuthService {
 
       // STRICT ROLE GATE: Reject any non-admin email from logging in as Staff Admin
       if (!isStaffAdminEmail(adminEmail)) {
-        throw new Error("Access denied: Only the authorized Staff Admin account (ckcondodrophub@gmail.com) can sign in.");
+        throw new Error("Access denied: Only authorized Staff Admin credentials can sign in.");
       }
 
       if (auth) {
