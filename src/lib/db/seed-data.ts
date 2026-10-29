@@ -3,7 +3,7 @@ import { Parcel, ResidentProfile, AuthUser, ActivityLogItem, SmsLogItem, HubSett
 export const SEED_USERS: AuthUser[] = [
   {
     id: "usr-admin-1",
-    email: "admin@ckcondohub.com",
+    email: "ckcondodrophub@gmail.com",
     name: "Lobby Staff Admin",
     phone: "0917 999 8888",
     role: "admin",

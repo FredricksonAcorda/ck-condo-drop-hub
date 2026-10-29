@@ -239,7 +239,7 @@ function LoginForm() {
                 setAdminEmail(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              placeholder="e.g. admin@ckcondohub.com"
+              placeholder="e.g. ckcondodrophub@gmail.com"
               className="w-full bg-[#1c1c21] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-500 placeholder:opacity-50 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/40 transition-colors"
               required
               disabled={isLoading}

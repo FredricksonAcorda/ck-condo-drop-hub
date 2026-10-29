@@ -8,16 +8,12 @@ const SESSION_KEY = "ck_hub_session_v2";
 
 export const AUTHORIZED_ADMIN_EMAILS = [
   "ckcondodrophub@gmail.com",
-  "admin@ckcondohub.com",
 ];
 
 export function isStaffAdminEmail(email: string): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  return (
-    AUTHORIZED_ADMIN_EMAILS.includes(normalized) ||
-    normalized.startsWith("admin@")
-  );
+  return AUTHORIZED_ADMIN_EMAILS.includes(normalized);
 }
 
 class AuthService {
@@ -142,11 +138,11 @@ class AuthService {
     // 1. STAFF ADMIN AUTHENTICATION (STRICT FIREBASE AUTH VALIDATION)
     // ==========================================================
     if (role === "admin") {
-      const adminEmail = cleanInput.includes("@") ? cleanInput.toLowerCase() : "admin@ckcondohub.com";
+      const adminEmail = cleanInput.trim().toLowerCase();
 
       // STRICT ROLE GATE: Reject any non-admin email from logging in as Staff Admin
       if (!isStaffAdminEmail(adminEmail)) {
-        throw new Error("Access denied: This account does not have Staff Admin privileges. Please sign in via the Resident Portal.");
+        throw new Error("Access denied: Only the authorized Staff Admin account (ckcondodrophub@gmail.com) can sign in.");
       }
 
       if (auth) {
@@ -154,21 +150,11 @@ class AuthService {
           await signInWithEmailAndPassword(auth, adminEmail, password);
         } catch (fbErr: unknown) {
           const error = fbErr as { code?: string; message?: string };
-          // If admin account doesn't exist yet in Firebase Auth, bootstrap it on initial valid login
-          if (error?.code === "auth/user-not-found" || error?.code === "auth/invalid-credential") {
-            try {
-              // Attempt bootstrap creation in Firebase Auth
-              await createUserWithEmailAndPassword(auth, adminEmail, password);
-              console.log("Staff Admin initialized in Firebase Auth successfully.");
-            } catch (createErr: unknown) {
-              const createError = createErr as { code?: string };
-              // If email already in use, it means the admin account DOES exist and the password was WRONG
-              if (createError?.code === "auth/email-already-in-use") {
-                throw new Error("Incorrect staff admin password. Please enter the valid admin password.");
-              }
-              throw new Error("Invalid staff admin credentials. Please check your password.");
-            }
-          } else if (error?.code === "auth/wrong-password" || error?.code === "auth/invalid-password") {
+          if (
+            error?.code === "auth/wrong-password" ||
+            error?.code === "auth/invalid-credential" ||
+            error?.code === "auth/invalid-password"
+          ) {
             throw new Error("Incorrect staff admin password. Please enter the valid admin password.");
           } else if (error?.code === "auth/too-many-requests") {
             throw new Error("Access temporarily disabled due to many failed login attempts. Please try again later.");
